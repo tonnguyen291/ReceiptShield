@@ -27,8 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"; // AlertDialogTrigger is not needed here if not used
 import { useToast } from '@/hooks/use-toast';
 
 export function SubmissionHistoryTable() {
@@ -151,11 +150,10 @@ export function SubmissionHistoryTable() {
                             </Button>
                           </>
                         )}
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
+                        {/* Removed AlertDialogTrigger wrapper */}
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
