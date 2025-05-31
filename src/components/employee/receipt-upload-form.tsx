@@ -52,10 +52,10 @@ export function ReceiptUploadForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !user) {
+    if (!file || !user || !user.email) {
       toast({
         title: 'Error',
-        description: 'Please select a file and ensure you are logged in.',
+        description: 'Please select a file and ensure you are logged in with a valid user account.',
         variant: 'destructive',
       });
       return;
