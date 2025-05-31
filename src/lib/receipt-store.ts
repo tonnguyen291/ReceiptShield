@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ProcessedReceipt } from '@/types';
@@ -28,12 +29,24 @@ function setStoredReceipts(receipts: ProcessedReceipt[]): void {
 export function addReceipt(receipt: ProcessedReceipt): void {
   const receipts = getStoredReceipts();
   setStoredReceipts([receipt, ...receipts]);
+   // Dispatch a storage event so other tabs/components can update
+  window.dispatchEvent(new Event('storage'));
+}
+
+export function updateReceipt(updatedReceipt: ProcessedReceipt): void {
+  let receipts = getStoredReceipts();
+  receipts = receipts.map(receipt =>
+    receipt.id === updatedReceipt.id ? updatedReceipt : receipt
+  );
+  setStoredReceipts(receipts);
+   // Dispatch a storage event so other tabs/components can update
+  window.dispatchEvent(new Event('storage'));
 }
 
 export function getFlaggedReceiptsForManager(): ProcessedReceipt[] {
   const receipts = getStoredReceipts();
   // Managers see receipts that are flagged as fraudulent
-  return receipts.filter(receipt => receipt.isFraudulent);
+  return receipts.filter(receipt => receipt.isFraudulent && receipt.explanation !== "Pending user verification.");
 }
 
 export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {

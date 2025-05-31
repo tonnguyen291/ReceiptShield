@@ -3,7 +3,7 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation'; // Added
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { summarizeReceipt } from '@/ai/flows/summarize-receipt';
-import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
+// flagFraudulentReceipt will be called from the verification page
 import type { ProcessedReceipt } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { addReceipt } from '@/lib/receipt-store';
@@ -23,7 +23,7 @@ export function ReceiptUploadForm() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const router = useRouter(); // Added
+  const router = useRouter();
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -71,30 +71,23 @@ export function ReceiptUploadForm() {
         throw new Error('Failed to summarize receipt. The summary was empty.');
       }
       
-      const isSummaryProblematic = summaryResult.summary.toLowerCase().includes("date or amount not found");
-
-      const fraudResult = await flagFraudulentReceipt({
-        receiptData: summaryResult.summary,
-        receiptImage: imageDataUri,
-      });
-      
-      const newReceipt: ProcessedReceipt = {
+      const initialReceipt: ProcessedReceipt = {
         id: Date.now().toString(),
         fileName: file.name,
         imageDataUri,
         summary: summaryResult.summary,
-        isFraudulent: fraudResult.fraudulent || isSummaryProblematic,
-        fraudProbability: isSummaryProblematic && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability,
-        explanation: isSummaryProblematic && !fraudResult.fraudulent ? `AI flagged: ${fraudResult.explanation}. Human attention needed: Receipt summary indicates missing date or amount. Original AI Fraud assessment: ${fraudResult.explanation}` : fraudResult.explanation,
+        isFraudulent: false, // Will be determined after verification
+        fraudProbability: 0, // Will be determined after verification
+        explanation: "Pending user verification.", // Placeholder
         uploadedAt: new Date().toISOString(),
         uploadedBy: user.email,
       };
 
-      addReceipt(newReceipt);
+      addReceipt(initialReceipt);
 
       toast({
-        title: 'Receipt Uploaded Successfully!',
-        description: 'Redirecting to receipt details...',
+        title: 'Receipt Summarized!',
+        description: 'Please verify the extracted information.',
       });
       
       // Reset form state before navigating
@@ -103,7 +96,7 @@ export function ReceiptUploadForm() {
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
-      router.push(`/employee/receipt/${newReceipt.id}`); // Redirect to new page
+      router.push(`/employee/verify-receipt/${initialReceipt.id}`);
 
     } catch (error: any) {
       console.error('Error processing receipt:', error);
@@ -121,7 +114,7 @@ export function ReceiptUploadForm() {
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Upload Expense Receipt</CardTitle>
-        <CardDescription>Submit a photo of your receipt for processing.</CardDescription>
+        <CardDescription>Submit a photo of your receipt for AI summarization.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
@@ -159,7 +152,7 @@ export function ReceiptUploadForm() {
             ) : (
               <UploadCloud className="mr-2 h-4 w-4" />
             )}
-            {isProcessing ? 'Processing...' : 'Upload and Process Receipt'}
+            {isProcessing ? 'Processing...' : 'Upload & Summarize'}
           </Button>
         </CardFooter>
       </form>
