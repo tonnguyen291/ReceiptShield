@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, role: UserRole) => void;
+  createAccount: (name: string, email: string, role: UserRole) => void; // Added
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -38,7 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (email: string, role: UserRole) => {
     // In a real app, you'd authenticate against a backend.
     // Here, we're creating a mock user.
-    const newUser: User = { id: Date.now().toString(), email, role };
+    const existingUser: User = { id: Date.now().toString(), email, role, name: email.split('@')[0] }; // Mock name for existing login
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(existingUser));
+    setUser(existingUser);
+    if (role === 'manager') {
+      router.push('/manager/dashboard');
+    } else {
+      router.push('/employee/dashboard');
+    }
+  };
+
+  const createAccount = (name: string, email: string, role: UserRole) => {
+    const newUser: User = { id: Date.now().toString(), name, email, role };
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
     setUser(newUser);
     if (role === 'manager') {
@@ -55,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, createAccount, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

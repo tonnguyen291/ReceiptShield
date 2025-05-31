@@ -13,29 +13,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield } from 'lucide-react';
 
 export function LoginForm() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(''); // Password is not used in mock auth
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
+  const { login, createAccount } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (!email) {
       setError('Email is required.');
       return;
     }
-    // Basic email validation
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address.');
       return;
     }
+    if (!password) {
+      setError('Password is required.');
+      return;
+    }
+
+    if (isCreateAccountMode) {
+      if (!name.trim()) {
+        setError('Full name is required.');
+        return;
+      }
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      createAccount(name, email, role);
+    } else {
+      // Login logic (password is not strictly checked for login in this mock)
+      login(email, role);
+    }
+  };
+
+  const toggleMode = () => {
+    setIsCreateAccountMode(!isCreateAccountMode);
     setError('');
-    login(email, role);
+    // Optionally clear form fields on mode toggle
+    // setName('');
+    // setEmail('');
+    // setPassword('');
+    // setConfirmPassword('');
   };
 
   return (
@@ -44,11 +79,28 @@ export function LoginForm() {
         <div className="flex justify-center mb-4">
           <Shield className="w-16 h-16 text-primary" />
         </div>
-        <CardTitle className="text-3xl font-headline">Welcome to Receipt Shield</CardTitle>
-        <CardDescription>Please sign in to manage your expenses.</CardDescription>
+        <CardTitle className="text-3xl font-headline">
+          {isCreateAccountMode ? 'Create Account' : 'Welcome to Receipt Shield'}
+        </CardTitle>
+        <CardDescription>
+          {isCreateAccountMode ? 'Fill in the details to get started.' : 'Please sign in to manage your expenses.'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {isCreateAccountMode && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -69,9 +121,21 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              // In a real app, password would be used. For this demo, it's a stub.
             />
           </div>
+          {isCreateAccountMode && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
@@ -86,10 +150,15 @@ export function LoginForm() {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-            Sign In
+            {isCreateAccountMode ? 'Create Account' : 'Sign In'}
           </Button>
         </form>
       </CardContent>
+      <CardFooter className="flex justify-center">
+        <Button variant="link" onClick={toggleMode} className="text-sm">
+          {isCreateAccountMode ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

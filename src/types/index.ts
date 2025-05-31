@@ -2,6 +2,7 @@ export type UserRole = 'employee' | 'manager';
 
 export interface User {
   id: string;
+  name?: string; // Added for full name
   email: string;
   role: UserRole;
 }
