@@ -1,9 +1,94 @@
+
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
+import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bell, Users, Settings, FileText as ReportIcon, ShieldAlert, TrendingUp, Loader2 } from 'lucide-react'; // Renamed FileText to ReportIcon
 
 export default function ManagerDashboardPage() {
   return (
-    <div className="space-y-8">
-      <FlaggedReceiptsTable />
+    <div className="space-y-12">
+      <div>
+        <h1 className="text-3xl font-headline font-semibold mb-8 text-center md:text-left">Manager Dashboard</h1>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <TrendingUp className="w-6 h-6 text-primary" /> Dashboard Overview
+        </h2>
+        <ManagerOverviewCharts />
+      </div>
+
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <ShieldAlert className="w-6 h-6 text-primary" /> Review AI-Flagged Receipts
+        </h2>
+        <FlaggedReceiptsTable />
+      </div>
+
+      <Separator />
+      
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <Users className="w-6 h-6 text-primary" /> Manage Users
+        </h2>
+        <Card className="shadow-md">
+          <CardHeader><CardTitle>User Administration</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Add, remove, or edit employee accounts. (Functionality to be implemented)</p>
+            <Button variant="outline" className="mt-4" disabled>Manage Users</Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <ReportIcon className="w-6 h-6 text-primary" /> Data Reports
+        </h2>
+        <Card className="shadow-md">
+          <CardHeader><CardTitle>Expense Reporting</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Generate and download expense reports. (Functionality to be implemented)</p>
+            <Button variant="outline" className="mt-4" disabled>Generate Report</Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <Bell className="w-6 h-6 text-primary" /> Notifications
+        </h2>
+        <Card className="shadow-md">
+          <CardHeader><CardTitle>System Alerts</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">No new notifications. This section will show alerts for new flagged receipts, approvals, or high-priority actions. (Functionality to be implemented)</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Separator />
+      
+      <div>
+        <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
+          <Settings className="w-6 h-6 text-primary" /> System Settings
+        </h2>
+        <Card className="shadow-md">
+          <CardHeader><CardTitle>Company Policies & Configuration</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Manage expense limits, categories, data retention, etc. (Functionality to be implemented)</p>
+            <Button variant="outline" className="mt-4" disabled>Configure Settings</Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
