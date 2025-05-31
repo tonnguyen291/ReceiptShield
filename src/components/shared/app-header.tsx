@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, UserCircle, Shield, UserCog, KeyRound } from 'lucide-react';
+import { LogOut, UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react'; // Added ChevronDown
 import Link from 'next/link';
 
 export default function AppHeader() {
@@ -41,6 +41,7 @@ export default function AppHeader() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm text-foreground hidden md:inline">{user.name || user.email}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" /> {/* Added icon here */}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
