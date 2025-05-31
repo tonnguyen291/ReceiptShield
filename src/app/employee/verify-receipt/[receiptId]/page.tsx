@@ -29,7 +29,8 @@ export default function VerifyReceiptPage() {
       const foundReceipt = getReceiptById(receiptId);
       setReceipt(foundReceipt);
       if (foundReceipt) {
-        setEditableItems(foundReceipt.items.map(item => ({ ...item }))); // Create a deep copy for editing
+        // Ensure items is always an array, even if empty or undefined from storage
+        setEditableItems(Array.isArray(foundReceipt.items) ? foundReceipt.items.map(item => ({ ...item })) : []);
       }
     }
   }, [receiptId]);
@@ -44,6 +45,21 @@ export default function VerifyReceiptPage() {
     e.preventDefault();
     if (!receipt) return;
 
+    // Check if any critical items are still marked as "Extraction Failed" or "Not found - Edit me" or are empty
+    const needsAttention = editableItems.some(item => 
+        (item.label.toLowerCase().includes("vendor") || item.label.toLowerCase().includes("date") || item.label.toLowerCase().includes("total amount")) &&
+        (item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me") || item.value.trim() === "")
+    );
+
+    if (needsAttention) {
+        toast({
+            title: 'Attention Needed',
+            description: 'Please review and edit fields marked "Extraction Failed", "Not found - Edit me", or empty critical fields (Vendor, Date, Total Amount) before proceeding.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
     setIsProcessing(true);
     try {
       const receiptDataString = editableItems
@@ -54,9 +70,7 @@ export default function VerifyReceiptPage() {
         receiptData: receiptDataString,
         receiptImage: receipt.imageDataUri,
       });
-
-      // Check if any critical values (e.g., 'Date', 'Total Amount') are 'Not found' or empty.
-      // This is a basic check; more sophisticated checks could be added.
+      
       const hasMissingCriticalInfo = editableItems.some(item =>
         (item.label.toLowerCase().includes('date') || item.label.toLowerCase().includes('total') || item.label.toLowerCase().includes('amount')) &&
         (item.value.trim() === '' || item.value.toLowerCase() === 'not found')
@@ -64,9 +78,9 @@ export default function VerifyReceiptPage() {
       
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
-        items: editableItems, // Save the edited items
+        items: editableItems, 
         isFraudulent: fraudResult.fraudulent || hasMissingCriticalInfo,
-        fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability, // Boost probability if user confirmed missing info
+        fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability, 
         explanation: hasMissingCriticalInfo && !fraudResult.fraudulent 
             ? `User confirmed receipt with missing/problematic critical information (e.g., Date, Total). Original AI Assessment: ${fraudResult.explanation}` 
             : fraudResult.explanation,
@@ -119,6 +133,8 @@ export default function VerifyReceiptPage() {
       </Card>
     );
   }
+  
+  const isExtractionEssentiallyFailed = editableItems.length > 0 && editableItems.every(item => item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"));
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -135,6 +151,7 @@ export default function VerifyReceiptPage() {
         </div>
         <CardDescription>
           Review the AI-extracted information below. Edit any field as necessary, then confirm to proceed with fraud analysis.
+          If fields show "Extraction Failed" or are incorrect, please correct them using the receipt image as a reference.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleConfirmAndAnalyze}>
@@ -156,8 +173,19 @@ export default function VerifyReceiptPage() {
             <div className="space-y-3">
               <h3 className="font-semibold text-lg mb-2">Extracted Items (Editable)</h3>
               <ScrollArea className="h-[300px] md:h-[400px] pr-3 border rounded-md p-3 bg-muted/30 shadow-inner">
-                 {editableItems.length === 0 && <p className="text-sm text-muted-foreground p-4 text-center">No items extracted by AI. You can attempt to add them or proceed if the image is unclear.</p>}
-                {editableItems.map((item) => (
+                 {editableItems.length === 0 && (
+                  <p className="text-sm text-muted-foreground p-4 text-center">
+                    No items were extracted by the AI. This might be due to image quality. 
+                    Please try uploading a clearer image or a different receipt.
+                  </p>
+                 )}
+                 {isExtractionEssentiallyFailed && editableItems.some(item => item.label === "Note") && (
+                    <div className="mb-3 p-2 border border-yellow-500 bg-yellow-50 rounded-md">
+                        <p className="text-sm text-yellow-700 font-medium">{editableItems.find(item => item.label === "Note")?.value}</p>
+                    </div>
+                 )}
+
+                {editableItems.filter(item => item.label !== "Note").map((item) => (
                   <div key={item.id} className="mb-3">
                     <Label htmlFor={item.id} className="text-sm font-medium text-foreground/90">
                       {item.label}
@@ -174,7 +202,8 @@ export default function VerifyReceiptPage() {
                 ))}
               </ScrollArea>
                <p className="text-xs text-muted-foreground mt-1 px-1">
-                  Ensure key details like Vendor, Total Amount, and Date are accurate. Correct any "Not found" values if visible on the receipt.
+                  Ensure key details like Vendor, Total Amount, and Date are accurate. 
+                  Correct any "Extraction Failed" or "Not found" values if visible on the receipt.
                 </p>
             </div>
           </div>
@@ -183,7 +212,7 @@ export default function VerifyReceiptPage() {
           <Button type="button" variant="outline" onClick={() => router.push('/employee/dashboard')} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isProcessing || editableItems.length === 0}>
+          <Button type="submit" disabled={isProcessing || editableItems.length === 0 || editableItems.filter(item => item.label !== "Note").length === 0}>
             {isProcessing ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -196,3 +225,4 @@ export default function VerifyReceiptPage() {
     </Card>
   );
 }
+
