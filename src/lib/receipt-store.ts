@@ -24,13 +24,13 @@ function setStoredReceipts(receipts: ProcessedReceipt[]): void {
     return;
   }
   localStorage.setItem(RECEIPTS_STORAGE_KEY, JSON.stringify(receipts));
+  // Dispatch a storage event so other tabs/components can update
+  window.dispatchEvent(new Event('storage'));
 }
 
 export function addReceipt(receipt: ProcessedReceipt): void {
   const receipts = getStoredReceipts();
   setStoredReceipts([receipt, ...receipts]);
-   // Dispatch a storage event so other tabs/components can update
-  window.dispatchEvent(new Event('storage'));
 }
 
 export function updateReceipt(updatedReceipt: ProcessedReceipt): void {
@@ -39,8 +39,12 @@ export function updateReceipt(updatedReceipt: ProcessedReceipt): void {
     receipt.id === updatedReceipt.id ? updatedReceipt : receipt
   );
   setStoredReceipts(receipts);
-   // Dispatch a storage event so other tabs/components can update
-  window.dispatchEvent(new Event('storage'));
+}
+
+export function deleteReceipt(id: string): void {
+  let receipts = getStoredReceipts();
+  receipts = receipts.filter(receipt => receipt.id !== id);
+  setStoredReceipts(receipts);
 }
 
 export function getFlaggedReceiptsForManager(): ProcessedReceipt[] {
@@ -51,7 +55,7 @@ export function getFlaggedReceiptsForManager(): ProcessedReceipt[] {
 
 export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {
     const receipts = getStoredReceipts();
-    return receipts.filter(receipt => receipt.uploadedBy === userEmail);
+    return receipts.filter(receipt => receipt.uploadedBy === userEmail).sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 }
 
 export function getReceiptById(id: string): ProcessedReceipt | undefined {
