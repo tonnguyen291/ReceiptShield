@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 import { useAuth } from '@/contexts/auth-context';
 import type { UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react'; // Added Loader2
 
 export function LoginForm() {
+  const [hasMounted, setHasMounted] = useState(false);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +28,10 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
   const { login, createAccount } = useAuth();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +79,30 @@ export function LoginForm() {
     // setPassword('');
     // setConfirmPassword('');
   };
+
+  if (!hasMounted) {
+    return (
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="text-center py-10">
+          <div className="flex justify-center mb-4">
+            <Shield className="w-16 h-16 text-primary" />
+          </div>
+          <CardTitle className="text-3xl font-headline">
+            Loading Form
+          </CardTitle>
+           <CardDescription>
+            Please wait a moment...
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center h-56"> {/* Increased height for spinner visibility */}
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </CardContent>
+        <CardFooter className="flex justify-center">
+           <p className="text-xs text-muted-foreground">&nbsp;</p> {/* Placeholder for similar height */}
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md shadow-xl">
