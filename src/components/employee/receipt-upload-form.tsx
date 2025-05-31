@@ -1,7 +1,9 @@
+
 'use client';
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // Added
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +23,7 @@ export function ReceiptUploadForm() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const router = useRouter(); // Added
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -68,8 +71,6 @@ export function ReceiptUploadForm() {
         throw new Error('Failed to summarize receipt. The summary was empty.');
       }
       
-      // If summary contains "Date or amount not found", flag as potentially problematic
-      // This is a simple heuristic, a more robust check might be needed.
       const isSummaryProblematic = summaryResult.summary.toLowerCase().includes("date or amount not found");
 
       const fraudResult = await flagFraudulentReceipt({
@@ -82,8 +83,8 @@ export function ReceiptUploadForm() {
         fileName: file.name,
         imageDataUri,
         summary: summaryResult.summary,
-        isFraudulent: fraudResult.fraudulent || isSummaryProblematic, // Also flag if summary is problematic
-        fraudProbability: isSummaryProblematic && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability, // Assign higher probability if summary problematic
+        isFraudulent: fraudResult.fraudulent || isSummaryProblematic,
+        fraudProbability: isSummaryProblematic && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability,
         explanation: isSummaryProblematic && !fraudResult.fraudulent ? `AI flagged: ${fraudResult.explanation}. Human attention needed: Receipt summary indicates missing date or amount. Original AI Fraud assessment: ${fraudResult.explanation}` : fraudResult.explanation,
         uploadedAt: new Date().toISOString(),
         uploadedBy: user.email,
@@ -92,14 +93,17 @@ export function ReceiptUploadForm() {
       addReceipt(newReceipt);
 
       toast({
-        title: 'Receipt Uploaded',
-        description: `Summary: ${newReceipt.summary}. Fraudulent: ${newReceipt.isFraudulent ? 'Yes' : 'No'}.`,
+        title: 'Receipt Uploaded Successfully!',
+        description: 'Redirecting to receipt details...',
       });
+      
+      // Reset form state before navigating
       setFile(null);
       setPreview(null);
-      // Reset the file input visually
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+      
+      router.push(`/employee/receipt/${newReceipt.id}`); // Redirect to new page
 
     } catch (error: any) {
       console.error('Error processing receipt:', error);
