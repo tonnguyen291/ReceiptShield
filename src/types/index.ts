@@ -1,3 +1,4 @@
+
 export type UserRole = 'employee' | 'manager';
 
 export interface User {
@@ -7,11 +8,17 @@ export interface User {
   role: UserRole;
 }
 
+export interface ReceiptDataItem {
+  id: string; // Client-side unique ID for list rendering
+  label: string;
+  value: string;
+}
+
 export interface ProcessedReceipt {
   id: string;
   fileName: string;
   imageDataUri: string;
-  summary: string; 
+  items: ReceiptDataItem[]; 
   isFraudulent: boolean;
   fraudProbability: number;
   explanation: string;

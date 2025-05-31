@@ -1,7 +1,8 @@
+
 'use server';
 
 /**
- * @fileOverview Summarizes the details of a receipt, including vendor, amount, and date.
+ * @fileOverview Summarizes the details of a receipt, extracting key information into structured items.
  *
  * - summarizeReceipt - A function that handles the receipt summarization process.
  * - SummarizeReceiptInput - The input type for the summarizeReceipt function.
@@ -20,8 +21,13 @@ const SummarizeReceiptInputSchema = z.object({
 });
 export type SummarizeReceiptInput = z.infer<typeof SummarizeReceiptInputSchema>;
 
+const ReceiptItemSchema = z.object({
+  label: z.string().describe('The label or category of the extracted information (e.g., "Vendor", "Date", "Total Amount", "Item Name").'),
+  value: z.string().describe('The extracted value for the corresponding label.'),
+});
+
 const SummarizeReceiptOutputSchema = z.object({
-  summary: z.string().describe('A summary of the receipt details, including vendor, amount, and date.'),
+  items: z.array(ReceiptItemSchema).describe('A list of key information items extracted from the receipt. Each item has a label and a value.'),
 });
 export type SummarizeReceiptOutput = z.infer<typeof SummarizeReceiptOutputSchema>;
 
@@ -33,7 +39,12 @@ const prompt = ai.definePrompt({
   name: 'summarizeReceiptPrompt',
   input: {schema: SummarizeReceiptInputSchema},
   output: {schema: SummarizeReceiptOutputSchema},
-  prompt: `You are an expert financial assistant specializing in summarizing receipts for expense reports. Please provide a concise summary of the receipt, including the vendor, amount, and date.  If the date and amount are not in the receipt, respond with 'Date or amount not found'.
+  prompt: `You are an expert financial assistant specializing in extracting structured information from receipts for expense reports.
+Please analyze the receipt image and extract key pieces of information.
+Return these as a list of items, where each item has a "label" (e.g., "Vendor", "Date", "Total Amount", "Item 1 Description", "Item 1 Amount") and its corresponding "value".
+If the receipt contains multiple line items, extract each as a separate item (e.g., {label: "Item 1", value: "Coffee - $2.50"}, {label: "Item 2", value: "Sandwich - $5.00"}).
+If specific common fields like Date or Total Amount are not found, include an item like {label: "Date", value: "Not found"} or {label: "Total Amount", value: "Not found"}.
+Do not invent items if they are not on the receipt. Strive for accuracy.
 
 Receipt Image: {{media url=photoDataUri}}`,
 });

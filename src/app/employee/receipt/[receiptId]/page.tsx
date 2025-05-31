@@ -5,12 +5,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getReceiptById } from '@/lib/receipt-store';
-import type { ProcessedReceipt } from '@/types';
+import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -73,12 +73,12 @@ export default function ReceiptDetailsPage() {
             </Button>
         </div>
       </CardHeader>
-      <ScrollArea className="max-h-[calc(100vh-20rem)]"> {/* Adjust max height as needed */}
+      <ScrollArea className="max-h-[calc(100vh-20rem)]">
         <CardContent className="pt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-xl text-primary">Receipt Image</h3>
-              <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted">
+              <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted min-h-[300px] md:min-h-[450px]">
                 <Image
                   src={receipt.imageDataUri}
                   alt={`Receipt ${receipt.fileName}`}
@@ -91,8 +91,24 @@ export default function ReceiptDetailsPage() {
             </div>
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-xl text-primary mb-1">Summary</h3>
-                <p className="text-sm bg-muted p-4 rounded-md shadow-sm min-h-[60px]">{receipt.summary || 'No summary available.'}</p>
+                <h3 className="font-semibold text-xl text-primary mb-2 flex items-center gap-2">
+                  <Info className="w-5 h-5" />
+                  Extracted Details
+                </h3>
+                <ScrollArea className="h-48 border rounded-md p-1 bg-muted/50 shadow-inner">
+                  <div className="p-3 space-y-2">
+                  {receipt.items && receipt.items.length > 0 ? (
+                    receipt.items.map((item) => (
+                      <div key={item.id} className="text-sm grid grid-cols-3 gap-1 even:bg-muted/30 p-1 rounded">
+                        <span className="font-medium col-span-1 truncate pr-1">{item.label}:</span>
+                        <span className="col-span-2 text-foreground/90 break-words">{item.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground p-2">No specific items were extracted or confirmed for this receipt.</p>
+                  )}
+                  </div>
+                </ScrollArea>
               </div>
               
               <Separator />

@@ -27,7 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; // AlertDialogTrigger is not needed here if not used
+} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
 export function SubmissionHistoryTable() {
@@ -93,6 +93,18 @@ export function SubmissionHistoryTable() {
     return { text: "Clear", variant: "default" };
   };
 
+  const getSummarySnippet = (receipt: ProcessedReceipt): string => {
+    if (receipt.items && receipt.items.length > 0) {
+      const firstItem = receipt.items[0];
+      let snippet = `${firstItem.label}: ${firstItem.value}`;
+      if (snippet.length > 50) {
+        snippet = snippet.substring(0, 47) + "...";
+      }
+      return snippet;
+    }
+    return 'N/A';
+  };
+
 
   return (
     <>
@@ -128,7 +140,7 @@ export function SubmissionHistoryTable() {
                       <TableCell className="font-medium max-w-xs truncate">{receipt.fileName}</TableCell>
                       <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
                       <TableCell className="hidden md:table-cell max-w-sm truncate">
-                        {receipt.summary ? `${receipt.summary.substring(0, 50)}...` : 'N/A'}
+                        {getSummarySnippet(receipt)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>
@@ -150,7 +162,6 @@ export function SubmissionHistoryTable() {
                             </Button>
                           </>
                         )}
-                        {/* Removed AlertDialogTrigger wrapper */}
                         <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
                           <Trash2 className="h-4 w-4" />
                         </Button>

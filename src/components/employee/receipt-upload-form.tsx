@@ -11,8 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { summarizeReceipt } from '@/ai/flows/summarize-receipt';
-// flagFraudulentReceipt will be called from the verification page
-import type { ProcessedReceipt } from '@/types';
+import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { addReceipt } from '@/lib/receipt-store';
 import { fileToDataUri } from '@/lib/utils';
@@ -67,15 +66,20 @@ export function ReceiptUploadForm() {
       const imageDataUri = await fileToDataUri(file);
 
       const summaryResult = await summarizeReceipt({ photoDataUri: imageDataUri });
-      if (!summaryResult || !summaryResult.summary) {
-        throw new Error('Failed to summarize receipt. The summary was empty.');
+      if (!summaryResult || !summaryResult.items) {
+        throw new Error('Failed to summarize receipt. The AI did not return structured items.');
       }
       
+      const processedItems: ReceiptDataItem[] = summaryResult.items.map((item, index) => ({
+        ...item,
+        id: `item-${Date.now()}-${index}`, // Simple unique ID for client-side
+      }));
+
       const initialReceipt: ProcessedReceipt = {
         id: Date.now().toString(),
         fileName: file.name,
         imageDataUri,
-        summary: summaryResult.summary,
+        items: processedItems,
         isFraudulent: false, // Will be determined after verification
         fraudProbability: 0, // Will be determined after verification
         explanation: "Pending user verification.", // Placeholder
@@ -86,11 +90,10 @@ export function ReceiptUploadForm() {
       addReceipt(initialReceipt);
 
       toast({
-        title: 'Receipt Summarized!',
+        title: 'Receipt Items Extracted!',
         description: 'Please verify the extracted information.',
       });
       
-      // Reset form state before navigating
       setFile(null);
       setPreview(null);
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
@@ -114,7 +117,7 @@ export function ReceiptUploadForm() {
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Upload Expense Receipt</CardTitle>
-        <CardDescription>Submit a photo of your receipt for AI summarization.</CardDescription>
+        <CardDescription>Submit a photo of your receipt for AI processing.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
@@ -152,7 +155,7 @@ export function ReceiptUploadForm() {
             ) : (
               <UploadCloud className="mr-2 h-4 w-4" />
             )}
-            {isProcessing ? 'Processing...' : 'Upload & Summarize'}
+            {isProcessing ? 'Processing...' : 'Upload & Extract Data'}
           </Button>
         </CardFooter>
       </form>
