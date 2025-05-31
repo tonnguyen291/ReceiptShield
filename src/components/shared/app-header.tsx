@@ -29,8 +29,8 @@ export default function AppHeader() {
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 p-1 h-auto rounded-full">
-                <Avatar className="h-9 w-9">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Avatar className="h-8 w-8"> {/* Adjusted avatar size to fit better with sm button */}
                   <AvatarImage 
                     src={`https://placehold.co/40x40.png?text=${user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}`} 
                     alt={user.name || user.email}
@@ -41,7 +41,7 @@ export default function AppHeader() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm text-foreground hidden md:inline">{user.name || user.email}</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" /> {/* Added icon here */}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
