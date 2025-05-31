@@ -78,7 +78,7 @@ export default function ReceiptDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-xl text-primary">Receipt Image</h3>
-              <div className="border rounded-lg overflow-hidden shadow-md aspect-[3/4] relative bg-muted">
+              <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted">
                 <Image
                   src={receipt.imageDataUri}
                   alt={`Receipt ${receipt.fileName}`}
@@ -137,4 +137,3 @@ export default function ReceiptDetailsPage() {
     </Card>
   );
 }
-

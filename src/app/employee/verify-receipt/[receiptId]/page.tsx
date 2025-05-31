@@ -122,7 +122,7 @@ export default function VerifyReceiptPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-lg mb-2">Receipt Image</h3>
-              <div className="border rounded-lg overflow-hidden shadow-md aspect-[3/4] relative bg-muted">
+              <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted">
                 <Image
                   src={receipt.imageDataUri}
                   alt={`Receipt ${receipt.fileName}`}
