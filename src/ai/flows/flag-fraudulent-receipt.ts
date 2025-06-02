@@ -1,4 +1,3 @@
-// This is a Genkit flow that flags fraudulent receipts.
 
 'use server';
 
@@ -76,7 +75,22 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
     outputSchema: FlagFraudulentReceiptOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      return output!;
+    } catch (error: any) {
+      if (error.message && (error.message.includes('503 Service Unavailable') || error.message.includes('model is overloaded') || error.message.includes('The model is overloaded'))) {
+        console.warn('flagFraudulentReceiptFlow: Model is overloaded. Returning fallback response.');
+        return {
+          fraudulent: true, 
+          fraudProbability: 0.9, 
+          explanation: "AI fraud analysis is temporarily unavailable due to high demand on the AI service. The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
+        };
+      }
+      // For other types of errors, re-throw so the UI can display a generic error.
+      console.error('Error in flagFraudulentReceiptFlow:', error);
+      throw new Error('An unexpected error occurred during AI fraud analysis. Please try again.');
+    }
   }
 );
+
