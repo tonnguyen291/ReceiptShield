@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, UserRole } from '@/types';
@@ -9,7 +10,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, role: UserRole) => void;
-  createAccount: (name: string, email: string, role: UserRole) => void; // Added
+  createAccount: (name: string, email: string, role: UserRole) => void;
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -25,9 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (storedUserJSON) {
+        const storedUser = JSON.parse(storedUserJSON);
+        // Ensure dob field exists for older stored users
+        if (!('dob' in storedUser)) {
+          storedUser.dob = '';
+        }
+        setUser(storedUser);
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
@@ -36,12 +42,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (!isLoading) { 
+      if (user) {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      }
+    }
+  }, [user, isLoading]);
+
   const login = (email: string, role: UserRole) => {
     // In a real app, you'd authenticate against a backend.
-    // Here, we're creating a mock user.
-    const existingUser: User = { id: Date.now().toString(), email, role, name: email.split('@')[0] }; // Mock name for existing login
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(existingUser));
-    setUser(existingUser);
+    // Here, we're creating/retrieving a mock user.
+    // For simplicity, if user exists in storage, we use that, otherwise create one.
+    let existingUser: User | null = null;
+    try {
+      const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (storedUserJSON) {
+        const potentialUser = JSON.parse(storedUserJSON);
+        if (potentialUser.email === email && potentialUser.role === role) {
+          existingUser = potentialUser;
+          if (!('dob' in existingUser!)) { // Ensure dob for older entries
+            existingUser!.dob = '';
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    if (!existingUser) {
+      existingUser = { 
+        id: Date.now().toString(), 
+        email, 
+        role, 
+        name: email.split('@')[0], 
+        dob: '' 
+      };
+    }
+    
+    setUser(existingUser); // This will trigger the useEffect to save to localStorage
     if (role === 'manager') {
       router.push('/manager/dashboard');
     } else {
@@ -50,9 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const createAccount = (name: string, email: string, role: UserRole) => {
-    const newUser: User = { id: Date.now().toString(), name, email, role };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
-    setUser(newUser);
+    const newUser: User = { 
+      id: Date.now().toString(), 
+      name, 
+      email, 
+      role, 
+      dob: '' // Initialize dob
+    };
+    setUser(newUser); // This will trigger the useEffect to save to localStorage
     if (role === 'manager') {
       router.push('/manager/dashboard');
     } else {
@@ -61,8 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    setUser(null);
+    setUser(null); // This will trigger the useEffect to remove from localStorage
     router.push('/login');
   };
 

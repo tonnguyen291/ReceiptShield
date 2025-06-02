@@ -6,6 +6,7 @@ export interface User {
   name?: string; // Added for full name
   email: string;
   role: UserRole;
+  dob?: string; // Date of Birth
 }
 
 export interface ReceiptDataItem {
@@ -27,4 +28,3 @@ export interface ProcessedReceipt {
   status?: 'pending_approval' | 'approved' | 'rejected'; // Status for manager workflow
   managerNotes?: string; // Notes from manager during review
 }
-

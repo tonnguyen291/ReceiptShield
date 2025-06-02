@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { LogOut, UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AppHeader() {
@@ -30,7 +30,7 @@ export default function AppHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Avatar className="h-8 w-8"> {/* Adjusted avatar size to fit better with sm button */}
+                <Avatar className="h-8 w-8">
                   <AvatarImage 
                     src={`https://placehold.co/40x40.png?text=${user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}`} 
                     alt={user.name || user.email}
@@ -54,14 +54,18 @@ export default function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <UserCog className="mr-2 h-4 w-4" />
-                <span>Manage Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <KeyRound className="mr-2 h-4 w-4" />
-                <span>Change Password</span>
-              </DropdownMenuItem>
+              <Link href="/profile" passHref>
+                <DropdownMenuItem>
+                  <UserCog className="mr-2 h-4 w-4" />
+                  <span>Manage Profile</span>
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/profile/change-password" passHref>
+                <DropdownMenuItem>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  <span>Change Password</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
