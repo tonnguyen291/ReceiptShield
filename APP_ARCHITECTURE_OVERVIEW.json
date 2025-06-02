@@ -1,0 +1,108 @@
+{
+  "EmployeeWorkflow": {
+    "UploadReceipt": {
+      "components": [
+        "ImageUploadComponent",
+        "FileValidationLogic",
+        "ProgressIndicator",
+        "UploadButton",
+        "ToastNotification"
+      ]
+    },
+    "AI_OCR_Extraction": {
+      "components": [
+        "GenkitSummarizeReceiptFlow",
+        "DataExtractionModel",
+        "APIResponseHandler",
+        "FallbackHandling"
+      ]
+    },
+    "VerifyReceipt": {
+      "components": [
+        "ReceiptImageViewer",
+        "EditableFieldsComponent",
+        "PlaceholderHandling",
+        "ConfirmAnalyzeFraudButton",
+        "VerificationStatusToast"
+      ]
+    },
+    "AI_Fraud_Analysis": {
+      "components": [
+        "GenkitFlagFraudulentReceipt",
+        "AIProbabilityDisplay",
+        "AutoFlaggingLogic"
+      ]
+    }
+  },
+  "EmployeeDashboard": {
+    "components": [
+      "ReceiptManagementTable",
+      "StatusBadgeComponent",
+      "ActionsForReceipts",
+      "UploadNewReceiptButton",
+      "ToastNotifications"
+    ]
+  },
+  "ManagerWorkflow": {
+    "ManagerDashboard": {
+      "components": [
+        "OverviewPanels",
+        "FlaggedReceiptsTable",
+        "ActionsForFlaggedReceipts",
+        "ManagerNotifications"
+      ]
+    },
+    "ReceiptDetailsDialog": {
+      "components": [
+        "ReceiptImagePreview",
+        "EditableFields",
+        "AIFraudProbabilityExplanation",
+        "EmployeeInfo",
+        "ManagerNotesField",
+        "ApproveButton",
+        "RejectButton",
+        "ConfirmationDialogs"
+      ]
+    }
+  },
+  "SharedFeatures": {
+    "NotificationsStatus": {
+      "components": [
+        "ToastNotificationComponent",
+        "ErrorHandlerComponent"
+      ]
+    },
+    "UserProfileSettings": {
+      "components": [
+        "ProfileInformationViewEdit",
+        "PasswordChangeForm",
+        "RoleBadge"
+      ]
+    },
+    "DataReports": {
+      "components": [
+        "DownloadableReportButton",
+        "TrendsChartsComponents"
+      ]
+    }
+  },
+  "SystemLevel": {
+    "components": [
+      "AuthenticationModule",
+      "RoleBasedLayout",
+      "StylingAndTheming",
+      "GenkitIntegration",
+      "ReceiptStorageDBLayer",
+      "SecurityCompliance"
+    ]
+  },
+  "FutureGrowth": {
+    "components": [
+      "MultiReceiptBatchUpload",
+      "ReceiptCategoryTags",
+      "BulkManagerApprovals",
+      "PowerBI_LookerIntegration",
+      "AdvancedFraudVisualization"
+    ]
+  }
+}
