@@ -1,12 +1,24 @@
 
+'use client';
+
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Users, Settings, FileText as ReportIcon, ShieldAlert, TrendingUp, Loader2 } from 'lucide-react'; // Renamed FileText to ReportIcon
+import { Bell, Users, Settings, FileText as ReportIcon, ShieldAlert, TrendingUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ManagerDashboardPage() {
+  const { toast } = useToast();
+
+  const handleGenerateReportClick = () => {
+    toast({
+      title: 'Feature Coming Soon',
+      description: 'Full report generation and download functionality will be available in a future update.',
+    });
+  };
+
   return (
     <div className="space-y-12">
       <div>
@@ -55,8 +67,8 @@ export default function ManagerDashboardPage() {
         <Card className="shadow-md">
           <CardHeader><CardTitle>Expense Reporting</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Generate and download expense reports. (Functionality to be implemented)</p>
-            <Button variant="outline" className="mt-4" disabled>Generate Report</Button>
+            <p className="text-muted-foreground">Generate and download expense reports.</p>
+            <Button variant="outline" className="mt-4" onClick={handleGenerateReportClick}>Generate Report</Button>
           </CardContent>
         </Card>
       </div>
