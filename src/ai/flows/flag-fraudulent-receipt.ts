@@ -77,19 +77,38 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
   async input => {
     try {
       const {output} = await prompt(input);
-      return output!;
+
+      if (!output) {
+        console.warn('flagFraudulentReceiptFlow: AI model returned null output. Using fallback.');
+        return {
+          fraudulent: true,
+          fraudProbability: 0.85,
+          explanation: "AI analysis failed to produce structured output. Receipt flagged for caution.",
+        };
+      }
+
+      const finalExplanation = output.explanation || (output.fraudulent ? "Receipt flagged by AI; detailed explanation not provided by the model." : "AI analysis completed; no specific issues noted by AI.");
+
+      return {
+        ...output,
+        explanation: finalExplanation,
+      };
     } catch (error: any) {
       if (error.message && (error.message.includes('503 Service Unavailable') || error.message.includes('model is overloaded') || error.message.includes('The model is overloaded'))) {
         console.warn('flagFraudulentReceiptFlow: Model is overloaded. Returning fallback response.');
         return {
-          fraudulent: true, 
-          fraudProbability: 0.9, 
+          fraudulent: true,
+          fraudProbability: 0.9,
           explanation: "AI fraud analysis is temporarily unavailable due to high demand on the AI service. The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
         };
       }
-      // For other types of errors, re-throw so the UI can display a generic error.
       console.error('Error in flagFraudulentReceiptFlow:', error);
-      throw new Error('An unexpected error occurred during AI fraud analysis. Please try again.');
+      // For other types of errors, return a default fraudulent state to be safe.
+      return {
+        fraudulent: true,
+        fraudProbability: 0.8,
+        explanation: "An unexpected error occurred during AI fraud analysis. Receipt flagged for caution. Please try again or review manually.",
+      };
     }
   }
 );

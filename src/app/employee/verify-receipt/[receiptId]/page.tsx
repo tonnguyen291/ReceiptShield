@@ -46,7 +46,7 @@ export default function VerifyReceiptPage() {
     e.preventDefault();
     if (!receipt) return;
 
-    const needsAttention = editableItems.some(item => 
+    const needsAttention = editableItems.some(item =>
         (item.label.toLowerCase().includes("vendor") || item.label.toLowerCase().includes("date") || item.label.toLowerCase().includes("total amount")) &&
         (item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me") || item.value.trim() === "")
     );
@@ -70,22 +70,33 @@ export default function VerifyReceiptPage() {
         receiptData: receiptDataString,
         receiptImage: receipt.imageDataUri,
       });
-      
+
       const hasMissingCriticalInfo = editableItems.some(item =>
         (item.label.toLowerCase().includes('date') || item.label.toLowerCase().includes('total') || item.label.toLowerCase().includes('amount')) &&
-        (item.value.trim() === '' || item.value.toLowerCase() === 'not found')
+        (item.value.trim() === '' || item.value.toLowerCase() === 'not found' || item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"))
       );
-      
+
       const isActuallyFraudulent = fraudResult.fraudulent || hasMissingCriticalInfo;
+      let finalExplanation = fraudResult.explanation; // fraudResult.explanation should always be a string now from the robust flow.
+
+      if (hasMissingCriticalInfo) {
+        if (!fraudResult.fraudulent) {
+          // AI didn't flag it, but user confirmed with missing critical info.
+          // We are overriding isFraudulent to true.
+          finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total) confirmed by user. Original AI Assessment: ${fraudResult.explanation || "Not applicable or no issues found by AI."}`;
+        } else {
+          // AI flagged it AND user confirmed missing critical info. Prepend.
+          finalExplanation = `Flagged due to missing/problematic critical information. Additionally, AI reported: ${fraudResult.explanation}`;
+        }
+      }
+      // If !hasMissingCriticalInfo, fraudResult.explanation is used as is.
 
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
-        items: editableItems, 
+        items: editableItems,
         isFraudulent: isActuallyFraudulent,
-        fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability, 
-        explanation: hasMissingCriticalInfo && !fraudResult.fraudulent 
-            ? `User confirmed receipt with missing/problematic critical information (e.g., Date, Total). Original AI Assessment: ${fraudResult.explanation}` 
-            : fraudResult.explanation,
+        fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability,
+        explanation: finalExplanation,
         status: isActuallyFraudulent ? 'pending_approval' : undefined,
         managerNotes: receipt.managerNotes // Preserve existing manager notes if any
       };
@@ -105,11 +116,21 @@ export default function VerifyReceiptPage() {
 
     } catch (error: any) {
       console.error('Error during fraud analysis:', error);
+      // This catch block might be less likely to be hit if the flow handles its own errors and returns a valid object.
+      // However, it's kept as a safety net for unexpected issues in this page's logic.
       toast({
         title: 'Analysis Error',
         description: error.message || 'Could not analyze the receipt. Please try again.',
         variant: 'destructive',
       });
+      // Ensure explanation reflects local page error if flow itself didn't error
+       if (receipt && !receipt.explanation.toLowerCase().includes("error occurred during ai fraud analysis")) {
+         const errorReceipt = {
+            ...receipt,
+            explanation: "A local error occurred while preparing data for AI fraud analysis. Please check your inputs or try again."
+         }
+         updateReceipt(errorReceipt);
+       }
     } finally {
       setIsProcessing(false);
     }
@@ -143,7 +164,7 @@ export default function VerifyReceiptPage() {
       </Card>
     );
   }
-  
+
   const isExtractionEssentiallyFailed = editableItems.length > 0 && editableItems.every(item => item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"));
   const pageTitle = user?.role === 'manager' ? `Review & Edit Receipt: ${receipt.fileName}` : `Verify Receipt Data: ${receipt.fileName}`;
   const submitButtonText = user?.role === 'manager' ? 'Save Changes & Re-analyze' : 'Confirm & Analyze Fraud';
@@ -188,7 +209,7 @@ export default function VerifyReceiptPage() {
               <ScrollArea className="h-[300px] md:h-[400px] pr-3 border rounded-md p-3 bg-muted/30 shadow-inner">
                  {editableItems.length === 0 && (
                   <p className="text-sm text-muted-foreground p-4 text-center">
-                    No items were extracted by the AI. This might be due to image quality. 
+                    No items were extracted by the AI. This might be due to image quality.
                     Please try uploading a clearer image or a different receipt.
                   </p>
                  )}
@@ -215,7 +236,7 @@ export default function VerifyReceiptPage() {
                 ))}
               </ScrollArea>
                <p className="text-xs text-muted-foreground mt-1 px-1">
-                  Ensure key details like Vendor, Total Amount, and Date are accurate. 
+                  Ensure key details like Vendor, Total Amount, and Date are accurate.
                   Correct any "Extraction Failed" or "Not found" values if visible on the receipt.
                 </p>
             </div>
