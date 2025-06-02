@@ -30,6 +30,7 @@ function setStoredReceipts(receipts: ProcessedReceipt[]): void {
 
 export function addReceipt(receipt: ProcessedReceipt): void {
   const receipts = getStoredReceipts();
+  // When adding, ensure status is undefined or pending_approval based on initial creation logic
   setStoredReceipts([receipt, ...receipts]);
 }
 
@@ -49,8 +50,25 @@ export function deleteReceipt(id: string): void {
 
 export function getFlaggedReceiptsForManager(): ProcessedReceipt[] {
   const receipts = getStoredReceipts();
-  // Managers see receipts that are flagged as fraudulent
-  return receipts.filter(receipt => receipt.isFraudulent && receipt.explanation !== "Pending user verification.");
+  // Managers see receipts that are flagged and pending approval.
+  return receipts.filter(receipt => receipt.isFraudulent && receipt.status === 'pending_approval')
+                 .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+}
+
+export function approveReceipt(receiptId: string): void {
+  const receipts = getStoredReceipts();
+  const updatedReceipts = receipts.map(r => 
+    r.id === receiptId ? { ...r, status: 'approved', managerNotes: 'Approved by manager.' } : r
+  );
+  setStoredReceipts(updatedReceipts);
+}
+
+export function rejectReceipt(receiptId: string, notes?: string): void {
+  const receipts = getStoredReceipts();
+  const updatedReceipts = receipts.map(r => 
+    r.id === receiptId ? { ...r, status: 'rejected', managerNotes: notes || 'Rejected by manager.' } : r
+  );
+  setStoredReceipts(updatedReceipts);
 }
 
 export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {
@@ -62,3 +80,4 @@ export function getReceiptById(id: string): ProcessedReceipt | undefined {
   const receipts = getStoredReceipts();
   return receipts.find(receipt => receipt.id === id);
 }
+

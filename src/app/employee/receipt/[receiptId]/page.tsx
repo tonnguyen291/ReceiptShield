@@ -6,11 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getReceiptById } from '@/lib/receipt-store';
 import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Info } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -56,6 +56,22 @@ export default function ReceiptDetailsPage() {
   }
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
+
+  const getStatusBadge = () => {
+    if (receipt.status === 'approved') {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-4 h-4 mr-1.5"/>Approved by Manager</Badge>;
+    }
+    if (receipt.status === 'rejected') {
+      return <Badge variant="destructive"><XCircle className="w-4 h-4 mr-1.5"/>Rejected by Manager</Badge>;
+    }
+    if (receipt.status === 'pending_approval') {
+      return <Badge variant="secondary"><ShieldQuestion className="w-4 h-4 mr-1.5"/>Pending Manager Review</Badge>;
+    }
+    return <Badge variant={receipt.isFraudulent ? 'destructive' : 'default'} className="text-sm px-3 py-1">
+            {receipt.isFraudulent ? 'Flagged as Potentially Fraudulent' : 'Looks Clear (AI)'}
+           </Badge>;
+  };
+
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -114,16 +130,14 @@ export default function ReceiptDetailsPage() {
               <Separator />
 
               <div>
-                <h3 className="font-semibold text-xl text-primary mb-2">Fraud Analysis</h3>
+                <h3 className="font-semibold text-xl text-primary mb-2">Review & Analysis</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
-                    <span className="text-sm font-medium">Status:</span>
-                    <Badge variant={receipt.isFraudulent ? 'destructive' : 'default'} className="text-sm px-3 py-1">
-                      {receipt.isFraudulent ? 'Flagged as Potentially Fraudulent' : 'Looks Clear'}
-                    </Badge>
+                    <span className="text-sm font-medium">Overall Status:</span>
+                    {getStatusBadge()}
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
-                    <span className="text-sm font-medium">Fraud Probability:</span>
+                    <span className="text-sm font-medium">AI Fraud Probability:</span>
                     <div className="flex items-center gap-2">
                       <Progress 
                         value={fraudProbabilityPercent} 
@@ -139,17 +153,36 @@ export default function ReceiptDetailsPage() {
                     </div>
                   </div>
                    <div className="space-y-1 p-3 bg-muted/50 rounded-md shadow-sm">
-                     <span className="text-sm font-medium">Explanation:</span>
-                     <ScrollArea className="h-32">
-                        <p className="text-xs p-2 rounded-md min-h-[50px] whitespace-pre-wrap">{receipt.explanation || 'No explanation provided.'}</p>
+                     <span className="text-sm font-medium">AI Explanation:</span>
+                     <ScrollArea className="h-24">
+                        <p className="text-xs p-2 rounded-md min-h-[40px] whitespace-pre-wrap">{receipt.explanation || 'No AI explanation provided.'}</p>
                      </ScrollArea>
                    </div>
+                   {receipt.managerNotes && (
+                    <Card className="mt-3 shadow-sm">
+                      <CardHeader className="p-3">
+                        <CardTitle className="text-md flex items-center gap-2"><MessageSquareText className="w-4 h-4 text-accent"/>Manager Notes</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 pt-0">
+                        <ScrollArea className="h-20">
+                          <p className="text-xs whitespace-pre-wrap">{receipt.managerNotes}</p>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                   )}
                 </div>
               </div>
             </div>
           </div>
         </CardContent>
       </ScrollArea>
+       {receipt.status && (receipt.status === 'approved' || receipt.status === 'rejected') && (
+        <CardFooter className="pt-4 border-t">
+            <p className="text-sm text-muted-foreground w-full text-center">
+                This receipt has been {receipt.status} by management.
+            </p>
+        </CardFooter>
+      )}
     </Card>
   );
 }

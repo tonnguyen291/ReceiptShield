@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '../ui/separator';
-import { Info } from 'lucide-react';
+import { Info, CheckCircle, XCircle, ShieldQuestion } from 'lucide-react';
 
 interface ReceiptDetailsDialogProps {
   receipt: ProcessedReceipt | null;
@@ -27,6 +27,22 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
   if (!receipt) return null;
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
+
+  const getStatusBadge = () => {
+    if (receipt.status === 'approved') {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
+    }
+    if (receipt.status === 'rejected') {
+      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    }
+    if (receipt.status === 'pending_approval') {
+      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
+    }
+    // Fallback for older receipts or other states
+    return <Badge variant={receipt.isFraudulent ? 'destructive' : 'default'}>
+            {receipt.isFraudulent ? 'Flagged' : 'Looks Clear'}
+           </Badge>;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -75,26 +91,32 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
               </div>
               <Separator />
               <div>
-                <h3 className="font-semibold text-lg mb-1">Fraud Analysis</h3>
+                <h3 className="font-semibold text-lg mb-1">Fraud Analysis & Status</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-2 bg-muted/50 rounded-sm">
-                    <span className="text-sm font-medium">Status:</span>
-                    <Badge variant={receipt.isFraudulent ? 'destructive' : 'default'}>
-                      {receipt.isFraudulent ? 'Flagged' : 'Looks Clear'}
-                    </Badge>
+                    <span className="text-sm font-medium">Overall Status:</span>
+                    {getStatusBadge()}
                   </div>
                   <div className="flex items-center justify-between p-2 bg-muted/50 rounded-sm">
-                    <span className="text-sm font-medium">Fraud Probability:</span>
+                    <span className="text-sm font-medium">AI Fraud Probability:</span>
                     <span className={`font-semibold ${fraudProbabilityPercent > 70 ? 'text-destructive' : fraudProbabilityPercent > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
                       {fraudProbabilityPercent}%
                     </span>
                   </div>
                    <div className="space-y-1 p-2 bg-muted/50 rounded-sm">
-                     <span className="text-sm font-medium">Explanation:</span>
-                     <ScrollArea className="h-28">
-                        <p className="text-xs p-1.5 rounded-md min-h-[40px] whitespace-pre-wrap">{receipt.explanation || 'No explanation provided.'}</p>
+                     <span className="text-sm font-medium">AI Explanation:</span>
+                     <ScrollArea className="h-20">
+                        <p className="text-xs p-1.5 rounded-md min-h-[30px] whitespace-pre-wrap">{receipt.explanation || 'No AI explanation provided.'}</p>
                      </ScrollArea>
                    </div>
+                   {receipt.managerNotes && (
+                    <div className="space-y-1 p-2 bg-muted/50 rounded-sm">
+                      <span className="text-sm font-medium">Manager Notes:</span>
+                      <ScrollArea className="h-16">
+                          <p className="text-xs p-1.5 rounded-md min-h-[20px] whitespace-pre-wrap">{receipt.managerNotes}</p>
+                      </ScrollArea>
+                    </div>
+                   )}
                 </div>
               </div>
             </div>
@@ -107,3 +129,4 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
     </Dialog>
   );
 }
+

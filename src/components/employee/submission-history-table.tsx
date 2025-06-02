@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle, ShieldQuestion, CheckCircle, XCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,24 +83,43 @@ export function SubmissionHistoryTable() {
     }
   };
 
-  const getStatus = (receipt: ProcessedReceipt): { text: string; variant: "default" | "destructive" | "secondary" } => {
+  const getStatusBadge = (receipt: ProcessedReceipt): JSX.Element => {
+    if (receipt.status === 'approved') {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
+    }
+    if (receipt.status === 'rejected') {
+      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    }
+    if (receipt.status === 'pending_approval') {
+      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
+    }
+    // Legacy or direct employee verification states
     if (receipt.explanation === "Pending user verification.") {
-      return { text: "Pending Verification", variant: "secondary" };
+      return <Badge variant="secondary"><ClipboardCheck className="w-3 h-3 mr-1"/>Pending Verification</Badge>;
     }
-    if (receipt.isFraudulent) {
-      return { text: "Flagged", variant: "destructive" };
+    if (receipt.isFraudulent) { // Fallback if status isn't set but it's fraudulent
+      return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1"/>Flagged</Badge>;
     }
-    return { text: "Clear", variant: "default" };
+    return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1"/>Clear</Badge>;
   };
+
 
   const getSummarySnippet = (receipt: ProcessedReceipt): string => {
     if (receipt.items && receipt.items.length > 0) {
-      const firstItem = receipt.items[0];
-      let snippet = `${firstItem.label}: ${firstItem.value}`;
+      const vendor = receipt.items.find(item => item.label.toLowerCase() === 'vendor');
+      const total = receipt.items.find(item => item.label.toLowerCase().includes('total amount'));
+      let snippet = '';
+      if (vendor && vendor.value) snippet += `${vendor.value}`;
+      if (total && total.value) snippet += (snippet ? ` - ${total.value}` : `${total.value}`);
+      
+      if (!snippet && receipt.items[0]) { // Fallback to first item if specific ones not found
+          snippet = `${receipt.items[0].label}: ${receipt.items[0].value}`;
+      }
+
       if (snippet.length > 50) {
         snippet = snippet.substring(0, 47) + "...";
       }
-      return snippet;
+      return snippet || 'N/A';
     }
     return 'N/A';
   };
@@ -134,7 +153,9 @@ export function SubmissionHistoryTable() {
               </TableHeader>
               <TableBody>
                 {receipts.map((receipt) => {
-                  const status = getStatus(receipt);
+                  const isPendingEmployeeVerification = receipt.explanation === "Pending user verification.";
+                  const isActionableByEmployee = isPendingEmployeeVerification || (!receipt.status || receipt.status === 'pending_approval');
+
                   return (
                     <TableRow key={receipt.id}>
                       <TableCell className="font-medium max-w-xs truncate">{receipt.fileName}</TableCell>
@@ -143,12 +164,10 @@ export function SubmissionHistoryTable() {
                         {getSummarySnippet(receipt)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={status.variant}>
-                          {status.text}
-                        </Badge>
+                        {getStatusBadge(receipt)}
                       </TableCell>
                       <TableCell className="text-right space-x-1">
-                        {status.text === "Pending Verification" ? (
+                        {isPendingEmployeeVerification ? (
                           <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)} title="Verify Receipt">
                             <ClipboardCheck className="h-4 w-4" />
                           </Button>
@@ -157,14 +176,20 @@ export function SubmissionHistoryTable() {
                             <Button variant="outline" size="sm" onClick={() => handleViewDetails(receipt.id)} title="View Details">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)} title="Edit Receipt">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            {/* Allow edit if not yet approved/rejected by manager, or if it's just clear/flagged by AI without manager action */}
+                            {isActionableByEmployee && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+                              <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)} title="Edit Receipt">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
                           </>
                         )}
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Allow delete if not yet approved by manager */}
+                        {receipt.status !== 'approved' && (
+                           <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -201,3 +226,4 @@ export function SubmissionHistoryTable() {
     </>
   );
 }
+

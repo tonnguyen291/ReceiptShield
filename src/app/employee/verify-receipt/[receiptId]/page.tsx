@@ -14,11 +14,13 @@ import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit } from 'lucide
 import { useToast } from '@/hooks/use-toast';
 import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 
 export default function VerifyReceiptPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth(); // Get current user
   const [receipt, setReceipt] = useState<ProcessedReceipt | null | undefined>(undefined);
   const [editableItems, setEditableItems] = useState<ReceiptDataItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -29,7 +31,6 @@ export default function VerifyReceiptPage() {
       const foundReceipt = getReceiptById(receiptId);
       setReceipt(foundReceipt);
       if (foundReceipt) {
-        // Ensure items is always an array, even if empty or undefined from storage
         setEditableItems(Array.isArray(foundReceipt.items) ? foundReceipt.items.map(item => ({ ...item })) : []);
       }
     }
@@ -45,13 +46,12 @@ export default function VerifyReceiptPage() {
     e.preventDefault();
     if (!receipt) return;
 
-    // Check if any critical items are still marked as "Extraction Failed" or "Not found - Edit me" or are empty
     const needsAttention = editableItems.some(item => 
         (item.label.toLowerCase().includes("vendor") || item.label.toLowerCase().includes("date") || item.label.toLowerCase().includes("total amount")) &&
         (item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me") || item.value.trim() === "")
     );
 
-    if (needsAttention) {
+    if (needsAttention && user?.role === 'employee') { // Only employees get this strict check
         toast({
             title: 'Attention Needed',
             description: 'Please review and edit fields marked "Extraction Failed", "Not found - Edit me", or empty critical fields (Vendor, Date, Total Amount) before proceeding.',
@@ -76,23 +76,33 @@ export default function VerifyReceiptPage() {
         (item.value.trim() === '' || item.value.toLowerCase() === 'not found')
       );
       
+      const isActuallyFraudulent = fraudResult.fraudulent || hasMissingCriticalInfo;
+
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
         items: editableItems, 
-        isFraudulent: fraudResult.fraudulent || hasMissingCriticalInfo,
+        isFraudulent: isActuallyFraudulent,
         fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability, 
         explanation: hasMissingCriticalInfo && !fraudResult.fraudulent 
             ? `User confirmed receipt with missing/problematic critical information (e.g., Date, Total). Original AI Assessment: ${fraudResult.explanation}` 
             : fraudResult.explanation,
+        status: isActuallyFraudulent ? 'pending_approval' : undefined,
+        managerNotes: receipt.managerNotes // Preserve existing manager notes if any
       };
 
       updateReceipt(finalReceipt);
 
       toast({
-        title: 'Receipt Verified & Analyzed!',
-        description: 'Redirecting to final details...',
+        title: `Receipt ${user?.role === 'manager' ? 'Updated' : 'Verified'} & Analyzed!`,
+        description: `Redirecting to ${user?.role === 'manager' ? 'manager dashboard' : 'final details...'}`,
       });
-      router.push(`/employee/receipt/${finalReceipt.id}`);
+
+      if (user?.role === 'manager') {
+        router.push('/manager/dashboard');
+      } else {
+        router.push(`/employee/receipt/${finalReceipt.id}`);
+      }
+
     } catch (error: any) {
       console.error('Error during fraud analysis:', error);
       toast({
@@ -125,7 +135,7 @@ export default function VerifyReceiptPage() {
         </CardHeader>
         <CardContent>
           <p>The receipt you are looking for could not be found for verification.</p>
-          <Button onClick={() => router.push('/employee/dashboard')} className="mt-6">
+          <Button onClick={() => router.push(user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard')} className="mt-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
@@ -135,6 +145,8 @@ export default function VerifyReceiptPage() {
   }
   
   const isExtractionEssentiallyFailed = editableItems.length > 0 && editableItems.every(item => item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"));
+  const pageTitle = user?.role === 'manager' ? `Review & Edit Receipt: ${receipt.fileName}` : `Verify Receipt Data: ${receipt.fileName}`;
+  const submitButtonText = user?.role === 'manager' ? 'Save Changes & Re-analyze' : 'Confirm & Analyze Fraud';
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -142,7 +154,7 @@ export default function VerifyReceiptPage() {
         <div className="flex justify-between items-center">
             <CardTitle className="text-2xl font-headline flex items-center gap-2">
                 <FileEdit className="w-7 h-7 text-primary"/>
-                Verify Receipt Data: {receipt.fileName}
+                {pageTitle}
             </CardTitle>
             <Button onClick={() => router.back()} variant="outline" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -150,8 +162,9 @@ export default function VerifyReceiptPage() {
             </Button>
         </div>
         <CardDescription>
-          Review the AI-extracted information below. Edit any field as necessary, then confirm to proceed with fraud analysis.
+          Review the AI-extracted information below. Edit any field as necessary, then confirm to proceed.
           If fields show "Extraction Failed" or are incorrect, please correct them using the receipt image as a reference.
+          {user?.role === 'manager' && " As a manager, saving changes will re-trigger fraud analysis."}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleConfirmAndAnalyze}>
@@ -209,7 +222,7 @@ export default function VerifyReceiptPage() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={() => router.push('/employee/dashboard')} disabled={isProcessing}>
+          <Button type="button" variant="outline" onClick={() => router.push(user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard')} disabled={isProcessing}>
             Cancel
           </Button>
           <Button type="submit" disabled={isProcessing || editableItems.length === 0 || editableItems.filter(item => item.label !== "Note").length === 0}>
@@ -218,7 +231,7 @@ export default function VerifyReceiptPage() {
             ) : (
               <CheckCircle className="mr-2 h-4 w-4" />
             )}
-            {isProcessing ? 'Analyzing...' : 'Confirm & Analyze Fraud'}
+            {isProcessing ? 'Processing...' : submitButtonText}
           </Button>
         </CardFooter>
       </form>

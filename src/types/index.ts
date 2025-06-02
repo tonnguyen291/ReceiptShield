@@ -18,10 +18,13 @@ export interface ProcessedReceipt {
   id: string;
   fileName: string;
   imageDataUri: string;
-  items: ReceiptDataItem[]; 
+  items: ReceiptDataItem[];
   isFraudulent: boolean;
   fraudProbability: number;
   explanation: string;
   uploadedAt: string; // ISO Date string
   uploadedBy: string; // user email (identifier for the employee)
+  status?: 'pending_approval' | 'approved' | 'rejected'; // Status for manager workflow
+  managerNotes?: string; // Notes from manager during review
 }
+
