@@ -89,7 +89,7 @@ export default function ReceiptDetailsPage() {
             </Button>
         </div>
       </CardHeader>
-      <ScrollArea className="max-h-[calc(100vh-22rem)]"> {/* Adjusted max-h slightly for potentially taller header */}
+      <ScrollArea className="max-h-[calc(100vh-22rem)]">
         <CardContent className="pt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div className="space-y-4">
@@ -111,7 +111,7 @@ export default function ReceiptDetailsPage() {
                   <Info className="w-5 h-5" />
                   Extracted Details
                 </h3>
-                <ScrollArea className="h-60 border rounded-md p-1 bg-muted/50 shadow-inner">
+                <ScrollArea className="h-80 border rounded-md p-1 bg-muted/50 shadow-inner"> {/* Increased height */}
                   <div className="p-3 space-y-2">
                   {receipt.items && receipt.items.length > 0 ? (
                     receipt.items.map((item) => (
@@ -154,7 +154,7 @@ export default function ReceiptDetailsPage() {
                   </div>
                    <div className="space-y-1 p-3 bg-muted/50 rounded-md shadow-sm">
                      <span className="text-sm font-medium">AI Explanation:</span>
-                     <ScrollArea className="h-32"> {/* Increased height */}
+                     <ScrollArea className="h-40"> {/* Increased height */}
                         <p className="text-xs p-2 rounded-md min-h-[40px] whitespace-pre-wrap">{receipt.explanation || 'No AI explanation provided.'}</p>
                      </ScrollArea>
                    </div>
@@ -164,7 +164,7 @@ export default function ReceiptDetailsPage() {
                         <CardTitle className="text-md flex items-center gap-2"><MessageSquareText className="w-4 h-4 text-accent"/>Manager Notes</CardTitle>
                       </CardHeader>
                       <CardContent className="p-3 pt-0">
-                        <ScrollArea className="h-28"> {/* Increased height */}
+                        <ScrollArea className="h-32"> {/* Increased height */}
                           <p className="text-xs whitespace-pre-wrap">{receipt.managerNotes}</p>
                         </ScrollArea>
                       </CardContent>
