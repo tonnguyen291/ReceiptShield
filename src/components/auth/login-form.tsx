@@ -180,7 +180,10 @@ export function LoginForm() {
             </Select>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button
+            type="submit"
+            className="w-full"
+          >
             {isCreateAccountMode ? 'Create Account' : 'Sign In'}
           </Button>
         </form>
