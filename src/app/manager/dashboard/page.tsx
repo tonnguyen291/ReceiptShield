@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react'; // Added useState
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { Separator } from '@/components/ui/separator';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Users, Settings, FileText as ReportIcon, ShieldAlert, TrendingUp, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Chatbot } from '@/components/shared/chatbot'; // Added chatbot import
 import {
   Tooltip,
   TooltipContent,
@@ -17,18 +19,12 @@ import {
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Added chatbot state
 
   const handleGenerateReportClick = () => {
     toast({
       title: 'Feature Coming Soon',
       description: 'Full report generation and download functionality will be available in a future update.',
-    });
-  };
-
-  const handleChatbotClick = () => {
-    toast({
-      title: 'Feature Coming Soon',
-      description: 'Our AI-powered chatbot will be available soon to help you with your questions.',
     });
   };
 
@@ -122,7 +118,7 @@ export default function ManagerDashboardPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={handleChatbotClick}
+              onClick={() => setIsChatbotOpen(true)} // Updated onClick
               className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
               size="icon"
             >
@@ -134,6 +130,9 @@ export default function ManagerDashboardPage() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      
+      {/* Chatbot Component */}
+      <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
     </>
   );
 }

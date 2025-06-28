@@ -1,13 +1,14 @@
 
 'use client';
 
+import { useState } from 'react'; // Added useState
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, Bell, UserCog, History, BrainCircuit, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { Chatbot } from '@/components/shared/chatbot'; // Added chatbot import
 import {
   Tooltip,
   TooltipContent,
@@ -17,17 +18,10 @@ import {
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Added chatbot state
 
   const handleUploadClick = () => {
     router.push('/employee/upload');
-  };
-
-  const handleChatbotClick = () => {
-    toast({
-      title: 'Feature Coming Soon',
-      description: 'Our AI-powered chatbot will be available soon to help you with your questions.',
-    });
   };
 
   return (
@@ -110,7 +104,7 @@ export default function EmployeeDashboardPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={handleChatbotClick}
+              onClick={() => setIsChatbotOpen(true)} // Updated onClick
               className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
               size="icon"
             >
@@ -122,6 +116,9 @@ export default function EmployeeDashboardPage() {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {/* Chatbot Component */}
+      <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
     </>
   );
 }

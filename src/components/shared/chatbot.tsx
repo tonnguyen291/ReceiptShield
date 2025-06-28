@@ -1,0 +1,162 @@
+'use client';
+
+import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { useAuth } from '@/contexts/auth-context';
+import { getAllReceiptsForUser } from '@/lib/receipt-store';
+import { runAssistant } from '@/ai/flows/assistant-flow';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Bot, Loader2, Send, User } from 'lucide-react';
+
+interface ChatbotProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export function Chatbot({ isOpen, onClose }: ChatbotProps) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'init',
+      role: 'assistant',
+      content: `Hello ${user?.name || 'there'}! How can I help you with your expenses today? You can ask me about company policy or the status of your receipts.`,
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [isResponding, setIsResponding] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !user || isResponding) return;
+
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsResponding(true);
+
+    try {
+      const userReceipts = getAllReceiptsForUser(user.email);
+      const receiptHistoryString = JSON.stringify(
+        userReceipts.map(r => ({ fileName: r.fileName, status: r.status || (r.isFraudulent ? 'flagged' : 'clear'), uploaded_at: r.uploadedAt }))
+      );
+
+      const result = await runAssistant({
+        query: input,
+        userEmail: user.email,
+        receiptHistory: receiptHistoryString,
+      });
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: result.response,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error('Chatbot error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'I\'m sorry, but I encountered an error. Please try again later.',
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-full max-w-lg flex flex-col p-0">
+        <SheetHeader className="p-6 pb-2">
+          <SheetTitle className="text-2xl font-headline flex items-center gap-2">
+            <Bot className="w-7 h-7 text-primary" />
+            AI Expense Assistant
+          </SheetTitle>
+          <SheetDescription>
+            Ask questions about policy or check receipt status.
+          </SheetDescription>
+        </SheetHeader>
+        <ScrollArea className="flex-grow p-6 pt-2" ref={scrollAreaRef}>
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div key={message.id} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                {message.role === 'assistant' && (
+                  <Avatar className="h-9 w-9 border border-primary">
+                    <AvatarFallback><Bot className="w-5 h-5" /></AvatarFallback>
+                  </Avatar>
+                )}
+                <div
+                  className={`rounded-lg px-4 py-2 max-w-[80%] whitespace-pre-wrap ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {message.content}
+                </div>
+                 {message.role === 'user' && (
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback><User className="w-5 h-5" /></AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))}
+            {isResponding && (
+                <div className="flex items-start gap-3">
+                     <Avatar className="h-9 w-9 border border-primary">
+                        <AvatarFallback><Bot className="w-5 h-5" /></AvatarFallback>
+                    </Avatar>
+                    <div className="rounded-lg px-4 py-3 bg-muted text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Thinking...</span>
+                    </div>
+                </div>
+            )}
+          </div>
+        </ScrollArea>
+        <SheetFooter className="p-4 border-t bg-background">
+          <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about a receipt or expense policy..."
+              className="min-h-0 flex-1 resize-none"
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              disabled={isResponding}
+            />
+            <Button type="submit" size="icon" disabled={!input.trim() || isResponding}>
+              <Send className="h-5 w-5" />
+            </Button>
+          </form>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
