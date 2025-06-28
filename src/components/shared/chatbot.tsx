@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { getAllReceiptsForUser } from '@/lib/receipt-store';
 import { runAssistant } from '@/ai/flows/assistant-flow';
@@ -8,8 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bot, Loader2, Send, User } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Bot, Loader2, Send, User, UploadCloud } from 'lucide-react';
 
 interface ChatbotProps {
   isOpen: boolean;
@@ -20,10 +21,15 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export function Chatbot({ isOpen, onClose }: ChatbotProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'init',
@@ -70,6 +76,16 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         role: 'assistant',
         content: result.response,
       };
+
+      if (result.suggestUpload) {
+        assistantMessage.action = {
+          label: 'Upload a Receipt',
+          onClick: () => {
+            router.push('/employee/upload');
+            onClose();
+          },
+        };
+      }
       setMessages((prev) => [...prev, assistantMessage]);
 
     } catch (error) {
@@ -107,13 +123,24 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
                   </Avatar>
                 )}
                 <div
-                  className={`rounded-lg px-4 py-2 max-w-[80%] whitespace-pre-wrap ${
+                  className={`rounded-lg px-4 py-3 max-w-[85%] ${
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  {message.content}
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.action && (
+                    <Button
+                      onClick={message.action.onClick}
+                      variant="secondary"
+                      size="sm"
+                      className="mt-3"
+                    >
+                      <UploadCloud className="mr-2 h-4 w-4" />
+                      {message.action.label}
+                    </Button>
+                  )}
                 </div>
                  {message.role === 'user' && (
                   <Avatar className="h-9 w-9">

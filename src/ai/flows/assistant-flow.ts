@@ -21,6 +21,7 @@ export type AssistantInput = z.infer<typeof AssistantInputSchema>;
 
 const AssistantOutputSchema = z.object({
   response: z.string().describe('The AI assistant\'s response to the user.'),
+  suggestUpload: z.boolean().optional().describe('Set to true if the user seems to want to upload a receipt.'),
 });
 export type AssistantOutput = z.infer<typeof AssistantOutputSchema>;
 
@@ -56,7 +57,9 @@ Here is the user's receipt submission history as a JSON string:
 {{{receiptHistory}}}
 </history>
 
-Please answer the user's query based on the policy and their history. Be concise and clear in your responses. If the user asks a question outside of these topics, politely state that you can only help with expense-related queries.
+Please answer the user's query based on the policy and their history. Be concise and clear in your responses.
+If the user's query is about submitting an expense, uploading a receipt, or starting a new expense report, set the 'suggestUpload' field to true in your JSON response, in addition to providing a helpful text response.
+If the user asks a question outside of these topics, politely state that you can only help with expense-related queries.
 
 User Query: "{{query}}"
 `,
