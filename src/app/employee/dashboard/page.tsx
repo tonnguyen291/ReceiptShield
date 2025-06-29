@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useState } from 'react'; // Added useState
+import { useState } from 'react';
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, Bell, UserCog, History, BrainCircuit, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Chatbot } from '@/components/shared/chatbot'; // Added chatbot import
+import { PlusCircle, History, BrainCircuit, Bell, UserCog, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Chatbot } from '@/components/shared/chatbot';
 import {
   Tooltip,
   TooltipContent,
@@ -18,7 +17,7 @@ import {
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Added chatbot state
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const handleUploadClick = () => {
     router.push('/employee/upload');
@@ -26,85 +25,79 @@ export default function EmployeeDashboardPage() {
 
   return (
     <>
-      <div className="space-y-12">
-        <div>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <h1 className="text-3xl font-headline font-semibold text-center md:text-left">Employee Dashboard</h1>
-            <Button onClick={handleUploadClick} size="lg" className="w-full md:w-auto">
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Upload New Receipt
-            </Button>
-          </div>
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-3xl font-headline font-semibold">Employee Dashboard</h1>
+          <Button onClick={handleUploadClick} size="lg" className="w-full md:w-auto">
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Upload New Receipt
+          </Button>
         </div>
         
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <History className="w-6 h-6 text-primary" /> Manage My Receipts
-          </h2>
-          <SubmissionHistoryTable />
-        </div>
-
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <BrainCircuit className="w-6 h-6 text-primary" /> AI Insights
-          </h2>
+        <div className="space-y-6">
           <Card className="shadow-md">
             <CardHeader>
-              <CardTitle>Understanding AI Feedback</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <History className="w-6 h-6 text-primary" />
+                Manage My Receipts
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                For receipts flagged by our AI, detailed explanations and fraud probability scores can be found by clicking 'View' on the receipt in the 'Manage My Receipts' section. This will take you to the individual receipt details page where AI feedback is provided.
-              </p>
+              <SubmissionHistoryTable />
             </CardContent>
           </Card>
-        </div>
 
-        <Separator />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="shadow-md lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BrainCircuit className="w-6 h-6 text-primary" />
+                  Understanding AI Feedback
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Our AI analyzes receipts for fraud probability. You can view detailed explanations and scores by clicking the 'View' icon on any receipt in your history table. This feedback helps you understand why a receipt might be flagged for manager review.
+                </p>
+              </CardContent>
+            </Card>
 
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <Bell className="w-6 h-6 text-primary" /> Notifications
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Recent Alerts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No new notifications at this time. This section will show alerts for approvals, rejections, and status changes. (Functionality to be implemented)</p>
-              {/* Placeholder for future notification list */}
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-6 h-6 text-primary" />
+                  Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">No new notifications. Alerts for approvals and rejections will appear here. (Future Feature)</p>
+              </CardContent>
+            </Card>
 
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <UserCog className="w-6 h-6 text-primary" /> Profile & Settings
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Account Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Manage your personal information and preferences here. (Functionality to be implemented)</p>
-              <Button variant="outline" className="mt-4" disabled>Edit Profile</Button>
-            </CardContent>
-          </Card>
+            <Card className="shadow-md lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCog className="w-6 h-6 text-primary" />
+                  Profile & Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <p className="text-muted-foreground">Manage your personal information, preferences, and change your password.</p>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
+                  <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
       
-      {/* Chatbot FAB */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setIsChatbotOpen(true)} // Updated onClick
+              onClick={() => setIsChatbotOpen(true)}
               className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
               size="icon"
             >
@@ -117,7 +110,6 @@ export default function EmployeeDashboardPage() {
         </Tooltip>
       </TooltipProvider>
 
-      {/* Chatbot Component */}
       <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
     </>
   );

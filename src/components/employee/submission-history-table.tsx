@@ -29,6 +29,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function SubmissionHistoryTable() {
   const { user } = useAuth();
@@ -79,7 +85,7 @@ export function SubmissionHistoryTable() {
         title: "Receipt Deleted",
         description: `Receipt "${receiptToDelete.fileName}" has been successfully deleted.`,
       });
-      setReceiptToDelete(null); // Close dialog
+      setReceiptToDelete(null);
     }
   };
 
@@ -93,11 +99,10 @@ export function SubmissionHistoryTable() {
     if (receipt.status === 'pending_approval') {
       return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
     }
-    // Legacy or direct employee verification states
     if (receipt.explanation === "Pending user verification.") {
       return <Badge variant="secondary"><ClipboardCheck className="w-3 h-3 mr-1"/>Pending Verification</Badge>;
     }
-    if (receipt.isFraudulent) { // Fallback if status isn't set but it's fraudulent
+    if (receipt.isFraudulent) {
       return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1"/>Flagged</Badge>;
     }
     return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1"/>Clear</Badge>;
@@ -112,7 +117,7 @@ export function SubmissionHistoryTable() {
       if (vendor && vendor.value) snippet += `${vendor.value}`;
       if (total && total.value) snippet += (snippet ? ` - ${total.value}` : `${total.value}`);
       
-      if (!snippet && receipt.items[0]) { // Fallback to first item if specific ones not found
+      if (!snippet && receipt.items[0]) {
           snippet = `${receipt.items[0].label}: ${receipt.items[0].value}`;
       }
 
@@ -127,85 +132,101 @@ export function SubmissionHistoryTable() {
 
   return (
     <>
-      <Card className="shadow-lg">
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              Fetching your receipts...
-            </div>
-          ) : receipts.length === 0 ? (
-            <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-              <FileText className="w-10 h-10 text-primary mb-3" />
-              <p>You haven&apos;t uploaded any receipts yet.</p>
-              <p className="text-sm">Use the &quot;Upload New Receipt&quot; button to get started!</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>File Name</TableHead>
-                  <TableHead className="hidden sm:table-cell">Upload Date</TableHead>
-                  <TableHead className="hidden md:table-cell">Summary Snippet</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {receipts.map((receipt) => {
-                  const isPendingEmployeeVerification = receipt.explanation === "Pending user verification.";
-                  const isActionableByEmployee = isPendingEmployeeVerification || (!receipt.status || receipt.status === 'pending_approval');
+      {isLoading ? (
+        <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          Fetching your receipts...
+        </div>
+      ) : receipts.length === 0 ? (
+        <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+          <FileText className="w-10 h-10 text-primary mb-3" />
+          <p>You haven't uploaded any receipts yet.</p>
+          <p className="text-sm">Use the &quot;Upload New Receipt&quot; button to get started!</p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>File Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Upload Date</TableHead>
+              <TableHead className="hidden md:table-cell">Summary</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {receipts.map((receipt) => {
+              const isPendingEmployeeVerification = receipt.explanation === "Pending user verification.";
+              const isActionableByEmployee = isPendingEmployeeVerification || (!receipt.status || receipt.status === 'pending_approval');
 
-                  return (
-                    <TableRow key={receipt.id}>
-                      <TableCell className="font-medium max-w-xs truncate">{receipt.fileName}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="hidden md:table-cell max-w-sm truncate">
-                        {getSummarySnippet(receipt)}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(receipt)}
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        {isPendingEmployeeVerification ? (
-                          <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)} title="Verify Receipt">
-                            <ClipboardCheck className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => handleViewDetails(receipt.id)} title="View Details">
+              return (
+                <TableRow key={receipt.id}>
+                  <TableCell className="font-medium max-w-[150px] sm:max-w-xs truncate">{receipt.fileName}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="hidden md:table-cell max-w-sm truncate text-muted-foreground">
+                    {getSummarySnippet(receipt)}
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(receipt)}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <TooltipProvider>
+                      {isPendingEmployeeVerification ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
+                              <ClipboardCheck className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Verify Receipt</p></TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleViewDetails(receipt.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {/* Allow edit if not yet approved/rejected by manager, or if it's just clear/flagged by AI without manager action */}
-                            {isActionableByEmployee && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
-                              <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)} title="Edit Receipt">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        {/* Allow delete if not yet approved by manager */}
-                        {receipt.status !== 'approved' && (
-                           <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)} title="Delete Receipt">
-                             <Trash2 className="h-4 w-4" />
-                           </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                          </TooltipTrigger>
+                          <TooltipContent><p>View Details</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                      
+                      {isActionableByEmployee && !isPendingEmployeeVerification && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Edit Receipt</p></TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {receipt.status !== 'approved' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Delete Receipt</p></TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
 
       <AlertDialog open={!!receiptToDelete} onOpenChange={(open) => !open && setReceiptToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
                 <AlertTriangle className="w-6 h-6 mr-2 text-destructive" />
-                Are you sure you want to delete this receipt?
+                Are you sure?
             </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the receipt: <br />
@@ -226,4 +247,3 @@ export function SubmissionHistoryTable() {
     </>
   );
 }
-

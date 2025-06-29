@@ -131,7 +131,7 @@ export default function ReceiptDetailsPage() {
             
             <Separator />
 
-            <div className="flex-grow space-y-3"> {/* This div allows Review & Analysis to take remaining space if needed */}
+            <div className="flex-grow space-y-3">
               <h3 className="font-semibold text-xl text-primary mb-2">Review & Analysis</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
@@ -179,7 +179,7 @@ export default function ReceiptDetailsPage() {
       </CardContent>
       
        {receipt.status && (receipt.status === 'approved' || receipt.status === 'rejected') && (
-        <CardFooter className="pt-4 border-t mt-6"> {/* Added mt-6 for spacing if footer is present */}
+        <CardFooter className="pt-4 border-t mt-6">
             <p className="text-sm text-muted-foreground w-full text-center">
                 This receipt has been {receipt.status} by management.
             </p>
@@ -188,4 +188,3 @@ export default function ReceiptDetailsPage() {
     </Card>
   );
 }
-

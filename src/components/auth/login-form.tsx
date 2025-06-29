@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import type { UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Shield } from 'lucide-react'; // Added Loader2
+import { Loader2, Shield } from 'lucide-react';
 
 export function LoginForm() {
   const [hasMounted, setHasMounted] = useState(false);
@@ -65,7 +65,6 @@ export function LoginForm() {
       }
       createAccount(name, email, role);
     } else {
-      // Login logic (password is not strictly checked for login in this mock)
       login(email, role);
     }
   };
@@ -73,11 +72,6 @@ export function LoginForm() {
   const toggleMode = () => {
     setIsCreateAccountMode(!isCreateAccountMode);
     setError('');
-    // Optionally clear form fields on mode toggle
-    // setName('');
-    // setEmail('');
-    // setPassword('');
-    // setConfirmPassword('');
   };
 
   if (!hasMounted) {
@@ -94,11 +88,11 @@ export function LoginForm() {
             Please wait a moment...
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center items-center h-56"> {/* Increased height for spinner visibility */}
+        <CardContent className="flex justify-center items-center h-56">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </CardContent>
         <CardFooter className="flex justify-center">
-           <p className="text-xs text-muted-foreground">&nbsp;</p> {/* Placeholder for similar height */}
+           <p className="text-xs text-muted-foreground">&nbsp;</p>
         </CardFooter>
       </Card>
     );

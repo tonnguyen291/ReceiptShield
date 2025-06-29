@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, KeyRound } from 'lucide-react'; // KeyRound is better than KeyRoundIcon
+import { ArrowLeft, KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ChangePasswordPage() {
