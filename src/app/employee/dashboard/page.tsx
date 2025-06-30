@@ -25,13 +25,13 @@ export default function EmployeeDashboardPage() {
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-8 max-w-3xl mx-auto">
+        <div className="flex flex-col items-start gap-4">
           <div>
             <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
             <p className="text-muted-foreground">Manage your expense receipts and submissions.</p>
           </div>
-          <Button onClick={handleUploadClick} size="lg" className="w-full md:w-auto shadow-sm">
+          <Button onClick={handleUploadClick} size="lg" className="w-full sm:w-auto shadow-sm">
             <PlusCircle className="mr-2 h-5 w-5" />
             Upload New Receipt
           </Button>
@@ -59,9 +59,9 @@ export default function EmployeeDashboardPage() {
               </CardTitle>
               <CardDescription>Manage your personal information and password.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-                <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
-                <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
+            <CardContent className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" onClick={() => router.push('/profile')} className="flex-1">Edit Profile</Button>
+                <Button variant="outline" onClick={() => router.push('/profile/change-password')} className="flex-1">Change Password</Button>
             </CardContent>
           </Card>
 
