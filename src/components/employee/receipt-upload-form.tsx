@@ -72,7 +72,7 @@ export function ReceiptUploadForm() {
       
       const processedItems: ReceiptDataItem[] = summaryResult.items.map((item, index) => ({
         ...item,
-        id: `item-${Date.now()}-${index}`, // Simple unique ID for client-side
+        id: `item-${Date.now()}-${index}`,
       }));
 
       const initialReceipt: ProcessedReceipt = {
@@ -80,9 +80,9 @@ export function ReceiptUploadForm() {
         fileName: file.name,
         imageDataUri,
         items: processedItems,
-        isFraudulent: false, // Will be determined after verification
-        fraudProbability: 0, // Will be determined after verification
-        explanation: "Pending user verification.", // Placeholder
+        isFraudulent: false,
+        fraudProbability: 0,
+        explanation: "Pending user verification.",
         uploadedAt: new Date().toISOString(),
         uploadedBy: user.email,
       };

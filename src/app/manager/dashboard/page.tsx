@@ -1,25 +1,27 @@
 
 'use client';
 
-import { useState } from 'react'; // Added useState
+import { useState } from 'react';
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Users, Settings, FileText as ReportIcon, ShieldAlert, TrendingUp, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Bell, Users, Settings, FileText, ShieldAlert, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Chatbot } from '@/components/shared/chatbot'; // Added chatbot import
+import { Chatbot } from '@/components/shared/chatbot';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function ManagerDashboardPage() {
+  const { logout } = useAuth();
   const { toast } = useToast();
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // Added chatbot state
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const handleGenerateReportClick = () => {
     toast({
@@ -30,109 +32,81 @@ export default function ManagerDashboardPage() {
 
   return (
     <>
-      <div className="space-y-12">
+      <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-headline font-semibold mb-8 text-center md:text-left">Manager Dashboard</h1>
+          <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
+          <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
 
-        <Separator />
+        <ManagerOverviewCharts />
 
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-primary" /> Dashboard Overview
-          </h2>
-          <ManagerOverviewCharts />
-        </div>
-
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-primary" /> Review AI-Flagged Receipts
-          </h2>
-          <FlaggedReceiptsTable />
-        </div>
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <ShieldAlert className="w-7 h-7 text-primary" />
+              <span className="text-2xl font-semibold">Review Queue</span>
+            </CardTitle>
+            <CardDescription>These receipts were flagged by AI for potential issues. Please review them carefully.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FlaggedReceiptsTable />
+          </CardContent>
+        </Card>
 
         <Separator />
         
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" /> Manage Users
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader><CardTitle>User Administration</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Add, remove, or edit employee accounts. (Functionality to be implemented)</p>
-              <Button variant="outline" className="mt-4" disabled>Manage Users</Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <ReportIcon className="w-6 h-6 text-primary" /> Data Reports
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader><CardTitle>Expense Reporting</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Generate and download expense reports.</p>
-              <Button variant="outline" className="mt-4" onClick={handleGenerateReportClick}>Generate Report</Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Separator />
-
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <Bell className="w-6 h-6 text-primary" /> Notifications
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader><CardTitle>System Alerts</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No new notifications. This section will show alerts for new flagged receipts, approvals, or high-priority actions. (Functionality to be implemented)</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Separator />
-        
-        <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 text-center md:text-left flex items-center gap-2">
-            <Settings className="w-6 h-6 text-primary" /> System Settings
-          </h2>
-          <Card className="shadow-md">
-            <CardHeader><CardTitle>Company Policies & Configuration</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Manage expense limits, categories, data retention, etc. (Functionality to be implemented)</p>
-              <Button variant="outline" className="mt-4" disabled>Configure Settings</Button>
-            </CardContent>
-          </Card>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Team Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <p className="text-muted-foreground mb-4 text-sm">Add, remove, or edit employee accounts. (Future Feature)</p>
+                <Button variant="outline" disabled>Manage Users</Button>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><FileText className="w-6 h-6 text-primary" /> Data & Reports</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <p className="text-muted-foreground mb-4 text-sm">Generate and download expense reports.</p>
+                <Button variant="outline" onClick={handleGenerateReportClick}>Generate Report</Button>
+                </CardContent>
+            </Card>
+             <Card className="shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Settings className="w-6 h-6 text-primary" /> System Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <p className="text-muted-foreground mb-4 text-sm">Manage expense policies, categories, etc. (Future Feature)</p>
+                <Button variant="outline" disabled>Configure Settings</Button>
+                </CardContent>
+            </Card>
         </div>
       </div>
 
-      {/* Chatbot FAB */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setIsChatbotOpen(true)} // Updated onClick
+              onClick={() => setIsChatbotOpen(true)}
               className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
               size="icon"
             >
               <MessageSquare className="h-8 w-8" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Chat with AI Assistant</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       
-      {/* Chatbot Component */}
       <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+      <div className="flex justify-center mt-8">
+        <Button variant="destructive" onClick={logout}>Sign Out</Button>
+      </div>
     </>
   );
 }

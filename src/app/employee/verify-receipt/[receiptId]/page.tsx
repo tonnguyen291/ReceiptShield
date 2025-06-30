@@ -77,20 +77,14 @@ export default function VerifyReceiptPage() {
       );
 
       const isActuallyFraudulent = fraudResult.fraudulent || hasMissingCriticalInfo;
-      let finalExplanation = fraudResult.explanation; // fraudResult.explanation should always be a string now from the robust flow.
+      let finalExplanation = fraudResult.explanation;
 
-      if (hasMissingCriticalInfo) {
-        if (!fraudResult.fraudulent) {
-          // AI didn't flag it, but user confirmed with missing critical info.
-          // We are overriding isFraudulent to true.
-          finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total) confirmed by user. Original AI Assessment: ${fraudResult.explanation || "Not applicable or no issues found by AI."}`;
-        } else {
-          // AI flagged it AND user confirmed missing critical info. Prepend.
-          finalExplanation = `Flagged due to missing/problematic critical information. Additionally, AI reported: ${fraudResult.explanation}`;
-        }
+      if (hasMissingCriticalInfo && !fraudResult.fraudulent) {
+        finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total) confirmed by user. Original AI Assessment: ${fraudResult.explanation || "Not applicable or no issues found by AI."}`;
+      } else if (hasMissingCriticalInfo && fraudResult.fraudulent) {
+        finalExplanation = `Flagged due to missing/problematic critical information. Additionally, AI reported: ${fraudResult.explanation}`;
       }
-      // If !hasMissingCriticalInfo, fraudResult.explanation is used as is.
-
+      
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
         items: editableItems,
@@ -98,7 +92,6 @@ export default function VerifyReceiptPage() {
         fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability,
         explanation: finalExplanation,
         status: isActuallyFraudulent ? 'pending_approval' : undefined,
-        managerNotes: receipt.managerNotes // Preserve existing manager notes if any
       };
 
       updateReceipt(finalReceipt);
@@ -116,14 +109,11 @@ export default function VerifyReceiptPage() {
 
     } catch (error: any) {
       console.error('Error during fraud analysis:', error);
-      // This catch block might be less likely to be hit if the flow handles its own errors and returns a valid object.
-      // However, it's kept as a safety net for unexpected issues in this page's logic.
       toast({
         title: 'Analysis Error',
         description: error.message || 'Could not analyze the receipt. Please try again.',
         variant: 'destructive',
       });
-      // Ensure explanation reflects local page error if flow itself didn't error
        if (receipt && !receipt.explanation.toLowerCase().includes("error occurred during ai fraud analysis")) {
          const errorReceipt = {
             ...receipt,
@@ -214,8 +204,8 @@ export default function VerifyReceiptPage() {
                   </p>
                  )}
                  {isExtractionEssentiallyFailed && editableItems.some(item => item.label === "Note") && (
-                    <div className="mb-3 p-2 border border-yellow-500 bg-yellow-50 rounded-md">
-                        <p className="text-sm text-yellow-700 font-medium">{editableItems.find(item => item.label === "Note")?.value}</p>
+                    <div className="mb-3 p-3 border border-yellow-500 bg-yellow-500/10 rounded-md">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">{editableItems.find(item => item.label === "Note")?.value}</p>
                     </div>
                  )}
 
@@ -259,4 +249,3 @@ export default function VerifyReceiptPage() {
     </Card>
   );
 }
-

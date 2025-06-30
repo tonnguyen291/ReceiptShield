@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -41,7 +42,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-5 lg:px-8 py-[5px]">
         {children}
       </main>
     </div>

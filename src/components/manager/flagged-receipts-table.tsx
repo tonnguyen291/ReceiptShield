@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 export function FlaggedReceiptsTable() {
   const [receipts, setReceipts] = useState<ProcessedReceipt[]>([]);
@@ -59,7 +60,7 @@ export function FlaggedReceiptsTable() {
   };
 
   const handleEdit = (receiptId: string) => {
-    router.push(`/employee/verify-receipt/${receiptId}`); // Using employee page for now
+    router.push(`/employee/verify-receipt/${receiptId}`);
   };
 
   const openActionDialog = (receipt: ProcessedReceipt, action: 'approve' | 'reject') => {
@@ -74,83 +75,75 @@ export function FlaggedReceiptsTable() {
       approveReceipt(actionReceipt.id);
       toast({ title: "Receipt Approved", description: `Receipt "${actionReceipt.fileName}" has been approved.` });
     } else if (dialogActionType === 'reject') {
-      rejectReceipt(actionReceipt.id); // Simple reject for now, can add notes later
+      rejectReceipt(actionReceipt.id);
       toast({ title: "Receipt Rejected", description: `Receipt "${actionReceipt.fileName}" has been rejected.`, variant: 'destructive' });
     }
-    loadReceipts(); // Refresh the list
+    loadReceipts();
     setActionReceipt(null);
     setDialogActionType(null);
   };
 
   return (
     <>
-      <Card className="shadow-lg">
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              Loading flagged receipts...
-            </div>
-          ) : receipts.length === 0 ? (
-             <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
-              <ShieldQuestion className="mx-auto h-12 w-12 text-primary mb-4" />
-              <p>No receipts are currently pending your review.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>File Name</TableHead>
-                  <TableHead>Uploaded By</TableHead>
-                  <TableHead className="hidden sm:table-cell">Date</TableHead>
-                  <TableHead>Fraud Probability</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {receipts.map((receipt) => (
-                  <TableRow key={receipt.id}>
-                    <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{receipt.fileName}</TableCell>
-                    <TableCell className="truncate max-w-[150px] sm:max-w-xs">{receipt.uploadedBy}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={receipt.fraudProbability * 100} className="w-20 h-2" 
-                          indicatorClassName={
-                            receipt.fraudProbability * 100 > 70 ? 'bg-destructive' :
-                            receipt.fraudProbability * 100 > 40 ? 'bg-yellow-500' : 'bg-green-500'
-                          }
-                        />
-                        <span className="text-xs">{Math.round(receipt.fraudProbability * 100)}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={receipt.status === 'pending_approval' ? 'secondary' : 'default'}>
-                        {receipt.status === 'pending_approval' ? 'Pending Review' : receipt.status || 'Flagged'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleViewDetails(receipt)} title="View Details">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                       <Button variant="ghost" size="sm" onClick={() => handleEdit(receipt.id)} title="Edit Receipt">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openActionDialog(receipt, 'approve')} title="Approve Receipt" className="text-green-600 hover:text-green-700">
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openActionDialog(receipt, 'reject')} title="Reject Receipt" className="text-red-600 hover:text-red-700">
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {isLoading ? (
+        <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          Loading flagged receipts...
+        </div>
+      ) : receipts.length === 0 ? (
+          <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+          <ShieldQuestion className="mx-auto h-12 w-12 text-primary mb-4" />
+          <p className="font-semibold">All clear!</p>
+          <p>No receipts are currently pending your review.</p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>File Name</TableHead>
+              <TableHead>Uploaded By</TableHead>
+              <TableHead className="hidden sm:table-cell">Date</TableHead>
+              <TableHead>Fraud Score</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {receipts.map((receipt) => (
+              <TableRow key={receipt.id}>
+                <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{receipt.fileName}</TableCell>
+                <TableCell className="truncate max-w-[150px] sm:max-w-xs">{receipt.uploadedBy}</TableCell>
+                <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Progress value={receipt.fraudProbability * 100} className="w-20 h-2" 
+                      indicatorClassName={
+                        receipt.fraudProbability * 100 > 70 ? 'bg-destructive' :
+                        receipt.fraudProbability * 100 > 40 ? 'bg-yellow-500' : 'bg-green-500'
+                      }
+                    />
+                    <span className="text-xs font-semibold">{Math.round(receipt.fraudProbability * 100)}%</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={receipt.status === 'pending_approval' ? 'secondary' : 'default'}>
+                    <ShieldQuestion className="w-3 h-3 mr-1.5" />
+                    Pending Review
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right space-x-1">
+                  <TooltipProvider>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewDetails(receipt)}><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>View Details</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(receipt.id)}><Pencil className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Edit Receipt</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => openActionDialog(receipt, 'approve')}><CheckCircle className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Approve</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700" onClick={() => openActionDialog(receipt, 'reject')}><XCircle className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Reject</p></TooltipContent></Tooltip>
+                  </TooltipProvider>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
       <ReceiptDetailsDialog
         receipt={selectedReceipt}
         isOpen={isDialogOpen}
@@ -165,7 +158,7 @@ export function FlaggedReceiptsTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to {dialogActionType} the receipt: <br />
-              <strong>{actionReceipt?.fileName}</strong> from {actionReceipt?.uploadedBy}?
+              <strong>{actionReceipt?.fileName}</strong> from {actionReceipt?.uploadedBy}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -182,4 +175,3 @@ export function FlaggedReceiptsTable() {
     </>
   );
 }
-

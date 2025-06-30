@@ -4,91 +4,71 @@
 
 @layer base {
   :root {
-    --background: 207 90% 94%; /* Light Blue */
-    --foreground: 231 48% 15%; /* Darker shade of Deep Blue for text */
+    --background: 222.2 84% 97.8%; /* Lighter Slate for background */
+    --foreground: 222.2 47.4% 11.2%; /* Dark Slate for text */
 
     --card: 0 0% 100%;
-    --card-foreground: 231 48% 15%;
+    --card-foreground: 222.2 47.4% 11.2%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 231 48% 15%;
+    --popover-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 231 48% 48%; /* Deep Blue */
-    --primary-foreground: 0 0% 98%; /* Light color for text on primary elements */
+    --primary: 221.2 83.2% 53.3%; /* A strong, professional blue */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 231 48% 88%; /* Lighter shade of Deep Blue */
-    --secondary-foreground: 231 48% 15%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 231 48% 95%; /* Very light shade of Deep Blue */
-    --muted-foreground: 231 48% 35%; /* Muted text color */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 260 45% 58%; /* Purple */
-    --accent-foreground: 0 0% 98%; /* Light color for text on accent elements */
+    --accent: 150 70% 45%; /* A pleasant green for accents */
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 231 48% 80%; /* Border color based on primary */
-    --input: 231 48% 85%; /* Input background */
-    --ring: 231 48% 48%; /* Ring color (focus) */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
     --radius: 0.5rem;
-
+    
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-
-    /* Sidebar colors - not used in this iteration but kept for consistency */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 231 48% 10%; /* Dark Deep Blue */
-    --foreground: 0 0% 98%; /* Light text */
+    --background: 222.2 47.4% 11.2%; /* Dark Slate */
+    --foreground: 210 40% 98%;
 
-    --card: 231 48% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 222.2 47.4% 14.2%; /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 231 48% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 231 48% 68%; /* Lighter Deep Blue for dark mode primary */
-    --primary-foreground: 231 48% 10%;
+    --primary: 217.2 91.2% 59.8%; /* Brighter blue for dark mode */
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 231 48% 20%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 231 48% 15%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 260 45% 68%; /* Lighter Purple for dark mode accent */
-    --accent-foreground: 260 45% 10%;
+    --accent: 150 70% 55%; /* Brighter green for dark mode */
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 231 48% 25%;
-    --input: 231 48% 20%;
-    --ring: 231 48% 68%;
-
-    /* Sidebar colors - dark theme */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -101,6 +81,6 @@
     font-family: var(--font-body);
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-headline);
+    @apply font-headline;
   }
 }

@@ -90,16 +90,16 @@ export default function ReceiptDetailsPage() {
       </CardHeader>
       
       <CardContent className="pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-x-8 gap-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {/* Receipt Image Column */}
-          <div className="md:col-span-3 space-y-4">
-            <h3 className="font-semibold text-xl text-primary">Receipt Image</h3>
-            <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted min-h-[400px] md:min-h-[calc(80vh-150px)]">
+          <div className="md:col-span-1 space-y-4">
+            <h3 className="font-semibold text-xl">Receipt Image</h3>
+            <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted h-[calc(80vh-150px)] min-h-[400px]">
               <Image
                 src={receipt.imageDataUri}
                 alt={`Receipt ${receipt.fileName}`}
-                layout="fill"
-                objectFit="contain"
+                fill
+                style={{objectFit: 'contain'}}
                 className="p-2"
                 data-ai-hint="receipt full"
               />
@@ -107,32 +107,9 @@ export default function ReceiptDetailsPage() {
           </div>
 
           {/* Details Sidebar Column */}
-          <div className="md:col-span-2 space-y-6 flex flex-col">
-            <div>
-              <h3 className="font-semibold text-xl text-primary mb-2 flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                Extracted Details
-              </h3>
-              <ScrollArea className="h-72 md:h-[calc(40vh-50px)] min-h-[200px] border rounded-md p-1 bg-muted/50 shadow-inner">
-                <div className="p-3 space-y-2">
-                {receipt.items && receipt.items.length > 0 ? (
-                  receipt.items.map((item) => (
-                    <div key={item.id} className="text-sm grid grid-cols-3 gap-1 even:bg-muted/30 p-1 rounded">
-                      <span className="font-medium col-span-1 truncate pr-1">{item.label}:</span>
-                      <span className="col-span-2 text-foreground/90 break-words">{item.value}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground p-2">No specific items were extracted or confirmed for this receipt.</p>
-                )}
-                </div>
-              </ScrollArea>
-            </div>
-            
-            <Separator />
-
-            <div className="flex-grow space-y-3"> {/* This div allows Review & Analysis to take remaining space if needed */}
-              <h3 className="font-semibold text-xl text-primary mb-2">Review & Analysis</h3>
+          <div className="md:col-span-1 space-y-6 flex flex-col">
+            <div className="flex-grow space-y-4">
+              <h3 className="font-semibold text-xl text-primary">Review & Analysis</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
                   <span className="text-sm font-medium">Overall Status:</span>
@@ -174,12 +151,35 @@ export default function ReceiptDetailsPage() {
                 )}
               </div>
             </div>
+
+            <Separator />
+            
+            <div>
+              <h3 className="font-semibold text-xl text-primary mb-2 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                Extracted Details
+              </h3>
+              <ScrollArea className="h-[calc(40vh-100px)] min-h-[200px] border rounded-md p-1 bg-muted/50 shadow-inner">
+                <div className="p-3 space-y-2">
+                {receipt.items && receipt.items.length > 0 ? (
+                  receipt.items.map((item) => (
+                    <div key={item.id} className="text-sm grid grid-cols-3 gap-1 even:bg-muted/30 p-1 rounded">
+                      <span className="font-medium col-span-1 truncate pr-1">{item.label}:</span>
+                      <span className="col-span-2 text-foreground/90 break-words">{item.value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground p-2">No specific items were extracted or confirmed for this receipt.</p>
+                )}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         </div>
       </CardContent>
       
        {receipt.status && (receipt.status === 'approved' || receipt.status === 'rejected') && (
-        <CardFooter className="pt-4 border-t mt-6"> {/* Added mt-6 for spacing if footer is present */}
+        <CardFooter className="pt-4 border-t mt-6">
             <p className="text-sm text-muted-foreground w-full text-center">
                 This receipt has been {receipt.status} by management.
             </p>
@@ -188,4 +188,3 @@ export default function ReceiptDetailsPage() {
     </Card>
   );
 }
-
