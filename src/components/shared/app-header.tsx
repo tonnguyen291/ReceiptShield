@@ -12,22 +12,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, LogOut } from 'lucide-react';
+import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, Bell, Bot } from 'lucide-react';
 import Link from 'next/link';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
-export default function AppHeader() {
+export default function AppHeader({ onChatbotClick }: { onChatbotClick?: () => void }) {
   const { user, logout } = useAuth();
 
   return (
-    <header className="bg-card border-b border-border shadow-sm">
+    <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between">
-        <Link href={user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'} className="flex items-center gap-2 text-xl font-headline font-semibold text-primary">
-          <Shield className="w-7 h-7" />
-          <span>Receipt Shield</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <SidebarTrigger className="md:hidden"/>
+          <Link href={user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'} className="flex items-center gap-2 text-xl font-headline font-semibold text-primary">
+            <Shield className="w-7 h-7" />
+            <span className="hidden sm:inline">Receipt Shield</span>
+          </Link>
+        </div>
         
         {user && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={onChatbotClick}>
+              <Bot className="h-5 w-5" />
+              <span className="sr-only">AI Assistant</span>
+            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Bell className="h-5 w-5" />
+              <span className="sr-only">Notifications</span>
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 p-1 pr-2 rounded-full">
@@ -41,8 +53,13 @@ export default function AppHeader() {
                       <UserCircle className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-foreground hidden md:inline font-medium">{user.name || user.email}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <div className="text-left hidden md:block">
+                    <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.role}
+                    </p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -50,7 +67,7 @@ export default function AppHeader() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user.email} ({user.role})
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -67,13 +84,13 @@ export default function AppHeader() {
                     <span>Change Password</span>
                   </DropdownMenuItem>
                 </Link>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuItem onClick={logout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-             <Button variant="outline" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
           </div>
         )}
       </div>
