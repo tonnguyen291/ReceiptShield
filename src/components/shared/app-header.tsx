@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -11,11 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react';
+import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AppHeader() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <header className="bg-card border-b border-border shadow-sm">
@@ -68,6 +69,11 @@ export default function AppHeader() {
                 </Link>
               </DropdownMenuContent>
             </DropdownMenu>
+
+             <Button variant="outline" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
         )}
       </div>

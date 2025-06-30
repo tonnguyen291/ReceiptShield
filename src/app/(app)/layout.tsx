@@ -5,11 +5,10 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import AppHeader from '@/components/shared/app-header';
-import { Button } from '@/components/ui/button';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -46,14 +45,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-5 lg:px-8 py-[5px]">
         {children}
       </main>
-      <footer className="py-4 border-t border-border bg-card">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8 flex justify-center">
-          <Button variant="outline" onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </footer>
     </div>
   );
 }
