@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, type ReactNode, useState } from 'react';
 import AppHeader from '@/components/shared/app-header';
-import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot } from 'lucide-react';
+import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot, FileWarning } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -128,6 +128,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SidebarMenuButton tooltip={{children: 'Export Data'}} disabled>
             <Download />
             <span>Export Data</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+          <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
+            <Bot />
+            <span>Help Center</span>
           </SidebarMenuButton>
       </SidebarMenuItem>
     </>
