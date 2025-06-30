@@ -73,9 +73,15 @@ export function LoginForm() {
         setError('You must select a supervisor.');
         return;
       }
-      createAccount(name, email, role, supervisorId);
+      const result = createAccount(name, email, role, supervisorId);
+      if (!result.success) {
+        setError(result.message);
+      }
     } else {
-      login(email, role);
+      const result = login(email, role);
+      if (!result.success) {
+        setError(result.message);
+      }
     }
   };
 
