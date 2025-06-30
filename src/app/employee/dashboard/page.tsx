@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/auth-context';
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 
 export default function EmployeeDashboardPage() {
+  const { logout } = useAuth();
   const router = useRouter();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
@@ -92,6 +94,11 @@ export default function EmployeeDashboardPage() {
           </Card>
         </div>
       </div>
+
+      <div className="mt-10 flex justify-center">
+        <Button variant="destructive" onClick={logout}>Sign Out</Button>
+      </div>
+
       
       <TooltipProvider>
         <Tooltip>

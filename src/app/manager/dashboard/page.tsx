@@ -16,8 +16,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function ManagerDashboardPage() {
+  const { logout } = useAuth();
   const { toast } = useToast();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
@@ -102,6 +104,9 @@ export default function ManagerDashboardPage() {
       </TooltipProvider>
       
       <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+      <div className="flex justify-center mt-8">
+        <Button variant="destructive" onClick={logout}>Sign Out</Button>
+      </div>
     </>
   );
 }
