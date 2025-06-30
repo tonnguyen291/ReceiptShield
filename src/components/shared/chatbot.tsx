@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllReceiptsForUser, getReceiptsForManager } from '@/lib/receipt-store';
+import { getAllReceipts, getAllReceiptsForUser, getReceiptsForManager } from '@/lib/receipt-store';
 import { runAssistant } from '@/ai/flows/assistant-flow';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, Loader2, Send, User, UploadCloud } from 'lucide-react';
+import type { ProcessedReceipt } from '@/types';
 
 interface ChatbotProps {
   isOpen: boolean;
@@ -31,16 +32,22 @@ interface Message {
 export function Chatbot({ isOpen, onClose }: ChatbotProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'init',
-      role: 'assistant',
-      content: `Hello ${user?.name || 'there'}! How can I help you with your expenses today? You can ask me about company policy or the status of your receipts.`,
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isResponding, setIsResponding] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+        setMessages([
+          {
+            id: 'init',
+            role: 'assistant',
+            content: `Hello ${user?.name || 'there'}! I am your AI assistant. How can I help you today?`,
+          },
+        ]);
+    }
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -61,9 +68,15 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     setIsResponding(true);
 
     try {
-      const relevantReceipts = user.role === 'manager' 
-        ? getReceiptsForManager(user.id) 
-        : getAllReceiptsForUser(user.email);
+      let relevantReceipts: ProcessedReceipt[];
+
+      if (user.role === 'admin') {
+        relevantReceipts = getAllReceipts();
+      } else if (user.role === 'manager') {
+        relevantReceipts = getReceiptsForManager(user.id);
+      } else {
+        relevantReceipts = getAllReceiptsForUser(user.email);
+      }
 
       const receiptHistoryString = JSON.stringify(
         relevantReceipts.map(r => ({ 
@@ -122,6 +135,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
           <SheetDescription>
             Ask questions about policy or check receipt status.
             {user?.role === 'manager' && ' As a manager, you can also ask for team-wide summaries.'}
+            {user?.role === 'admin' && ' As an admin, you can ask for organization-wide summaries.'}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="flex-grow p-6 pt-2" ref={scrollAreaRef}>

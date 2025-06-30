@@ -14,10 +14,10 @@ import {z} from 'genkit';
 const AssistantInputSchema = z.object({
   query: z.string().describe("The user's question or command."),
   userEmail: z.string().describe('The email address of the user making the request.'),
-  userRole: z.enum(['employee', 'manager']).describe('The role of the user.'),
+  userRole: z.enum(['employee', 'manager', 'admin']).describe('The role of the user.'),
   receiptHistory: z
     .string()
-    .describe('A JSON string representing receipt submission history. For employees, this is their own history. For managers, this is the history for all users.'),
+    .describe('A JSON string representing receipt submission history. For employees, this is their own history. For managers, this is for their team. For admins, this is for the entire organization.'),
 });
 export type AssistantInput = z.infer<typeof AssistantInputSchema>;
 
@@ -28,8 +28,12 @@ const AssistantOutputSchema = z.object({
 export type AssistantOutput = z.infer<typeof AssistantOutputSchema>;
 
 export async function runAssistant(input: AssistantInput): Promise<AssistantOutput> {
-  // Add isManager flag for Handlebars template
-  const extendedInput = { ...input, isManager: input.userRole === 'manager' };
+  // Add flags for Handlebars template
+  const extendedInput = { 
+      ...input, 
+      isManager: input.userRole === 'manager',
+      isAdmin: input.userRole === 'admin' 
+  };
   return assistantFlow(extendedInput);
 }
 
@@ -103,7 +107,7 @@ Receipt Shield maintains a strict policy that expenses in any category that coul
 •	First class tickets or upgrades.
 •	When lodging accommodations have been arranged by Receipt Shield and the individual elects to stay elsewhere, reimbursement is made at the amount no higher than the rate negotiated by Receipt Shield. Reimbursement shall not be made for transportation between the alternate lodging and the meeting site.
 •	Limousine travel.
-•	Movies, liquor or bar costs.
+	Movies, liquor or bar costs.
 •	Membership dues at any country club, private club, athletic club, golf club, tennis club or similar recreational organization.
 •	Participation in or attendance at golf, tennis or sporting events, without the advance approval of the Chair of the Board or the Chair’s designee.
 •	Purchase of golf clubs or any other sporting equipment.
@@ -121,6 +125,7 @@ This policy will be reviewed at least every two years and recommendations for am
 
 const AssistantPromptInputSchema = AssistantInputSchema.extend({
     isManager: z.boolean(),
+    isAdmin: z.boolean(),
 });
 
 const prompt = ai.definePrompt({
@@ -134,7 +139,10 @@ Your capabilities are:
 1.  **Answering questions about company expense policy.**
 2.  **Checking the status of submitted receipts.**
 {{#if isManager}}
-3.  **Providing summaries of team-wide expense data (e.g., total number of pending receipts, approved totals). You can perform calculations on the provided history data to answer questions.**
+3.  **Providing summaries of your team-wide expense data (e.g., total number of pending receipts). You can perform calculations on the provided history data to answer questions.**
+{{/if}}
+{{#if isAdmin}}
+3.  **Providing summaries of organization-wide expense data. You can perform calculations on the provided history data to answer questions.**
 {{/if}}
 4.  **Guiding users on how to use the application.**
 
@@ -145,7 +153,9 @@ ${companyPolicy}
 
 Here is the receipt submission history as a JSON string.
 - For an **employee**, this contains only their own receipts.
-- For a **manager**, this contains all receipts from all users. You can see who submitted each receipt in the 'uploadedBy' field.
+- For a **manager**, this contains all receipts from their direct reports.
+- For an **admin**, this contains all receipts from all users in the organization. 
+You can see who submitted each receipt in the 'uploadedBy' field.
 <history>
 {{{receiptHistory}}}
 </history>
@@ -159,7 +169,10 @@ Here is the receipt submission history as a JSON string.
 Answer the user's query based on their role, the policy, and their history, following the style instructions above.
 
 {{#if isManager}}
-**Manager-specific instructions:** When a manager asks for a summary (e.g., "how many receipts are pending?"), analyze the full history JSON provided and give them a direct number or summary.
+**Manager-specific instructions:** When a manager asks for a summary (e.g., "how many receipts are pending?"), analyze the provided team history JSON and give them a direct number or summary.
+{{/if}}
+{{#if isAdmin}}
+**Admin-specific instructions:** When an admin asks for a summary (e.g., "how many total receipts are flagged across the company?"), analyze the full organizational history JSON provided and give them a direct number or summary.
 {{/if}}
 
 If the user's query is about submitting an expense, uploading a receipt, or starting a new expense report, set the 'suggestUpload' field to true in your JSON response, in addition to providing a helpful text response.

@@ -5,18 +5,26 @@ import type { User } from '@/types';
 
 const USERS_DB_KEY = 'receiptShieldUsersDB';
 
-// Seed with a default manager if no users exist
+// Seed with default users if none exist
 function initializeUsersDB(): void {
   if (typeof window === 'undefined') return;
   const storedUsers = localStorage.getItem(USERS_DB_KEY);
   if (!storedUsers) {
-    const defaultManager: User = {
-      id: 'manager-001',
-      name: 'Bob Manager',
-      email: 'manager@example.com',
-      role: 'manager',
-    };
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify([defaultManager]));
+    const defaultUsers: User[] = [
+        {
+          id: 'admin-001',
+          name: 'Alex Admin',
+          email: 'admin@corp.com',
+          role: 'admin',
+        },
+        {
+          id: 'manager-001',
+          name: 'Bob Manager',
+          email: 'manager@example.com',
+          role: 'manager',
+        }
+    ];
+    localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
   }
 }
 

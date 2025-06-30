@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, type ReactNode, useState } from 'react';
 import AppHeader from '@/components/shared/app-header';
-import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot, FileWarning } from 'lucide-react';
+import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot, FileWarning, Briefcase, ListCollapse } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -34,11 +34,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
     const isEmployeeRoute = pathname.startsWith('/employee');
     const isManagerRoute = pathname.startsWith('/manager');
+    const isAdminRoute = pathname.startsWith('/admin');
+    const isSharedRoute = pathname.startsWith('/profile');
 
-    if (user.role === 'employee' && !isEmployeeRoute && pathname !== '/profile' && pathname !== '/profile/change-password') {
+    if (user.role === 'employee' && !isEmployeeRoute && !isSharedRoute) {
         router.replace('/employee/dashboard');
-    } else if (user.role === 'manager' && !isManagerRoute && pathname !== '/profile' && pathname !== '/profile/change-password') {
+    } else if (user.role === 'manager' && !isManagerRoute && !isSharedRoute) {
         router.replace('/manager/dashboard');
+    } else if (user.role === 'admin' && !isAdminRoute && !isSharedRoute) {
+        router.replace('/admin/dashboard');
     }
 
   }, [user, isLoading, router, pathname]);
@@ -139,6 +143,66 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </>
   );
 
+  const adminNav = (
+    <>
+        <SidebarMenuItem>
+            <Link href="/admin/dashboard" passHref>
+            <SidebarMenuButton isActive={pathname === '/admin/dashboard'} tooltip={{children: 'Overview Dashboard'}}>
+                <LayoutDashboard />
+                <span>Overview</span>
+            </SidebarMenuButton>
+            </Link>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <Link href="/admin/dashboard" passHref>
+            <SidebarMenuButton tooltip={{children: 'All Users'}}>
+                <Users />
+                <span>All Users</span>
+            </SidebarMenuButton>
+            </Link>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <Link href="/admin/dashboard" passHref>
+            <SidebarMenuButton tooltip={{children: 'Receipts Overview'}}>
+                <ReceiptText />
+                <span>All Receipts</span>
+            </SidebarMenuButton>
+            </Link>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: 'Fraud Detection Logs'}} disabled>
+                <FileWarning />
+                <span>Fraud Logs</span>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <SidebarMenuButton tooltip={{children: 'Approvals & Audits'}} disabled>
+                <ShieldAlert />
+                <span>Audits</span>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
+                <Bot />
+                <span>Help Center</span>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+    </>
+  );
+
+  const renderNav = () => {
+    switch(user?.role) {
+        case 'admin':
+            return adminNav;
+        case 'manager':
+            return managerNav;
+        case 'employee':
+            return employeeNav;
+        default:
+            return null;
+    }
+  }
+
   const sharedNavBottom = (
     <>
         <SidebarMenuItem>
@@ -164,7 +228,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar>
         <SidebarMenu className="flex flex-col h-full p-2">
             <div className="flex-grow">
-                {user.role === 'employee' ? employeeNav : managerNav}
+                {renderNav()}
             </div>
             <SidebarFooter>
                 {sharedNavBottom}

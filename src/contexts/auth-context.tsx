@@ -54,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (foundUser && foundUser.role === role) {
       setUser(foundUser);
-      if (role === 'manager') {
+      if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (role === 'manager') {
         router.push('/manager/dashboard');
       } else {
         router.push('/employee/dashboard');
@@ -84,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addUserToDB(newUser);
     setUser(newUser);
     
-    if (role === 'manager') {
+    if (role === 'admin') {
+      router.push('/admin/dashboard');
+    } else if (role === 'manager') {
       router.push('/manager/dashboard');
     } else {
       router.push('/employee/dashboard');

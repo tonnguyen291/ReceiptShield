@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ProcessedReceipt } from '@/types';
+import type { ProcessedReceipt, User } from '@/types';
 import { getFlaggedReceiptsForManager, approveReceipt, rejectReceipt } from '@/lib/receipt-store';
 import {
   Table,
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
+import { getUsers } from '@/lib/user-store';
 
 export function FlaggedReceiptsTable() {
   const { user } = useAuth();
@@ -46,12 +47,13 @@ export function FlaggedReceiptsTable() {
 
   const loadReceipts = () => {
     if (user?.id) {
-      setReceipts(getFlaggedReceiptsForManager(user.id));
+        setReceipts(getFlaggedReceiptsForManager(user.id));
     }
     setIsLoading(false);
   };
-
+  
   useEffect(() => {
+    setIsLoading(true);
     loadReceipts();
     const handleStorageChange = () => loadReceipts();
     window.addEventListener('storage', handleStorageChange);
