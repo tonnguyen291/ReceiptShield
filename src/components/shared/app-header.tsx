@@ -13,20 +13,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogOut, UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 export default function AppHeader() {
   const { user, logout } = useAuth();
 
   return (
     <header className="bg-card border-b border-border shadow-sm">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between">
         <Link href={user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'} className="flex items-center gap-2 text-xl font-headline font-semibold text-primary">
           <Shield className="w-7 h-7" />
           <span>Receipt Shield</span>
         </Link>
         
         {user && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 p-1 pr-2 rounded-full">
@@ -69,11 +70,11 @@ export default function AppHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Separator orientation="vertical" className="h-8 mx-2" />
+            <Separator orientation="vertical" className="h-8" />
 
             <Button variant="outline" size="sm" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+              <span>Sign Out</span>
             </Button>
           </div>
         )}
