@@ -36,7 +36,7 @@ const FlagFraudulentReceiptOutputSchema = z.object({
     .min(0)
     .max(1)
     .describe('The probability (0 to 1) that the receipt is fraudulent.'),
-  explanation: z.string().describe('Explanation of why the receipt was flagged.'),
+  explanation: z.string().describe('Explanation of why the receipt was flagged, structured with "Initial Check:" and "Detailed Analysis:" sections.'),
 });
 
 export type FlagFraudulentReceiptOutput = z.infer<typeof FlagFraudulentReceiptOutputSchema>;
@@ -51,20 +51,30 @@ const prompt = ai.definePrompt({
   name: 'flagFraudulentReceiptPrompt',
   input: {schema: FlagFraudulentReceiptInputSchema},
   output: {schema: FlagFraudulentReceiptOutputSchema},
-  prompt: `You are an AI expert in fraud detection.
+  prompt: `You are an AI expert in fraud detection for expense receipts. Your task is to perform a two-step analysis.
 
-You are provided with data extracted from an expense receipt, and transaction history, if available.
+**Step 1: Initial Visual and Data Integrity Check.**
+First, perform a quick assessment based on the provided image and data. Look for obvious red flags like:
+- Does the image look like a real receipt?
+- Are there clear signs of digital manipulation or editing?
+- Is the data provided in 'receiptData' grossly inconsistent with a typical receipt?
+- Is critical information (vendor, date, total) missing or nonsensical?
 
-Analyze the data and determine if the receipt is potentially fraudulent.
+**Step 2: Detailed Fraud Analysis.**
+Second, perform a deeper analysis considering common fraud schemes. Based on ALL the information, analyze for more subtle issues:
+- Does the amount seem unusually high for the items listed?
+- Could this be a duplicate submission? (Based on the data provided).
+- Are there any other anomalies that suggest this could be a personal expense disguised as a business one, an altered receipt, or other form of fraud?
+
+**Final Output:**
+After both steps, combine your findings. Respond with a JSON object that contains:
+- A "fraudulent" boolean field. If either Step 1 or Step 2 indicates high suspicion, this should be true.
+- A "fraudProbability" number field representing the overall probability (0 to 1) that the receipt is fraudulent.
+- An "explanation" string field. Your explanation MUST be structured with "Initial Check:" and "Detailed Analysis:" sections, summarizing your findings from both steps. This gives the human reviewer full context.
 
 Receipt Data: {{{receiptData}}}
 Transaction History: {{{transactionHistory}}}
 Receipt Image: {{media url=receiptImage}}
-
-Respond with a JSON object that contains:
-- A "fraudulent" boolean field (true if fraudulent, false otherwise).
-- A "fraudProbability" number field representing the probability (0 to 1) that the receipt is fraudulent.
-- An "explanation" string field explaining the reasoning behind the fraud determination.
 `,
 });
 
@@ -83,7 +93,7 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
         return {
           fraudulent: true,
           fraudProbability: 0.85,
-          explanation: "AI analysis failed to produce structured output. Receipt flagged for caution.",
+          explanation: "Initial Check: AI analysis failed to produce structured output.\nDetailed Analysis: Receipt flagged for caution due to analysis failure. Please review manually.",
         };
       }
 
@@ -99,7 +109,7 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
         return {
           fraudulent: true,
           fraudProbability: 0.9,
-          explanation: "AI fraud analysis is temporarily unavailable due to high demand on the AI service. The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
+          explanation: "Initial Check: AI fraud analysis is temporarily unavailable due to high demand on the AI service.\nDetailed Analysis: The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
         };
       }
       console.error('Error in flagFraudulentReceiptFlow:', error);
@@ -107,9 +117,8 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
       return {
         fraudulent: true,
         fraudProbability: 0.8,
-        explanation: "An unexpected error occurred during AI fraud analysis. Receipt flagged for caution. Please try again or review manually.",
+        explanation: "Initial Check: An unexpected error occurred during AI fraud analysis.\nDetailed Analysis: Receipt flagged for caution. Please try again or review manually.",
       };
     }
   }
 );
-
