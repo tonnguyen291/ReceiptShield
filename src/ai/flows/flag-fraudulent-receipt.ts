@@ -3,14 +3,13 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { runSimpleMlFraudCheck } from '@/services/ml-fraud-detection';
 
 /**
- * @fileOverview Flow for flagging potentially fraudulent expense receipts using a multi-layered approach.
+ * @fileOverview A flow for flagging potentially fraudulent expense receipts.
  *
- * - flagFraudulentReceipt - Function to analyze receipt data and flag potential fraud.
- * - FlagFraudulentReceiptInput - Input type for the flagFraudulentReceipt function.
- * - FlagFraudulentReceiptOutput - Output type for the flagFraudulentReceipt function.
+ * - flagFraudulentReceipt - A function that handles the receipt fraud analysis.
+ * - FlagFraudulentReceiptInput - The input type for the flagFraudulentReceipt function.
+ * - FlagFraudulentReceiptOutput - The return type for the flagFraudulentReceipt function.
  */
 
 const ReceiptItemSchema = z.object({
@@ -40,8 +39,8 @@ const FlagFraudulentReceiptOutputSchema = z.object({
     .number()
     .min(0)
     .max(1)
-    .describe('The combined probability (0 to 1) that the receipt is fraudulent.'),
-  explanation: z.string().describe('Explanation of why the receipt was flagged, structured with "ML Model Check:", "Initial Check:", and "Detailed Analysis:" sections.'),
+    .describe('The probability (0 to 1) that the receipt is fraudulent.'),
+  explanation: z.string().describe('An explanation of why the receipt was flagged.'),
 });
 
 export type FlagFraudulentReceiptOutput = z.infer<typeof FlagFraudulentReceiptOutputSchema>;
@@ -52,25 +51,13 @@ export async function flagFraudulentReceipt(
   return flagFraudulentReceiptFlow(input);
 }
 
-const PromptInputSchema = FlagFraudulentReceiptInputSchema.extend({
-  mlCheckResult: z.string().describe("The result from a preliminary ML model check."),
-});
-
-
 const prompt = ai.definePrompt({
   name: 'flagFraudulentReceiptPrompt',
-  input: {schema: PromptInputSchema},
+  input: {schema: FlagFraudulentReceiptInputSchema},
   output: {schema: FlagFraudulentReceiptOutputSchema},
-  prompt: `You are an AI expert in fraud detection for expense receipts. Your task is to perform a three-step analysis, using a preliminary check from another model as a starting point.
+  prompt: `You are an AI expert in fraud detection for expense receipts. Your task is to perform a two-step analysis.
 
-**Step 0: Preliminary ML Model Check.**
-An initial check was run using a standard ML model. Here are its findings:
-<ml_findings>
-{{{mlCheckResult}}}
-</ml_findings>
-Use this as a starting point. It may be correct or it may have missed something. Your job is to provide a more detailed, contextual analysis.
-
-**Step 1: Visual and Data Integrity Check.**
+**Step 1: Initial Visual and Data Integrity Check.**
 First, perform a quick assessment based on the provided image and data. Look for obvious red flags like:
 - Does the image look like a real receipt?
 - Are there clear signs of digital manipulation or editing?
@@ -84,10 +71,10 @@ Second, perform a deeper analysis considering common fraud schemes. Based on ALL
 - Are there any other anomalies that suggest this could be a personal expense disguised as a business one, an altered receipt, or other form of fraud?
 
 **Final Output:**
-After all steps, combine your findings. Respond with a JSON object that contains:
-- A "fraudulent" boolean field. If any step indicates high suspicion, this should be true.
-- A "fraudProbability" number field representing the overall probability (0 to 1) from YOUR analysis that the receipt is fraudulent.
-- An "explanation" string field. Your explanation MUST be structured with "ML Model Check:", "Initial Check:", and "Detailed Analysis:" sections, summarizing your findings from all steps. This gives the human reviewer full context.
+After both steps, combine your findings. Respond with a JSON object that contains:
+- A "fraudulent" boolean field. If either step indicates high suspicion, this should be true.
+- A "fraudProbability" number field representing the overall probability (0 to 1) that the receipt is fraudulent.
+- An "explanation" string field. Briefly summarize your findings from both steps. This gives the human reviewer context.
 
 Receipt Items:
 {{#each items}}
@@ -106,47 +93,25 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // Step 1: Run the simulated ML model check
-      const mlResult = await runSimpleMlFraudCheck({ items: input.items });
-      const mlResultString = `Risk Score: ${mlResult.preliminaryRiskScore * 100}%. Reason: ${mlResult.reason}`;
-
-      // Step 2: Call the GenAI prompt with the ML result as additional context
-      const promptInput = {
-        ...input,
-        mlCheckResult: mlResultString,
-      };
-
-      const {output} = await prompt(promptInput);
+      const {output} = await prompt(input);
 
       if (!output) {
-        console.warn('flagFraudulentReceiptFlow: AI model returned null output. Using fallback.');
+        // Fallback for when the model fails to return structured data
         return {
           fraudulent: true,
           fraudProbability: 0.85,
-          explanation: "ML Model Check: Preliminary check was run.\nInitial Check: AI analysis failed to produce structured output.\nDetailed Analysis: Receipt flagged for caution due to analysis failure. Please review manually.",
+          explanation: "AI analysis failed to produce structured output. Receipt flagged for caution. Please review manually.",
         };
       }
-      
-      // Combine ML risk with AI risk. We weight the more nuanced AI's opinion higher.
-      const finalProbability = (mlResult.preliminaryRiskScore * 0.3) + (output.fraudProbability * 0.7);
-      
-      const finalExplanation = output.explanation.includes("ML Model Check:") 
-        ? output.explanation 
-        : `ML Model Check: ${mlResultString}\n${output.explanation}`;
-
-      return {
-        ...output,
-        fraudProbability: Math.min(1, parseFloat(finalProbability.toFixed(2))), // Cap at 1 and format
-        explanation: finalExplanation,
-      };
-
+      return output;
     } catch (error: any) {
-      if (error.message && (error.message.includes('503 Service Unavailable') || error.message.includes('model is overloaded') || error.message.includes('The model is overloaded'))) {
+      // Handle potential API errors (e.g., service unavailable, model overloaded)
+      if (error.message && (error.message.includes('503 Service Unavailable') || error.message.includes('model is overloaded'))) {
         console.warn('flagFraudulentReceiptFlow: Model is overloaded. Returning fallback response.');
         return {
           fraudulent: true,
           fraudProbability: 0.9,
-          explanation: "ML Model Check: Preliminary check was run.\nInitial Check: AI fraud analysis is temporarily unavailable due to high demand on the AI service.\nDetailed Analysis: The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
+          explanation: "AI fraud analysis is temporarily unavailable due to high demand on the AI service. The receipt has been flagged for caution. Please review manually or try re-analyzing later.",
         };
       }
       console.error('Error in flagFraudulentReceiptFlow:', error);
@@ -154,7 +119,7 @@ const flagFraudulentReceiptFlow = ai.defineFlow(
       return {
         fraudulent: true,
         fraudProbability: 0.8,
-        explanation: "ML Model Check: Preliminary check was run.\nInitial Check: An unexpected error occurred during AI fraud analysis.\nDetailed Analysis: Receipt flagged for caution. Please try again or review manually.",
+        explanation: "An unexpected error occurred during AI fraud analysis. Receipt flagged for caution. Please try again or review manually.",
       };
     }
   }
