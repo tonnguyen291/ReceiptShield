@@ -71,6 +71,10 @@ export function rejectReceipt(receiptId: string, notes?: string): void {
   setStoredReceipts(updatedReceipts);
 }
 
+export function getAllReceipts(): ProcessedReceipt[] {
+    return getStoredReceipts();
+}
+
 export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {
     const receipts = getStoredReceipts();
     return receipts.filter(receipt => receipt.uploadedBy === userEmail).sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
@@ -80,4 +84,3 @@ export function getReceiptById(id: string): ProcessedReceipt | undefined {
   const receipts = getStoredReceipts();
   return receipts.find(receipt => receipt.id === id);
 }
-

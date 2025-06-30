@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllReceiptsForUser } from '@/lib/receipt-store';
+import { getAllReceiptsForUser, getAllReceipts } from '@/lib/receipt-store';
 import { runAssistant } from '@/ai/flows/assistant-flow';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -60,14 +60,21 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     setIsResponding(true);
 
     try {
-      const userReceipts = getAllReceiptsForUser(user.email);
+      const allReceipts = user?.role === 'manager' ? getAllReceipts() : getAllReceiptsForUser(user.email);
       const receiptHistoryString = JSON.stringify(
-        userReceipts.map(r => ({ fileName: r.fileName, status: r.status || (r.isFraudulent ? 'flagged' : 'clear'), uploaded_at: r.uploadedAt }))
+        allReceipts.map(r => ({ 
+            fileName: r.fileName, 
+            status: r.status || (r.isFraudulent ? 'flagged' : 'clear'), 
+            uploaded_at: r.uploadedAt,
+            // For managers, add who uploaded it
+            uploadedBy: user?.role === 'manager' ? r.uploadedBy : undefined 
+        }))
       );
 
       const result = await runAssistant({
         query: input,
         userEmail: user.email,
+        userRole: user.role,
         receiptHistory: receiptHistoryString,
       });
       
@@ -77,7 +84,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         content: result.response,
       };
 
-      if (result.suggestUpload) {
+      if (result.suggestUpload && user.role === 'employee') {
         assistantMessage.action = {
           label: 'Upload a Receipt',
           onClick: () => {
@@ -111,6 +118,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
           </SheetTitle>
           <SheetDescription>
             Ask questions about policy or check receipt status.
+            {user?.role === 'manager' && ' As a manager, you can also ask for team-wide summaries.'}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="flex-grow p-6 pt-2" ref={scrollAreaRef}>
@@ -129,7 +137,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }} />
                   {message.action && (
                     <Button
                       onClick={message.action.onClick}

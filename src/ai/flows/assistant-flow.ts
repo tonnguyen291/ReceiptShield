@@ -12,11 +12,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AssistantInputSchema = z.object({
-  query: z.string().describe('The user\'s question or command.'),
+  query: z.string().describe("The user's question or command."),
   userEmail: z.string().describe('The email address of the user making the request.'),
+  userRole: z.enum(['employee', 'manager']).describe('The role of the user.'),
   receiptHistory: z
     .string()
-    .describe('A JSON string representing the user\'s receipt submission history.'),
+    .describe('A JSON string representing receipt submission history. For employees, this is their own history. For managers, this is the history for all users.'),
 });
 export type AssistantInput = z.infer<typeof AssistantInputSchema>;
 
@@ -27,7 +28,9 @@ const AssistantOutputSchema = z.object({
 export type AssistantOutput = z.infer<typeof AssistantOutputSchema>;
 
 export async function runAssistant(input: AssistantInput): Promise<AssistantOutput> {
-  return assistantFlow(input);
+  // Add isManager flag for Handlebars template
+  const extendedInput = { ...input, isManager: input.userRole === 'manager' };
+  return assistantFlow(extendedInput);
 }
 
 const companyPolicy = `
@@ -116,23 +119,33 @@ Review of Policy
 This policy will be reviewed at least every two years and recommendations for amendments will be approved by the board.
 `;
 
+const AssistantPromptInputSchema = AssistantInputSchema.extend({
+    isManager: z.boolean(),
+});
+
 const prompt = ai.definePrompt({
   name: 'assistantPrompt',
-  input: {schema: AssistantInputSchema},
+  input: {schema: AssistantPromptInputSchema},
   output: {schema: AssistantOutputSchema},
-  prompt: `You are "Receipt Shield Assistant," a helpful AI assistant for an expense management application. Your user is {{userEmail}}.
+  prompt: `You are "Receipt Shield Assistant," a helpful AI assistant for an expense management application.
+Your user is {{userEmail}}, and their role is **{{userRole}}**.
 
 Your capabilities are:
 1.  **Answering questions about company expense policy.**
-2.  **Checking the status of the user's submitted receipts.**
-3.  **Guiding users on how to use the application.**
+2.  **Checking the status of submitted receipts.**
+{{#if isManager}}
+3.  **Providing summaries of team-wide expense data (e.g., total number of pending receipts, approved totals). You can perform calculations on the provided history data to answer questions.**
+{{/if}}
+4.  **Guiding users on how to use the application.**
 
 Here is the company expense policy:
 <policy>
 ${companyPolicy}
 </policy>
 
-Here is the user's receipt submission history as a JSON string:
+Here is the receipt submission history as a JSON string.
+- For an **employee**, this contains only their own receipts.
+- For a **manager**, this contains all receipts from all users. You can see who submitted each receipt in the 'uploadedBy' field.
 <history>
 {{{receiptHistory}}}
 </history>
@@ -141,9 +154,13 @@ Here is the user's receipt submission history as a JSON string:
 - Be **direct and clear**. Get straight to the point.
 - Use **bold markdown** (\`**text**\`) to highlight key terms, amounts, and actions.
 - Use bullet points (e.g., * or -) to break down information into easy-to-scan lists.
-- Use relevant emojis to make your answers more visual and engaging (e.g., ✅ for approvals, ❌ for rejections, 💰 for money, 📄 for documents).
+- Use relevant emojis to make your answers more visual and engaging (e.g., ✅ for approvals, ❌ for rejections, 💰 for money, 📄 for documents, 📊 for summaries).
 
-Answer the user's query based on the policy and their history, following the style instructions above.
+Answer the user's query based on their role, the policy, and their history, following the style instructions above.
+
+{{#if isManager}}
+**Manager-specific instructions:** When a manager asks for a summary (e.g., "how many receipts are pending?"), analyze the full history JSON provided and give them a direct number or summary.
+{{/if}}
 
 If the user's query is about submitting an expense, uploading a receipt, or starting a new expense report, set the 'suggestUpload' field to true in your JSON response, in addition to providing a helpful text response.
 If the user asks a question outside of these topics, politely state that you can only help with expense-related queries.
@@ -155,7 +172,7 @@ User Query: "{{query}}"
 const assistantFlow = ai.defineFlow(
   {
     name: 'assistantFlow',
-    inputSchema: AssistantInputSchema,
+    inputSchema: AssistantPromptInputSchema,
     outputSchema: AssistantOutputSchema,
   },
   async (input) => {
