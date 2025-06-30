@@ -26,21 +26,21 @@ export default function AppHeader() {
         </Link>
         
         {user && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
+                <Button variant="ghost" className="flex items-center gap-2 p-1 pr-2 rounded-full">
+                  <Avatar className="h-9 w-9">
                     <AvatarImage 
                       src={`https://placehold.co/40x40.png?text=${user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}`} 
                       alt={user.name || user.email}
                       data-ai-hint="abstract letter" 
                     />
                     <AvatarFallback>
-                      <UserCircle className="h-5 w-5" />
+                      <UserCircle className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-foreground hidden md:inline">{user.name || user.email}</span>
+                  <span className="text-sm text-foreground hidden md:inline font-medium">{user.name || user.email}</span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
@@ -68,6 +68,8 @@ export default function AppHeader() {
                 </Link>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Separator orientation="vertical" className="h-8 mx-2" />
 
             <Button variant="outline" size="sm" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />

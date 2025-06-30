@@ -6,7 +6,7 @@ import { SubmissionHistoryTable } from '@/components/employee/submission-history
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, History, BrainCircuit, Bell, UserCog, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Chatbot } from '@/components/shared/chatbot';
 import {
   Tooltip,
@@ -27,41 +27,63 @@ export default function EmployeeDashboardPage() {
     <>
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h1 className="text-3xl font-headline font-semibold">Employee Dashboard</h1>
-          <Button onClick={handleUploadClick} size="lg" className="w-full md:w-auto">
+          <div>
+            <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
+            <p className="text-muted-foreground">Manage your expense receipts and submissions.</p>
+          </div>
+          <Button onClick={handleUploadClick} size="lg" className="w-full md:w-auto shadow-sm">
             <PlusCircle className="mr-2 h-5 w-5" />
             Upload New Receipt
           </Button>
         </div>
         
-        <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="w-6 h-6 text-primary" />
-                Manage My Receipts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SubmissionHistoryTable />
-            </CardContent>
-          </Card>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="shadow-md lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="shadow-md">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BrainCircuit className="w-6 h-6 text-primary" />
-                  Understanding AI Feedback
+                <CardTitle className="flex items-center gap-3">
+                  <History className="w-7 h-7 text-primary" />
+                  <span className="text-2xl font-semibold">My Submission History</span>
                 </CardTitle>
+                <CardDescription>View, edit, or track the status of your submitted receipts below.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Our AI analyzes receipts for fraud probability. You can view detailed explanations and scores by clicking the 'View' icon on any receipt in your history table. This feedback helps you understand why a receipt might be flagged for manager review.
-                </p>
+                <SubmissionHistoryTable />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCog className="w-6 h-6 text-primary" />
+                  Account Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                  <p className="text-muted-foreground text-sm">Manage your personal information and password.</p>
+                  <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
+                  <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
               </CardContent>
             </Card>
 
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BrainCircuit className="w-6 h-6 text-primary" />
+                  AI Feedback
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Our AI helps by analyzing receipts for you. Click the 'View' icon on any receipt to see its detailed analysis and fraud probability score.
+                </p>
+              </CardContent>
+            </Card>
+            
             <Card className="shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -70,23 +92,7 @@ export default function EmployeeDashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">No new notifications. Alerts for approvals and rejections will appear here. (Future Feature)</p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-md lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCog className="w-6 h-6 text-primary" />
-                  Profile & Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <p className="text-muted-foreground">Manage your personal information, preferences, and change your password.</p>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
-                  <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
-                </div>
+                <p className="text-sm text-muted-foreground">No new notifications. Alerts will appear here in the future.</p>
               </CardContent>
             </Card>
           </div>
@@ -104,7 +110,7 @@ export default function EmployeeDashboardPage() {
               <MessageSquare className="h-8 w-8" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Chat with AI Assistant</p>
           </TooltipContent>
         </Tooltip>

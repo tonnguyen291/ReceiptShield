@@ -7,7 +7,7 @@ import { ManagerOverviewCharts } from '@/components/manager/manager-overview-cha
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Bell, Users, Settings, FileText, ShieldAlert, TrendingUp, MessageSquare } from 'lucide-react';
+import { Bell, Users, Settings, FileText, ShieldAlert, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Chatbot } from '@/components/shared/chatbot';
 import {
@@ -31,23 +31,20 @@ export default function ManagerDashboardPage() {
   return (
     <>
       <div className="space-y-8">
-        <h1 className="text-3xl font-headline font-semibold">Manager Dashboard</h1>
-
         <div>
-          <h2 className="text-2xl font-headline font-semibold mb-6 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-primary" /> Dashboard Overview
-          </h2>
-          <ManagerOverviewCharts />
+          <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
+          <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
 
-        <Separator />
+        <ManagerOverviewCharts />
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldAlert className="w-6 h-6 text-primary" /> Review AI-Flagged Receipts
+            <CardTitle className="flex items-center gap-3">
+              <ShieldAlert className="w-7 h-7 text-primary" />
+              <span className="text-2xl font-semibold">Review Queue</span>
             </CardTitle>
-            <CardDescription>These receipts were flagged by the AI for potential issues. Please review them carefully.</CardDescription>
+            <CardDescription>These receipts were flagged by AI for potential issues. Please review them carefully.</CardDescription>
           </CardHeader>
           <CardContent>
             <FlaggedReceiptsTable />
@@ -56,39 +53,31 @@ export default function ManagerDashboardPage() {
 
         <Separator />
         
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="shadow-md">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Manage Users</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Users className="w-6 h-6 text-primary" /> Team Management</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <p className="text-muted-foreground mb-4">Add, remove, or edit employee accounts. (Future Feature)</p>
+                <p className="text-muted-foreground mb-4 text-sm">Add, remove, or edit employee accounts. (Future Feature)</p>
                 <Button variant="outline" disabled>Manage Users</Button>
                 </CardContent>
             </Card>
             <Card className="shadow-md">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><FileText className="w-6 h-6 text-primary" /> Data Reports</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><FileText className="w-6 h-6 text-primary" /> Data & Reports</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <p className="text-muted-foreground mb-4">Generate and download expense reports.</p>
+                <p className="text-muted-foreground mb-4 text-sm">Generate and download expense reports.</p>
                 <Button variant="outline" onClick={handleGenerateReportClick}>Generate Report</Button>
                 </CardContent>
             </Card>
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Bell className="w-6 h-6 text-primary" /> Notifications</CardTitle>
-                </CardHeader>
-                <CardContent>
-                <p className="text-muted-foreground">System-wide alerts will appear here. (Future Feature)</p>
-                </CardContent>
-            </Card>
-            <Card className="shadow-md">
+             <Card className="shadow-md">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Settings className="w-6 h-6 text-primary" /> System Settings</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <p className="text-muted-foreground mb-4">Manage expense policies, categories, etc. (Future Feature)</p>
+                <p className="text-muted-foreground mb-4 text-sm">Manage expense policies, categories, etc. (Future Feature)</p>
                 <Button variant="outline" disabled>Configure Settings</Button>
                 </CardContent>
             </Card>
@@ -106,7 +95,7 @@ export default function ManagerDashboardPage() {
               <MessageSquare className="h-8 w-8" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="left">
             <p>Chat with AI Assistant</p>
           </TooltipContent>
         </Tooltip>
