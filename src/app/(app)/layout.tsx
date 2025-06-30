@@ -5,10 +5,20 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import AppHeader from '@/components/shared/app-header';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut } from 'lucide-react';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarInset,
+  SidebarFooter,
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -23,11 +33,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const isEmployeeRoute = pathname.startsWith('/employee');
     const isManagerRoute = pathname.startsWith('/manager');
 
-    if (isEmployeeRoute && user.role !== 'employee') {
-      router.replace('/login'); // Or an unauthorized page
-    } else if (isManagerRoute && user.role !== 'manager') {
-      router.replace('/login'); // Or an unauthorized page
+    if (user.role === 'employee' && !isEmployeeRoute && pathname !== '/profile' && pathname !== '/profile/change-password') {
+        router.replace('/employee/dashboard');
+    } else if (user.role === 'manager' && !isManagerRoute && pathname !== '/profile' && pathname !== '/profile/change-password') {
+        router.replace('/manager/dashboard');
     }
+
   }, [user, isLoading, router, pathname]);
 
   if (isLoading || !user) {
@@ -37,14 +48,108 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  
-  // Role & auth check passed or route is not role-specific under /app
+
+  const employeeNav = (
+    <>
+      <SidebarMenuItem>
+        <Link href="/employee/dashboard" passHref>
+          <SidebarMenuButton isActive={pathname === '/employee/dashboard'} tooltip={{children: 'Dashboard'}}>
+            <LayoutDashboard />
+            <span>Dashboard</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/employee/dashboard" passHref>
+          <SidebarMenuButton isActive={pathname.startsWith('/employee/receipt')} tooltip={{children: 'My Receipts'}}>
+            <ReceiptText />
+            <span>My Receipts</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+       <SidebarMenuItem>
+          <SidebarMenuButton tooltip={{children: 'Reports'}} disabled>
+            <BarChart3 />
+            <span>Reports</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/profile" passHref>
+          <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
+            <Settings />
+            <span>Settings</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+    </>
+  );
+
+  const managerNav = (
+    <>
+      <SidebarMenuItem>
+        <Link href="/manager/dashboard" passHref>
+          <SidebarMenuButton isActive={pathname === '/manager/dashboard'} tooltip={{children: 'Dashboard'}}>
+            <LayoutDashboard />
+            <span>Dashboard</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/manager/dashboard" passHref>
+          <SidebarMenuButton tooltip={{children: 'Review Queue'}}>
+            <ShieldAlert />
+            <span>Review Queue</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+       <SidebarMenuItem>
+          <SidebarMenuButton tooltip={{children: 'Team Management'}} disabled>
+            <Users />
+            <span>Team</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{children: 'Reports'}} disabled>
+            <BarChart3 />
+            <span>Reports</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/profile" passHref>
+          <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
+            <Settings />
+            <span>Settings</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+    </>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <AppHeader />
-      <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-5 lg:px-8 py-[5px]">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarMenu className="flex flex-col h-full p-2">
+            <div className="flex-grow">
+                {user.role === 'employee' ? employeeNav : managerNav}
+            </div>
+            <SidebarFooter>
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
+                        <LogOut />
+                        <span>Sign Out</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarFooter>
+        </SidebarMenu>
+      </Sidebar>
+      <SidebarInset>
+        <div className="min-h-screen flex flex-col bg-background/95">
+          <AppHeader />
+          <main className="flex-grow p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
