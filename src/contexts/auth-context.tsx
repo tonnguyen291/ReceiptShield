@@ -10,8 +10,8 @@ import { getUserByEmail, addUser as addUserToDB } from '@/lib/user-store';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => void;
-  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => void;
+  login: (email: string, role: UserRole) => { success: boolean, message: string };
+  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => { success: boolean, message: string };
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -61,18 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         router.push('/employee/dashboard');
       }
+      return { success: true, message: 'Login successful.' };
     } else {
-      // In a real app, you'd show an error from the backend
-      console.error("Login failed: User not found or role mismatch.");
-      alert("Login failed. Check your credentials and selected role.");
+      const message = "Login failed. Check your credentials and selected role.";
+      console.error(message);
+      return { success: false, message };
     }
   };
 
   const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string) => {
     const existingUser = getUserByEmail(email);
     if (existingUser) {
-        alert("An account with this email already exists.");
-        return;
+        const message = "An account with this email already exists.";
+        return { success: false, message };
     }
     
     const newUser: User = { 
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       router.push('/employee/dashboard');
     }
+    return { success: true, message: 'Account created successfully.' };
   };
 
   const logout = () => {
