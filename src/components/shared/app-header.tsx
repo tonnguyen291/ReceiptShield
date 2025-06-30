@@ -11,12 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react';
+import { UserCircle, Shield, UserCog, KeyRound, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
 
 export default function AppHeader() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <header className="bg-card border-b border-border shadow-sm">
@@ -69,13 +68,6 @@ export default function AppHeader() {
                 </Link>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Separator orientation="vertical" className="h-8" />
-
-            <Button variant="outline" size="sm" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign Out</span>
-            </Button>
           </div>
         )}
       </div>
