@@ -1,6 +1,11 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
+import type { User, ProcessedReceipt } from '@/types';
+import { useAuth } from '@/contexts/auth-context';
+import { getEmployeesForManager } from '@/lib/user-store';
+import { getAllReceiptsForUser } from '@/lib/receipt-store';
 import {
   Table,
   TableBody,
@@ -13,43 +18,81 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Loader2, Users } from 'lucide-react';
 
-const teamData = [
-    {
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        receipts: 15,
-        totalAmount: 1250.75,
-        flagged: 2,
-        approvalRate: 87,
-    },
-    {
-        name: 'Bob Williams',
-        email: 'bob@example.com',
-        receipts: 8,
-        totalAmount: 620.00,
-        flagged: 0,
-        approvalRate: 100,
-    },
-    {
-        name: 'Charlie Brown',
-        email: 'charlie@example.com',
-        receipts: 22,
-        totalAmount: 2130.50,
-        flagged: 5,
-        approvalRate: 77,
-    },
-    {
-        name: 'Diana Miller',
-        email: 'diana@example.com',
-        receipts: 5,
-        totalAmount: 310.20,
-        flagged: 1,
-        approvalRate: 80,
-    },
-];
+interface TeamMemberStats {
+  user: User;
+  receipts: number;
+  totalAmount: number;
+  flagged: number;
+  approvalRate: number;
+}
 
 export function TeamActivityTable() {
+    const { user } = useAuth();
+    const [teamStats, setTeamStats] = useState<TeamMemberStats[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadData = () => {
+        if (!user || user.role !== 'manager') {
+            setIsLoading(false);
+            return;
+        }
+
+        const teamMembers = getEmployeesForManager(user.id);
+        const stats: TeamMemberStats[] = teamMembers.map(employee => {
+            const receipts = getAllReceiptsForUser(employee.email || '');
+            const totalAmount = receipts.reduce((acc, r) => {
+                const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+                const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g,"") || "0");
+                return acc + (isNaN(amountValue) ? 0 : amountValue);
+            }, 0);
+            
+            const flagged = receipts.filter(r => r.isFraudulent).length;
+            const approvedCount = receipts.filter(r => r.status === 'approved').length;
+            const actionableCount = receipts.filter(r => r.status === 'approved' || r.status === 'rejected').length;
+            const approvalRate = actionableCount > 0 ? Math.round((approvedCount / actionableCount) * 100) : 100;
+
+            return {
+                user: employee,
+                receipts: receipts.length,
+                totalAmount,
+                flagged,
+                approvalRate,
+            };
+        });
+
+        setTeamStats(stats);
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        setIsLoading(true);
+        loadData();
+        const handleStorageChange = () => loadData();
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [user]);
+
+    if (isLoading) {
+      return (
+        <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          Loading team data...
+        </div>
+      );
+    }
+    
+    if (teamStats.length === 0) {
+        return (
+            <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
+              <Users className="mx-auto h-12 w-12 text-primary mb-4" />
+              <p className="font-semibold">No Employees Found</p>
+              <p>No employees have been assigned to you yet.</p>
+            </div>
+          );
+    }
+
     return (
         <TooltipProvider>
             <Table>
@@ -63,38 +106,38 @@ export function TeamActivityTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {teamData.map((employee) => (
-                    <TableRow key={employee.email}>
+                    {teamStats.map((employeeStat) => (
+                    <TableRow key={employeeStat.user.id}>
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${employee.name[0]}`} data-ai-hint="abstract letter" />
-                                    <AvatarFallback>{employee.name.substring(0, 2)}</AvatarFallback>
+                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${employeeStat.user.name ? employeeStat.user.name[0] : 'U'}`} data-ai-hint="abstract letter" />
+                                    <AvatarFallback>{employeeStat.user.name?.substring(0, 2)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="font-medium">{employee.name}</div>
-                                    <div className="text-xs text-muted-foreground">{employee.email}</div>
+                                    <div className="font-medium">{employeeStat.user.name}</div>
+                                    <div className="text-xs text-muted-foreground">{employeeStat.user.email}</div>
                                 </div>
                             </div>
                         </TableCell>
-                        <TableCell className="text-center">{employee.receipts}</TableCell>
-                        <TableCell className="text-right font-mono">${employee.totalAmount.toFixed(2)}</TableCell>
+                        <TableCell className="text-center">{employeeStat.receipts}</TableCell>
+                        <TableCell className="text-right font-mono">${employeeStat.totalAmount.toFixed(2)}</TableCell>
                         <TableCell className="text-center">
-                            <Badge variant={employee.flagged > 2 ? 'destructive' : employee.flagged > 0 ? 'secondary' : 'default'}
-                                   className={employee.flagged === 0 ? 'bg-green-500/20 text-green-700' : ''}
+                            <Badge variant={employeeStat.flagged > 2 ? 'destructive' : employeeStat.flagged > 0 ? 'secondary' : 'default'}
+                                   className={employeeStat.flagged === 0 ? 'bg-green-500/20 text-green-700' : ''}
                             >
-                                {employee.flagged}
+                                {employeeStat.flagged}
                             </Badge>
                         </TableCell>
                         <TableCell>
                              <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="flex items-center justify-center gap-2">
-                                         <Progress value={employee.approvalRate} className="w-24 h-2" indicatorClassName={employee.approvalRate < 80 ? 'bg-destructive' : 'bg-primary'} />
-                                         <span className="text-xs font-semibold">{employee.approvalRate}%</span>
+                                         <Progress value={employeeStat.approvalRate} className="w-24 h-2" indicatorClassName={employeeStat.approvalRate < 80 ? 'bg-destructive' : 'bg-primary'} />
+                                         <span className="text-xs font-semibold">{employeeStat.approvalRate}%</span>
                                     </div>
                                 </TooltipTrigger>
-                                <TooltipContent><p>{employee.approvalRate}% of receipts approved</p></TooltipContent>
+                                <TooltipContent><p>{employeeStat.approvalRate}% of receipts approved</p></TooltipContent>
                             </Tooltip>
                         </TableCell>
                     </TableRow>

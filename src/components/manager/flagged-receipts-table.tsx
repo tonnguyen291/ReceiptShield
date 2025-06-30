@@ -31,8 +31,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
 
 export function FlaggedReceiptsTable() {
+  const { user } = useAuth();
   const [receipts, setReceipts] = useState<ProcessedReceipt[]>([]);
   const [selectedReceipt, setSelectedReceipt] = useState<ProcessedReceipt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,7 +45,9 @@ export function FlaggedReceiptsTable() {
   const { toast } = useToast();
 
   const loadReceipts = () => {
-    setReceipts(getFlaggedReceiptsForManager());
+    if (user?.id) {
+      setReceipts(getFlaggedReceiptsForManager(user.id));
+    }
     setIsLoading(false);
   };
 
@@ -52,7 +56,7 @@ export function FlaggedReceiptsTable() {
     const handleStorageChange = () => loadReceipts();
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [user]);
 
   const handleViewDetails = (receipt: ProcessedReceipt) => {
     setSelectedReceipt(receipt);
@@ -94,7 +98,7 @@ export function FlaggedReceiptsTable() {
           <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
           <ShieldQuestion className="mx-auto h-12 w-12 text-primary mb-4" />
           <p className="font-semibold">All clear!</p>
-          <p>No receipts are currently pending your review.</p>
+          <p>No receipts from your team are currently pending review.</p>
         </div>
       ) : (
         <Table>

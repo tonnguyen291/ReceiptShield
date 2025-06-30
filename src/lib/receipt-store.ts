@@ -30,7 +30,6 @@ function setStoredReceipts(receipts: ProcessedReceipt[]): void {
 
 export function addReceipt(receipt: ProcessedReceipt): void {
   const receipts = getStoredReceipts();
-  // When adding, ensure status is undefined or pending_approval based on initial creation logic
   setStoredReceipts([receipt, ...receipts]);
 }
 
@@ -48,10 +47,10 @@ export function deleteReceipt(id: string): void {
   setStoredReceipts(receipts);
 }
 
-export function getFlaggedReceiptsForManager(): ProcessedReceipt[] {
+export function getFlaggedReceiptsForManager(managerId: string): ProcessedReceipt[] {
   const receipts = getStoredReceipts();
-  // Managers see receipts that are flagged and pending approval.
-  return receipts.filter(receipt => receipt.isFraudulent && receipt.status === 'pending_approval')
+  // Managers see receipts from their team that are flagged and pending approval.
+  return receipts.filter(receipt => receipt.supervisorId === managerId && receipt.isFraudulent && receipt.status === 'pending_approval')
                  .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 }
 
@@ -69,6 +68,11 @@ export function rejectReceipt(receiptId: string, notes?: string): void {
     r.id === receiptId ? { ...r, status: 'rejected', managerNotes: notes || 'Rejected by manager.' } : r
   );
   setStoredReceipts(updatedReceipts);
+}
+
+export function getReceiptsForManager(managerId: string): ProcessedReceipt[] {
+    const receipts = getStoredReceipts();
+    return receipts.filter(receipt => receipt.supervisorId === managerId);
 }
 
 export function getAllReceipts(): ProcessedReceipt[] {

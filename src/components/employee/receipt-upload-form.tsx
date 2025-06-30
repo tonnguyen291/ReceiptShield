@@ -85,6 +85,7 @@ export function ReceiptUploadForm() {
         explanation: "Pending user verification.",
         uploadedAt: new Date().toISOString(),
         uploadedBy: user.email,
+        supervisorId: user.supervisorId, // Add supervisorId to receipt
       };
 
       addReceipt(initialReceipt);

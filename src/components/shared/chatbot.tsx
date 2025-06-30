@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllReceiptsForUser, getAllReceipts } from '@/lib/receipt-store';
+import { getAllReceiptsForUser, getReceiptsForManager } from '@/lib/receipt-store';
 import { runAssistant } from '@/ai/flows/assistant-flow';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -60,14 +61,16 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     setIsResponding(true);
 
     try {
-      const allReceipts = user?.role === 'manager' ? getAllReceipts() : getAllReceiptsForUser(user.email);
+      const relevantReceipts = user.role === 'manager' 
+        ? getReceiptsForManager(user.id) 
+        : getAllReceiptsForUser(user.email);
+
       const receiptHistoryString = JSON.stringify(
-        allReceipts.map(r => ({ 
+        relevantReceipts.map(r => ({ 
             fileName: r.fileName, 
             status: r.status || (r.isFraudulent ? 'flagged' : 'clear'), 
             uploaded_at: r.uploadedAt,
-            // For managers, add who uploaded it
-            uploadedBy: user?.role === 'manager' ? r.uploadedBy : undefined 
+            uploadedBy: r.uploadedBy 
         }))
       );
 
