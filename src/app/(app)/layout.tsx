@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </main>
       <footer className="py-4 border-t border-border bg-card">
         <div className="container mx-auto px-4 sm:px-6 md:px-8 flex justify-center">
-          <Button variant="ghost" onClick={logout}>
+          <Button variant="outline" onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>

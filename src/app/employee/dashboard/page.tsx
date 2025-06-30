@@ -37,65 +37,59 @@ export default function EmployeeDashboardPage() {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Column */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <History className="w-7 h-7 text-primary" />
-                  <span className="text-2xl font-semibold">My Submission History</span>
-                </CardTitle>
-                <CardDescription>View, edit, or track the status of your submitted receipts below.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <SubmissionHistoryTable />
-              </CardContent>
-            </Card>
-          </div>
+        <div className="space-y-6">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <History className="w-7 h-7 text-primary" />
+                <span className="text-2xl font-semibold">My Submission History</span>
+              </CardTitle>
+              <CardDescription>View, edit, or track the status of your submitted receipts below.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SubmissionHistoryTable />
+            </CardContent>
+          </Card>
 
-          {/* Sidebar Column */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCog className="w-6 h-6 text-primary" />
-                  Account Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                  <p className="text-muted-foreground text-sm">Manage your personal information and password.</p>
-                  <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
-                  <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
-              </CardContent>
-            </Card>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="w-6 h-6 text-primary" />
+                Account Settings
+              </CardTitle>
+              <CardDescription>Manage your personal information and password.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+                <Button variant="outline" onClick={() => router.push('/profile')}>Edit Profile</Button>
+                <Button variant="outline" onClick={() => router.push('/profile/change-password')}>Change Password</Button>
+            </CardContent>
+          </Card>
 
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BrainCircuit className="w-6 h-6 text-primary" />
-                  AI Feedback
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Our AI helps by analyzing receipts for you. Click the 'View' icon on any receipt to see its detailed analysis and fraud probability score.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-6 h-6 text-primary" />
-                  Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">No new notifications. Alerts will appear here in the future.</p>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BrainCircuit className="w-6 h-6 text-primary" />
+                AI Feedback
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Our AI helps by analyzing receipts for you. Click the 'View' icon on any receipt to see its detailed analysis and fraud probability score.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-6 h-6 text-primary" />
+                Notifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">No new notifications. Alerts will appear here in the future.</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
       
