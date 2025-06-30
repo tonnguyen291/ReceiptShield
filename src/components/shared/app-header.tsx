@@ -12,12 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, Bell } from 'lucide-react';
+import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, Bell, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-export default function AppHeader() {
-  const { user } = useAuth();
+export default function AppHeader({ onChatbotClick }: { onChatbotClick?: () => void }) {
+  const { user, logout } = useAuth();
 
   return (
     <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
@@ -32,6 +32,10 @@ export default function AppHeader() {
         
         {user && (
           <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={onChatbotClick}>
+              <Bot className="h-5 w-5" />
+              <span className="sr-only">AI Assistant</span>
+            </Button>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Bell className="h-5 w-5" />
               <span className="sr-only">Notifications</span>
@@ -80,6 +84,11 @@ export default function AppHeader() {
                     <span>Change Password</span>
                   </DropdownMenuItem>
                 </Link>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuItem onClick={logout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

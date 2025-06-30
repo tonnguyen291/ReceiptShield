@@ -3,6 +3,7 @@
 
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
+import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileText, Filter } from 'lucide-react';
@@ -26,7 +27,7 @@ export default function ManagerDashboardPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
           <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
-        <Button onClick={handleGenerateReportClick} size="lg" className="shadow-sm w-full sm:w-auto">
+        <Button onClick={handleGenerateReportClick} size="lg" className="shadow-sm w-full sm:w-auto" disabled>
           <FileText className="mr-2 h-5 w-5" />
           Generate Report
         </Button>
@@ -36,10 +37,20 @@ export default function ManagerDashboardPage() {
 
       <Card className="shadow-md">
         <CardHeader>
-           <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+          <CardTitle>Team Activity</CardTitle>
+          <CardDescription>Overview of expense submissions across all employees.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TeamActivityTable />
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-md">
+        <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
               <div>
-                <CardTitle>Review Queue</CardTitle>
-                <CardDescription>These receipts were flagged by AI for potential issues. Please review them carefully.</CardDescription>
+                <CardTitle>Receipt Audit Queue</CardTitle>
+                <CardDescription>These receipts were flagged by AI and require manual approval.</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                  <Filter className="w-4 h-4 text-muted-foreground" />

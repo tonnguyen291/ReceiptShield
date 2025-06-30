@@ -3,9 +3,9 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, type ReactNode, useState } from 'react';
 import AppHeader from '@/components/shared/app-header';
-import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut } from 'lucide-react';
+import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -16,11 +16,13 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
+import { Chatbot } from '@/components/shared/chatbot';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isChatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -68,18 +70,24 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
       </SidebarMenuItem>
        <SidebarMenuItem>
-          <SidebarMenuButton tooltip={{children: 'Reports'}} disabled>
-            <BarChart3 />
-            <span>Reports</span>
+        <Link href="/employee/upload" passHref>
+          <SidebarMenuButton isActive={pathname.startsWith('/employee/upload')} tooltip={{children: 'Submit New Receipt'}}>
+            <FileUp />
+            <span>Submit Receipt</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+          <SidebarMenuButton tooltip={{children: 'Reimbursement Status'}} disabled>
+            <FileBarChart />
+            <span>Reimbursements</span>
           </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/profile" passHref>
-          <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
-            <Settings />
-            <span>Settings</span>
+          <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
+            <Bot />
+            <span>Help Center</span>
           </SidebarMenuButton>
-        </Link>
       </SidebarMenuItem>
     </>
   );
@@ -96,34 +104,54 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{children: 'Review Queue'}}>
-            <ShieldAlert />
-            <span>Review Queue</span>
+          <SidebarMenuButton tooltip={{children: 'Team Receipts'}}>
+            <Users />
+            <span>Team Receipts</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
        <SidebarMenuItem>
-          <SidebarMenuButton tooltip={{children: 'Team Management'}} disabled>
-            <Users />
-            <span>Team</span>
-          </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton tooltip={{children: 'Reports'}} disabled>
-            <BarChart3 />
-            <span>Reports</span>
-          </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <Link href="/profile" passHref>
-          <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
-            <Settings />
-            <span>Settings</span>
+        <Link href="/manager/dashboard" passHref>
+          <SidebarMenuButton tooltip={{children: 'Audit & Approvals'}}>
+            <ShieldAlert />
+            <span>Audit & Approvals</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{children: 'Fraud Reports'}} disabled>
+            <FileWarning />
+            <span>Fraud Reports</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
+        <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{children: 'Export Data'}} disabled>
+            <Download />
+            <span>Export Data</span>
+          </SidebarMenuButton>
+      </SidebarMenuItem>
     </>
   );
+
+  const sharedNavBottom = (
+    <>
+        <SidebarMenuItem>
+            <Link href="/profile" passHref>
+            <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
+                <Settings />
+                <span>Settings</span>
+            </SidebarMenuButton>
+            </Link>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+            <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
+                <LogOut />
+                <span>Sign Out</span>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+    </>
+  );
+
 
   return (
     <SidebarProvider>
@@ -133,20 +161,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 {user.role === 'employee' ? employeeNav : managerNav}
             </div>
             <SidebarFooter>
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
-                        <LogOut />
-                        <span>Sign Out</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
+                {sharedNavBottom}
             </SidebarFooter>
         </SidebarMenu>
       </Sidebar>
       <SidebarInset>
         <div className="min-h-screen flex flex-col bg-background/95">
-          <AppHeader />
+          <AppHeader onChatbotClick={() => setChatbotOpen(true)} />
           <main className="flex-grow p-4 sm:p-6 lg:p-8">
             {children}
+            <Chatbot isOpen={isChatbotOpen} onClose={() => setChatbotOpen(false)} />
           </main>
         </div>
       </SidebarInset>
