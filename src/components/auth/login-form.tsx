@@ -17,11 +17,10 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Shield } from 'lucide-react';
 import { getManagers } from '@/lib/user-store';
+import { useRouter } from 'next/navigation';
 
 export function LoginForm() {
-  const [hasMounted, setHasMounted] = useState(false);
   const [managers, setManagers] = useState<User[]>([]);
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +29,24 @@ export function LoginForm() {
   const [supervisorId, setSupervisorId] = useState<string>('');
   const [error, setError] = useState('');
   const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
-  const { login, createAccount } = useAuth();
+  
+  const { login, createAccount, user, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    setHasMounted(true);
+    // If the user is already logged in (e.g., from a previous session), redirect them.
+    if (!isLoading && user) {
+        if (user.role === 'admin') {
+            router.push('/admin/dashboard');
+        } else if (user.role === 'manager') {
+            router.push('/manager/dashboard');
+        } else {
+            router.push('/employee/dashboard');
+        }
+    }
+  }, [user, isLoading, router]);
+
+  useEffect(() => {
     if (isCreateAccountMode) {
       setManagers(getManagers());
     }
@@ -73,9 +86,15 @@ export function LoginForm() {
         setError('You must select a supervisor.');
         return;
       }
-      createAccount(name, email, role, supervisorId);
+      const response = createAccount(name, email, role, supervisorId);
+      if (!response.success) {
+        setError(response.message || "Failed to create account.");
+      }
     } else {
-      login(email, role);
+      const response = login(email, role);
+      if (!response.success) {
+        setError(response.message || "Login failed.");
+      }
     }
   };
 
@@ -91,7 +110,8 @@ export function LoginForm() {
     setSupervisorId('');
   };
 
-  if (!hasMounted) {
+  // While loading auth state or if user exists (and is being redirected), show a loading spinner.
+  if (isLoading || user) {
     return (
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center py-10">
@@ -99,10 +119,10 @@ export function LoginForm() {
             <Shield className="w-16 h-16 text-primary" />
           </div>
           <CardTitle className="text-3xl font-headline">
-            Loading Form
+            Authenticating
           </CardTitle>
            <CardDescription>
-            Please wait a moment...
+            Please wait...
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center items-center h-56">

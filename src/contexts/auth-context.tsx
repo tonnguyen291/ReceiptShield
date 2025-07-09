@@ -2,16 +2,21 @@
 'use client';
 
 import type { User, UserRole } from '@/types';
-import { useRouter } from 'next/navigation';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getUserByEmail, addUser as addUserToDB } from '@/lib/user-store';
+import { useRouter } from 'next/navigation';
+
+interface AuthResponse {
+  success: boolean;
+  message?: string;
+}
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => void;
-  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => void;
+  login: (email: string, role: UserRole) => AuthResponse;
+  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => AuthResponse;
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -49,30 +54,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading]);
 
-  const login = (email: string, role: UserRole) => {
+  const login = (email: string, role: UserRole): AuthResponse => {
     const foundUser = getUserByEmail(email);
 
     if (foundUser && foundUser.role === role) {
       setUser(foundUser);
-      if (role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (role === 'manager') {
-        router.push('/manager/dashboard');
-      } else {
-        router.push('/employee/dashboard');
-      }
+      return { success: true };
     } else {
       // In a real app, you'd show an error from the backend
-      console.error("Login failed: User not found or role mismatch.");
-      alert("Login failed. Check your credentials and selected role.");
+      return { success: false, message: "Login failed. Check your credentials and selected role." };
     }
   };
 
-  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string) => {
+  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string): AuthResponse => {
     const existingUser = getUserByEmail(email);
     if (existingUser) {
-        alert("An account with this email already exists.");
-        return;
+        return { success: false, message: "An account with this email already exists." };
     }
     
     const newUser: User = { 
@@ -86,13 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addUserToDB(newUser);
     setUser(newUser);
     
-    if (role === 'admin') {
-      router.push('/admin/dashboard');
-    } else if (role === 'manager') {
-      router.push('/manager/dashboard');
-    } else {
-      router.push('/employee/dashboard');
-    }
+    return { success: true };
   };
 
   const logout = () => {
