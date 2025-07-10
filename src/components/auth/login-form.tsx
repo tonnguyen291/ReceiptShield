@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import type { UserRole } from '@/types';
+import type { User, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,22 +16,28 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Shield } from 'lucide-react';
+import { getManagers } from '@/lib/user-store';
 
 export function LoginForm() {
   const [hasMounted, setHasMounted] = useState(false);
+  const [managers, setManagers] = useState<User[]>([]);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
+  const [supervisorId, setSupervisorId] = useState<string>('');
   const [error, setError] = useState('');
   const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
   const { login, createAccount } = useAuth();
 
   useEffect(() => {
     setHasMounted(true);
-  }, []);
+    if (isCreateAccountMode) {
+      setManagers(getManagers());
+    }
+  }, [isCreateAccountMode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,15 +69,32 @@ export function LoginForm() {
         setError('Passwords do not match.');
         return;
       }
-      createAccount(name, email, role);
+      if (role === 'employee' && !supervisorId) {
+        setError('You must select a supervisor.');
+        return;
+      }
+      const result = createAccount(name, email, role, supervisorId);
+      if (!result.success) {
+        setError(result.message);
+      }
     } else {
-      login(email, role);
+      const result = login(email, role);
+      if (!result.success) {
+        setError(result.message);
+      }
     }
   };
 
   const toggleMode = () => {
     setIsCreateAccountMode(!isCreateAccountMode);
     setError('');
+    // Reset fields
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('employee');
+    setSupervisorId('');
   };
 
   if (!hasMounted) {
@@ -170,9 +193,31 @@ export function LoginForm() {
               <SelectContent>
                 <SelectItem value="employee">Employee</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {isCreateAccountMode && role === 'employee' && (
+            <div className="space-y-2">
+              <Label htmlFor="supervisor">Supervisor</Label>
+              <Select value={supervisorId} onValueChange={setSupervisorId}>
+                <SelectTrigger id="supervisor">
+                  <SelectValue placeholder="Select your supervisor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {managers.length > 0 ? (
+                    managers.map(manager => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.name} ({manager.email})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>No managers available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             type="submit"

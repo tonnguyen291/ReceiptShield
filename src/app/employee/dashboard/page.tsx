@@ -1,123 +1,101 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, History, BrainCircuit, Bell, UserCog, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Chatbot } from '@/components/shared/chatbot';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
+import { ExpenseSummaryChart } from '@/components/employee/expense-summary-chart';
+import { PlusCircle, FileUp, IndianRupee, BarChart, AlertTriangle, Bot } from 'lucide-react';
+import Link from 'next/link';
 
 export default function EmployeeDashboardPage() {
-  const { logout } = useAuth();
   const router = useRouter();
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-
-  const handleUploadClick = () => {
-    router.push('/employee/upload');
-  };
 
   return (
-    <>
-      <div className="space-y-8 max-w-3xl mx-auto">
-        <div className="flex flex-col items-start gap-4">
-          <div>
-            <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
-            <p className="text-muted-foreground">Manage your expense receipts and submissions.</p>
-          </div>
-          <Button onClick={handleUploadClick} size="lg" className="w-full sm:w-auto shadow-sm">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Upload New Receipt
-          </Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back! Manage your expenses and receipts here.</p>
         </div>
-        
+        <Button onClick={() => router.push('/employee/upload')} size="lg" className="shadow-sm w-full sm:w-auto">
+          <PlusCircle className="mr-2 h-5 w-5" />
+          Upload New Receipt
+        </Button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses This Month</CardTitle>
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$450.75</div>
+            <p className="text-xs text-muted-foreground">(mock data)</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receipts Uploaded</CardTitle>
+            <BarChart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">+3 from last month (mock data)</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Reimbursement Status</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$250.00 Pending</div>
+            <p className="text-xs text-muted-foreground">2 receipts awaiting approval</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Recent Activity */}
+        <div className="md:col-span-2">
+            <Card className="shadow-md h-full">
+                <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Your recently uploaded receipts.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <SubmissionHistoryTable />
+                </CardContent>
+            </Card>
+        </div>
+
+        {/* Expense Summary & Quick Actions */}
         <div className="space-y-6">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <History className="w-7 h-7 text-primary" />
-                <span className="text-2xl font-semibold">My Submission History</span>
-              </CardTitle>
-              <CardDescription>View, edit, or track the status of your submitted receipts below.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SubmissionHistoryTable />
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="w-6 h-6 text-primary" />
-                Account Settings
-              </CardTitle>
-              <CardDescription>Manage your personal information and password.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-3">
-                <Button variant="outline" onClick={() => router.push('/profile')} className="flex-1">Edit Profile</Button>
-                <Button variant="outline" onClick={() => router.push('/profile/change-password')} className="flex-1">Change Password</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BrainCircuit className="w-6 h-6 text-primary" />
-                AI Feedback
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Our AI helps by analyzing receipts for you. Click the 'View' icon on any receipt to see its detailed analysis and fraud probability score.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-6 h-6 text-primary" />
-                Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No new notifications. Alerts will appear here in the future.</p>
-            </CardContent>
-          </Card>
+            <Card className="shadow-md">
+                <CardHeader>
+                    <CardTitle>Expense Summary</CardTitle>
+                    <CardDescription>Spending by category this month.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ExpenseSummaryChart />
+                </CardContent>
+            </Card>
+            <Card className="shadow-md bg-accent/20 border-accent/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bot className="text-accent"/>Guided Tip</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Remember to tag your hotel receipt from last week's trip for faster processing!</p>
+                 <Button variant="link" className="px-0">Dismiss</Button>
+              </CardContent>
+            </Card>
         </div>
       </div>
-
-      <div className="mt-10 flex justify-center">
-        <Button variant="destructive" onClick={logout}>Sign Out</Button>
-      </div>
-
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() => setIsChatbotOpen(true)}
-              className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
-              size="icon"
-            >
-              <MessageSquare className="h-8 w-8" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Chat with AI Assistant</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
-    </>
+    </div>
   );
 }

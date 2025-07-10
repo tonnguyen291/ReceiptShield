@@ -62,12 +62,8 @@ export default function VerifyReceiptPage() {
 
     setIsProcessing(true);
     try {
-      const receiptDataString = editableItems
-        .map(item => `${item.label}: ${item.value}`)
-        .join('\n');
-
       const fraudResult = await flagFraudulentReceipt({
-        receiptData: receiptDataString,
+        items: editableItems,
         receiptImage: receipt.imageDataUri,
       });
 

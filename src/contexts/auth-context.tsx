@@ -5,12 +5,13 @@ import type { User, UserRole } from '@/types';
 import { useRouter } from 'next/navigation';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { getUserByEmail, addUser as addUserToDB } from '@/lib/user-store';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => void;
-  createAccount: (name: string, email: string, role: UserRole) => void;
+  login: (email: string, role: UserRole) => { success: boolean, message: string };
+  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => { success: boolean, message: string };
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -28,11 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
       if (storedUserJSON) {
-        const storedUser = JSON.parse(storedUserJSON);
-        // Ensure dob field exists for older stored users
-        if (!('dob' in storedUser)) {
-          storedUser.dob = '';
-        }
+        const storedUser: User = JSON.parse(storedUserJSON);
         setUser(storedUser);
       }
     } catch (error) {
@@ -53,59 +50,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, isLoading]);
 
   const login = (email: string, role: UserRole) => {
-    // In a real app, you'd authenticate against a backend.
-    // Here, we're creating/retrieving a mock user.
-    // For simplicity, if user exists in storage, we use that, otherwise create one.
-    let existingUser: User | null = null;
-    try {
-      const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (storedUserJSON) {
-        const potentialUser = JSON.parse(storedUserJSON);
-        if (potentialUser.email === email && potentialUser.role === role) {
-          existingUser = potentialUser;
-          if (!('dob' in existingUser!)) { // Ensure dob for older entries
-            existingUser!.dob = '';
-          }
-        }
-      }
-    } catch (e) { /* ignore */ }
+    const foundUser = getUserByEmail(email);
 
-    if (!existingUser) {
-      existingUser = { 
-        id: Date.now().toString(), 
-        email, 
-        role, 
-        name: email.split('@')[0], 
-        dob: '' 
-      };
-    }
-    
-    setUser(existingUser); // This will trigger the useEffect to save to localStorage
-    if (role === 'manager') {
-      router.push('/manager/dashboard');
+    if (foundUser && foundUser.role === role) {
+      setUser(foundUser);
+      if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (role === 'manager') {
+        router.push('/manager/dashboard');
+      } else {
+        router.push('/employee/dashboard');
+      }
+      return { success: true, message: 'Login successful.' };
     } else {
-      router.push('/employee/dashboard');
+      const message = "Login failed. Check your credentials and selected role.";
+      console.error(message);
+      return { success: false, message };
     }
   };
 
-  const createAccount = (name: string, email: string, role: UserRole) => {
+  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string) => {
+    const existingUser = getUserByEmail(email);
+    if (existingUser) {
+        const message = "An account with this email already exists.";
+        return { success: false, message };
+    }
+    
     const newUser: User = { 
-      id: Date.now().toString(), 
+      id: `user-${Date.now()}`, 
       name, 
       email, 
       role, 
-      dob: '' // Initialize dob
+      supervisorId: role === 'employee' ? supervisorId : undefined,
     };
-    setUser(newUser); // This will trigger the useEffect to save to localStorage
-    if (role === 'manager') {
+    
+    addUserToDB(newUser);
+    setUser(newUser);
+    
+    if (role === 'admin') {
+      router.push('/admin/dashboard');
+    } else if (role === 'manager') {
       router.push('/manager/dashboard');
     } else {
       router.push('/employee/dashboard');
     }
+    return { success: true, message: 'Account created successfully.' };
   };
 
   const logout = () => {
-    setUser(null); // This will trigger the useEffect to remove from localStorage
+    setUser(null);
     router.push('/login');
   };
 
