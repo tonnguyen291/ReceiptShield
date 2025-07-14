@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "extract-dataset": "tsx ml/extract_dataset.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
@@ -61,8 +62,12 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "genkit-cli": "^1.8.0",
+    "image-hash": "^5.3.2",
     "postcss": "^8",
+    "sharp": "^0.34.3",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "tesseract.js": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

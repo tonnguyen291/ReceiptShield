@@ -62,7 +62,7 @@ const summarizeReceiptFlow = ai.defineFlow(
     inputSchema: SummarizeReceiptInputSchema,
     outputSchema: SummarizeReceiptOutputSchema,
   },
-  async input => {
+  async (input: any) => {
     const {output} = await prompt(input);
     if (!output || !output.items) {
       // If the model fails to produce schema-compliant output or items are missing,
@@ -90,13 +90,13 @@ const summarizeReceiptFlow = ai.defineFlow(
     // Filter out any potential duplicate "Not found" items if the AI already provided them
     // and then we added our own "Not found - Edit me"
     const uniqueItems = resultItems.reduce((acc, current) => {
-      const x = acc.find(item => item.label === current.label);
+      const x = acc.find((item:any) => item.label === current.label);
       if (!x) {
         return acc.concat([current]);
       } else {
         // Prefer non-"Extraction Failed" or non-"Not found - Edit me" if duplicates exist
         if (x.value.includes("Extraction Failed") || x.value.includes("Not found - Edit me")) {
-            acc = acc.filter(item => item.label !== x.label);
+            acc = acc.filter((item:any) => item.label !== x.label);
             return acc.concat([current]);
         }
         return acc;
