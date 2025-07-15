@@ -10,7 +10,7 @@ import { FileText, Filter, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/auth-context';
-import { getReceiptsForManager, getFlaggedReceiptsForManager } from '@/lib/receipt-store';
+import { getReceiptsForManager } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/user-store';
 import { Separator } from '@/components/ui/separator';
 
@@ -31,11 +31,11 @@ export default function ManagerDashboardPage() {
       return;
     }
 
-    const receiptsToExport = getFlaggedReceiptsForManager(user.id);
+    const receiptsToExport = getReceiptsForManager(user.id);
     if (receiptsToExport.length === 0) {
       toast({
         title: 'No Receipts to Export',
-        description: "There are no receipts in the audit queue to export.",
+        description: "There are no receipts from your team to export.",
       });
       return;
     }
@@ -70,14 +70,14 @@ export default function ManagerDashboardPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `audit_queue_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `team_activity_report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({
       title: 'Report Generated',
-      description: 'A CSV report for the audit queue has been downloaded.',
+      description: 'A CSV report for your team\'s activity has been downloaded.',
     });
   };
 
