@@ -72,7 +72,10 @@ export function rejectReceipt(receiptId: string, notes?: string): void {
 
 export function getReceiptsForManager(managerId: string): ProcessedReceipt[] {
     const receipts = getStoredReceipts();
-    return receipts.filter(receipt => receipt.supervisorId === managerId);
+    return receipts.filter(receipt => 
+        receipt.supervisorId === managerId &&
+        receipt.explanation !== "Pending user verification."
+    );
 }
 
 export function getAllReceipts(): ProcessedReceipt[] {
