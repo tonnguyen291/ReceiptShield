@@ -24,7 +24,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getReceiptsForManager } from "@/lib/receipt-store";
 import { getEmployeesForManager } from "@/lib/user-store";
 import { Separator } from "@/components/ui/separator";
-import { EmployeeView } from "@/components/manager/employee-view";
+import { EmployeeView } from "@/app/manager/employee-view";
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
