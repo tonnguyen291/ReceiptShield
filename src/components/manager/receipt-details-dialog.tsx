@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '../ui/separator';
-import { Info, CheckCircle, XCircle, ShieldQuestion, ArrowLeft, FileType } from 'lucide-react';
+import { Info, CheckCircle, XCircle, ShieldQuestion, FileType, Eye } from 'lucide-react';
 
 interface ReceiptDetailsDialogProps {
   receipt: ProcessedReceipt | null;
@@ -33,7 +33,7 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
     if (receipt && isPdf) {
       const pdfWindow = window.open("");
       if (pdfWindow) {
-        pdfWindow.document.write(`<iframe width='100%' height='100%' src='${receipt.imageDataUri}'></iframe>`);
+        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${receipt.imageDataUri}'></iframe>`);
         pdfWindow.document.title = receipt.fileName;
       }
     }
@@ -71,9 +71,9 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
                {isPdf ? (
                 <div className="border rounded-lg shadow-md bg-muted min-h-[300px] md:min-h-[400px] flex flex-col items-center justify-center p-4">
                   <FileType className="w-16 h-16 text-muted-foreground mb-4" />
-                  <p className="text-sm text-center mb-4 text-muted-foreground">PDF preview is not available here due to browser security policies.</p>
+                  <p className="text-sm text-center mb-4 text-muted-foreground">The preview is not available here due to security restrictions.</p>
                   <Button onClick={openPdfInNewTab}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> View Full PDF
+                    <Eye className="mr-2 h-4 w-4" /> View Full PDF
                   </Button>
                 </div>
               ) : (

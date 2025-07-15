@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,7 +46,7 @@ export default function VerifyReceiptPage() {
     if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
       const pdfWindow = window.open("");
       if (pdfWindow) {
-        pdfWindow.document.write(`<iframe width='100%' height='100%' src='${receipt.imageDataUri}'></iframe>`);
+        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${receipt.imageDataUri}'></iframe>`);
         pdfWindow.document.title = receipt.fileName;
       }
     }
@@ -190,17 +190,16 @@ export default function VerifyReceiptPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div>
               <h3 className="font-semibold text-lg mb-2">Receipt Document</h3>
-              <div className="border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px]">
                 {isPdf ? (
-                    <div className="h-full flex flex-col items-center justify-center p-4">
+                    <div className="border rounded-lg shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full flex flex-col items-center justify-center p-4">
                       <FileType className="w-16 h-16 text-muted-foreground mb-4" />
-                      <p className="text-sm text-center mb-4 text-muted-foreground">PDF preview is not available here due to browser security policies.</p>
+                      <p className="text-sm text-center mb-4 text-muted-foreground">The preview is not available here due to security restrictions.</p>
                       <Button type="button" onClick={openPdfInNewTab}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> View Full PDF
+                        <Eye className="mr-2 h-4 w-4" /> View Full PDF
                       </Button>
                     </div>
                 ) : (
-                  <div className="relative h-full">
+                  <div className="relative border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full">
                     <Image
                       src={receipt.imageDataUri}
                       alt={`Receipt ${receipt.fileName}`}
@@ -211,7 +210,6 @@ export default function VerifyReceiptPage() {
                     />
                   </div>
                 )}
-              </div>
             </div>
             <div className="space-y-3">
               <h3 className="font-semibold text-lg mb-2">Extracted Items (Editable)</h3>
