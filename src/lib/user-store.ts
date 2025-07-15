@@ -29,6 +29,13 @@ function initializeUsersDB(): void {
           email: 'employee@example.com',
           role: 'employee',
           supervisorId: 'manager-001'
+        },
+        {
+          id: 'employee-002',
+          name: 'Dana Employee',
+          email: 'employee2@example.com',
+          role: 'employee',
+          supervisorId: 'manager-001'
         }
     ];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
