@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, FileType, Eye } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -26,6 +26,16 @@ export default function ReceiptDetailsPage() {
       setReceipt(foundReceipt);
     }
   }, [receiptId]);
+  
+  const openPdfInNewTab = () => {
+    if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
+      const pdfWindow = window.open("");
+      if (pdfWindow) {
+        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${receipt.imageDataUri}'></iframe>`);
+        pdfWindow.document.title = receipt.fileName;
+      }
+    }
+  };
 
   if (receipt === undefined) {
     return (
@@ -56,6 +66,7 @@ export default function ReceiptDetailsPage() {
   }
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
+  const isPdf = receipt.imageDataUri.startsWith('data:application/pdf');
 
   const getStatusBadge = () => {
     if (receipt.status === 'approved') {
@@ -93,17 +104,27 @@ export default function ReceiptDetailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {/* Receipt Image Column */}
           <div className="md:col-span-1 space-y-4">
-            <h3 className="font-semibold text-xl">Receipt Image</h3>
-            <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted h-[calc(80vh-150px)] min-h-[400px]">
-              <Image
-                src={receipt.imageDataUri}
-                alt={`Receipt ${receipt.fileName}`}
-                fill
-                style={{objectFit: 'contain'}}
-                className="p-2"
-                data-ai-hint="receipt full"
-              />
-            </div>
+            <h3 className="font-semibold text-xl">Receipt Document</h3>
+             {isPdf ? (
+                <div className="border rounded-lg shadow-md bg-muted h-[calc(80vh-150px)] min-h-[400px] flex flex-col items-center justify-center p-4">
+                  <FileType className="w-16 h-16 text-muted-foreground mb-4" />
+                  <p className="text-sm text-center mb-4 text-muted-foreground">The preview is not available here due to security restrictions.</p>
+                  <Button onClick={openPdfInNewTab}>
+                    <Eye className="mr-2 h-4 w-4" /> View Full PDF
+                  </Button>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted h-[calc(80vh-150px)] min-h-[400px]">
+                  <Image
+                    src={receipt.imageDataUri}
+                    alt={`Receipt ${receipt.fileName}`}
+                    fill
+                    style={{objectFit: 'contain'}}
+                    className="p-2"
+                    data-ai-hint="receipt full"
+                  />
+                </div>
+              )}
           </div>
 
           {/* Details Sidebar Column */}

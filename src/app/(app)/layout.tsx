@@ -213,12 +213,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </SidebarMenuButton>
             </Link>
         </SidebarMenuItem>
-        <SidebarMenuItem>
-            <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
-                <LogOut />
-                <span>Sign Out</span>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
     </>
   );
 
@@ -238,7 +232,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarInset>
         <div className="min-h-screen flex flex-col bg-background/95">
           <AppHeader onChatbotClick={() => setChatbotOpen(true)} />
-          <main className="flex-grow p-4 sm:p-6 lg:p-8">
+          <main className="flex-grow p-8">
             {children}
             <Chatbot isOpen={isChatbotOpen} onClose={() => setChatbotOpen(false)} />
           </main>

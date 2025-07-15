@@ -5,9 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { UserManagementTable } from '@/components/admin/user-management-table';
 import { GlobalAnalyticsCards } from '@/components/admin/global-analytics-cards';
 import { Button } from '@/components/ui/button';
-import { FileUp, UserPlus } from 'lucide-react';
+import { FileUp, LogOut, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { Separator } from '@/components/ui/separator';
 
 export default function AdminDashboardPage() {
+  const { logout } = useAuth();
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -46,6 +49,19 @@ export default function AdminDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Separator className="my-8" />
+
+      <div className="flex justify-center">
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
 
     </div>
   );

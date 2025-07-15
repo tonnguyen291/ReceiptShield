@@ -2,16 +2,21 @@
 'use client';
 
 import type { User, UserRole } from '@/types';
-import { useRouter } from 'next/navigation';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getUserByEmail, addUser as addUserToDB } from '@/lib/user-store';
+import { useRouter } from 'next/navigation';
+
+interface AuthResponse {
+  success: boolean;
+  message?: string;
+}
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => { success: boolean, message: string };
-  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => { success: boolean, message: string };
+  login: (email: string, role: UserRole) => AuthResponse;
+  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => AuthResponse;
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -49,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading]);
 
-  const login = (email: string, role: UserRole) => {
+  const login = (email: string, role: UserRole): AuthResponse => {
     const foundUser = getUserByEmail(email);
 
     if (foundUser && foundUser.role === role) {
@@ -63,17 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: true, message: 'Login successful.' };
     } else {
+      // In a real app, you'd show an error from the backend
       const message = "Login failed. Check your credentials and selected role.";
       console.error(message);
-      return { success: false, message };
+      return { success: false, message: "Login failed. Check your credentials and selected role." };
     }
   };
 
-  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string) => {
+  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string): AuthResponse => {
     const existingUser = getUserByEmail(email);
     if (existingUser) {
-        const message = "An account with this email already exists.";
-        return { success: false, message };
+        return { success: false, message: "An account with this email already exists." };
     }
     
     const newUser: User = { 

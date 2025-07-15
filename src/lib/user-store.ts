@@ -22,6 +22,13 @@ function initializeUsersDB(): void {
           name: 'Bob Manager',
           email: 'manager@example.com',
           role: 'manager',
+        },
+        {
+          id: 'employee-001',
+          name: 'Charlie Employee',
+          email: 'employee@example.com',
+          role: 'employee',
+          supervisorId: 'manager-001'
         }
     ];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
@@ -66,4 +73,14 @@ export function getManagers(): User[] {
 export function getEmployeesForManager(managerId: string): User[] {
     const users = getUsers();
     return users.filter(u => u.role === 'employee' && u.supervisorId === managerId);
+}
+
+export function updateUserSupervisor(userId: string, newSupervisorId: string): void {
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex !== -1) {
+        users[userIndex].supervisorId = newSupervisorId;
+        setUsers(users);
+    }
 }
