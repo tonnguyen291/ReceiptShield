@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, UserCog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,17 +23,41 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ReassignSupervisorDialog } from './reassign-supervisor-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export function UserManagementTable() {
     const [users, setUsers] = useState<User[]>([]);
     const [managers, setManagers] = useState<User[]>([]);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const { toast } = useToast();
 
-    useEffect(() => {
+    const loadData = () => {
         const allUsers = getUsers();
         const allManagers = getManagers();
         setUsers(allUsers);
         setManagers(allManagers);
+    };
+
+    useEffect(() => {
+        loadData();
     }, []);
+    
+    const handleOpenDialog = (user: User) => {
+        if(user.role === 'employee') {
+            setSelectedUser(user);
+            setIsDialogOpen(true);
+        }
+    };
+
+    const handleSupervisorReassigned = () => {
+        loadData(); // Re-fetch users to reflect the change
+        toast({
+            title: "Supervisor Reassigned",
+            description: "The user's supervisor has been successfully updated."
+        });
+    };
 
     const getSupervisorName = (supervisorId?: string) => {
         if (!supervisorId) return 'N/A';
@@ -42,6 +66,7 @@ export function UserManagementTable() {
     };
 
     return (
+        <>
         <Table>
             <TableHeader>
                 <TableRow>
@@ -57,7 +82,7 @@ export function UserManagementTable() {
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${user.name ? user.name[0] : 'U'}`} data-ai-hint="abstract letter" />
+                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${user.name ? user.name[0] : 'U'}`} data-ai-hint="abstract letter"/>
                                     <AvatarFallback>{user.name?.substring(0, 2)}</AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -89,7 +114,13 @@ export function UserManagementTable() {
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem disabled>Edit User</DropdownMenuItem>
                                     <DropdownMenuItem disabled>Change Role</DropdownMenuItem>
-                                    <DropdownMenuItem disabled>Reassign Supervisor</DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleOpenDialog(user)}
+                                        disabled={user.role !== 'employee'}
+                                    >
+                                        <UserCog className="mr-2 h-4 w-4" />
+                                        Reassign Supervisor
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem disabled className="text-destructive">Deactivate User</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -98,5 +129,15 @@ export function UserManagementTable() {
                 ))}
             </TableBody>
         </Table>
+        {selectedUser && (
+            <ReassignSupervisorDialog
+                isOpen={isDialogOpen}
+                onClose={() => setIsDialogOpen(false)}
+                user={selectedUser}
+                managers={managers}
+                onSupervisorReassigned={handleSupervisorReassigned}
+            />
+        )}
+        </>
     );
 }

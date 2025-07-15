@@ -6,16 +6,17 @@ import { ManagerOverviewCharts } from '@/components/manager/manager-overview-cha
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Filter } from 'lucide-react';
+import { FileText, Filter, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/auth-context';
 import { getFlaggedReceiptsForManager } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/user-store';
+import { Separator } from '@/components/ui/separator';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleGenerateReportClick = () => {
     if (!user) return;
@@ -131,6 +132,17 @@ export default function ManagerDashboardPage() {
           <FlaggedReceiptsTable />
         </CardContent>
       </Card>
+       <Separator className="my-8" />
+       <div className="flex justify-center">
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
     </div>
   );
 }

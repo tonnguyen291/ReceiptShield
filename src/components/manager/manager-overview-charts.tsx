@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ShieldCheck, IndianRupee, Files, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, DollarSign, Files, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager } from '@/lib/receipt-store';
 import { subMonths, format, startOfMonth, endOfMonth } from 'date-fns';
@@ -76,7 +76,7 @@ export function ManagerOverviewCharts() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Team Expenses</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalExpenses.toFixed(2)}</div>

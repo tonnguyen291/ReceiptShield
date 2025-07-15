@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { ExpenseSummaryChart } from '@/components/employee/expense-summary-chart';
-import { PlusCircle, FileUp, IndianRupee, BarChart, AlertTriangle, Bot } from 'lucide-react';
+import { PlusCircle, FileUp, DollarSign, BarChart, AlertTriangle, Bot, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { Separator } from '@/components/ui/separator';
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
+  const { logout } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -31,7 +34,7 @@ export default function EmployeeDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Expenses This Month</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$450.75</div>
@@ -95,6 +98,17 @@ export default function EmployeeDashboardPage() {
               </CardContent>
             </Card>
         </div>
+      </div>
+       <Separator className="my-8" />
+       <div className="flex justify-center">
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );
