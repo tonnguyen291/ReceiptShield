@@ -30,7 +30,7 @@ export function ManagerOverviewCharts() {
 
       const totalExpenses = allReceipts.reduce((acc, r) => {
         const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
-        const amountValue = parseFloat(amountItem?.value.replace(/[^0-g.-]+/g, "") || "0");
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
         return acc + (isNaN(amountValue) ? 0 : amountValue);
       }, 0);
 
@@ -60,7 +60,7 @@ export function ManagerOverviewCharts() {
 
         const monthTotal = monthReceipts.reduce((acc, r) => {
             const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
-            const amountValue = parseFloat(amountItem?.value.replace(/[^0-g.-]+/g, "") || "0");
+            const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
             return acc + (isNaN(amountValue) ? 0 : amountValue);
         }, 0);
 
