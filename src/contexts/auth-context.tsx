@@ -59,9 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (foundUser && foundUser.role === role) {
       setUser(foundUser);
-      return { success: true };
+      if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (role === 'manager') {
+        router.push('/manager/dashboard');
+      } else {
+        router.push('/employee/dashboard');
+      }
+      return { success: true, message: 'Login successful.' };
     } else {
       // In a real app, you'd show an error from the backend
+      const message = "Login failed. Check your credentials and selected role.";
+      console.error(message);
       return { success: false, message: "Login failed. Check your credentials and selected role." };
     }
   };
@@ -83,7 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addUserToDB(newUser);
     setUser(newUser);
     
-    return { success: true };
+    if (role === 'admin') {
+      router.push('/admin/dashboard');
+    } else if (role === 'manager') {
+      router.push('/manager/dashboard');
+    } else {
+      router.push('/employee/dashboard');
+    }
+    return { success: true, message: 'Account created successfully.' };
   };
 
   const logout = () => {
