@@ -1,16 +1,75 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TrendingUp, FileWarning, CheckCircle2, ShieldCheck, IndianRupee, Files, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, IndianRupee, Files, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { getReceiptsForManager } from '@/lib/receipt-store';
+import { subMonths, format, startOfMonth, endOfMonth } from 'date-fns';
 
-const totalExpensesData = [
-  { name: 'Jan', total: 4000 }, { name: 'Feb', total: 3000 }, { name: 'Mar', total: 5000 },
-  { name: 'Apr', total: 4500 }, { name: 'May', total: 6000 }, { name: 'Jun', total: 5500 },
-];
+interface MonthlyTotal {
+  name: string;
+  total: number;
+}
 
 export function ManagerOverviewCharts() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalExpenses: 0,
+    totalReceipts: 0,
+    fraudAlerts: 0,
+    pendingApprovals: 0,
+  });
+  const [monthlyData, setMonthlyData] = useState<MonthlyTotal[]>([]);
+
+  useEffect(() => {
+    if (user?.id) {
+      const allReceipts = getReceiptsForManager(user.id);
+
+      const totalExpenses = allReceipts.reduce((acc, r) => {
+        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-g.-]+/g, "") || "0");
+        return acc + (isNaN(amountValue) ? 0 : amountValue);
+      }, 0);
+
+      const fraudAlerts = allReceipts.filter(r => r.isFraudulent).length;
+      const pendingApprovals = allReceipts.filter(r => r.status === 'pending_approval').length;
+      
+      setStats({
+        totalExpenses,
+        totalReceipts: allReceipts.length,
+        fraudAlerts,
+        pendingApprovals,
+      });
+
+      // Generate data for the last 6 months
+      const sixMonthsData: MonthlyTotal[] = [];
+      const today = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const date = subMonths(today, i);
+        const monthName = format(date, 'MMM');
+        const start = startOfMonth(date);
+        const end = endOfMonth(date);
+
+        const monthReceipts = allReceipts.filter(r => {
+          const receiptDate = new Date(r.uploadedAt);
+          return receiptDate >= start && receiptDate <= end;
+        });
+
+        const monthTotal = monthReceipts.reduce((acc, r) => {
+            const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+            const amountValue = parseFloat(amountItem?.value.replace(/[^0-g.-]+/g, "") || "0");
+            return acc + (isNaN(amountValue) ? 0 : amountValue);
+        }, 0);
+
+        sixMonthsData.push({ name: monthName, total: monthTotal });
+      }
+      setMonthlyData(sixMonthsData);
+    }
+  }, [user]);
+
   return (
     <div className="grid gap-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -20,8 +79,8 @@ export function ManagerOverviewCharts() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$28,450.50</div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month (mock)</p>
+            <div className="text-2xl font-bold">${stats.totalExpenses.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Sum of all team receipts</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -30,8 +89,8 @@ export function ManagerOverviewCharts() {
             <Files className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">214</div>
-            <p className="text-xs text-muted-foreground">Across 15 employees (mock)</p>
+            <div className="text-2xl font-bold">{stats.totalReceipts}</div>
+            <p className="text-xs text-muted-foreground">Total submissions by team</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -40,8 +99,8 @@ export function ManagerOverviewCharts() {
             <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">12</div>
-            <p className="text-xs text-muted-foreground">High probability flags (mock)</p>
+            <div className="text-2xl font-bold text-destructive">{stats.fraudAlerts}</div>
+            <p className="text-xs text-muted-foreground">Flagged by AI analysis</p>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
@@ -50,8 +109,8 @@ export function ManagerOverviewCharts() {
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Require your review (mock)</p>
+            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
+            <p className="text-xs text-muted-foreground">Receipts requiring review</p>
           </CardContent>
         </Card>
       </div>
@@ -59,14 +118,14 @@ export function ManagerOverviewCharts() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Monthly Expense Trends</CardTitle>
-          <CardDescription>Overview of team-wide expenses over the last 6 months (mock data).</CardDescription>
+          <CardDescription>Overview of team-wide expenses over the last 6 months.</CardDescription>
         </CardHeader>
         <CardContent className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={totalExpensesData}>
+            <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`} />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,6 +41,16 @@ export default function VerifyReceiptPage() {
       prevItems.map(item => (item.id === id ? { ...item, value: newValue } : item))
     );
   };
+  
+  const openPdfInNewTab = () => {
+    if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
+      const pdfWindow = window.open("");
+      if (pdfWindow) {
+        pdfWindow.document.write(`<iframe width='100%' height='100%' src='${receipt.imageDataUri}'></iframe>`);
+        pdfWindow.document.title = receipt.fileName;
+      }
+    }
+  };
 
   const handleConfirmAndAnalyze = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,7 +64,7 @@ export default function VerifyReceiptPage() {
     if (needsAttention && user?.role === 'employee') { // Only employees get this strict check
         toast({
             title: 'Attention Needed',
-            description: 'Please review and edit fields marked "Extraction Failed", "Not found - Edit me", or empty critical fields (Vendor, Date, Total Amount) before proceeding.',
+            description: 'Please review and edit fields marked "Extraction Failed", "Not found - edit me", or empty critical fields (Vendor, Date, Total Amount) before proceeding.',
             variant: 'destructive',
         });
         return;
@@ -154,6 +164,7 @@ export default function VerifyReceiptPage() {
   const isExtractionEssentiallyFailed = editableItems.length > 0 && editableItems.every(item => item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"));
   const pageTitle = user?.role === 'manager' ? `Review & Edit Receipt: ${receipt.fileName}` : `Verify Receipt Data: ${receipt.fileName}`;
   const submitButtonText = user?.role === 'manager' ? 'Save Changes & Re-analyze' : 'Confirm & Analyze Fraud';
+  const isPdf = receipt.imageDataUri.startsWith('data:application/pdf');
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -178,16 +189,28 @@ export default function VerifyReceiptPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div>
-              <h3 className="font-semibold text-lg mb-2">Receipt Image</h3>
-              <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted min-h-[300px] md:min-h-[400px]">
-                <Image
-                  src={receipt.imageDataUri}
-                  alt={`Receipt ${receipt.fileName}`}
-                  layout="fill"
-                  objectFit="contain"
-                  className="p-1"
-                  data-ai-hint="receipt full"
-                />
+              <h3 className="font-semibold text-lg mb-2">Receipt Document</h3>
+              <div className="border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px]">
+                {isPdf ? (
+                    <div className="h-full flex flex-col items-center justify-center p-4">
+                      <FileType className="w-16 h-16 text-muted-foreground mb-4" />
+                      <p className="text-sm text-center mb-4 text-muted-foreground">PDF preview is not available here due to browser security policies.</p>
+                      <Button type="button" onClick={openPdfInNewTab}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> View Full PDF
+                      </Button>
+                    </div>
+                ) : (
+                  <div className="relative h-full">
+                    <Image
+                      src={receipt.imageDataUri}
+                      alt={`Receipt ${receipt.fileName}`}
+                      fill
+                      style={{objectFit: 'contain'}}
+                      className="p-1"
+                      data-ai-hint="receipt full"
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-3">

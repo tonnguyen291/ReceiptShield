@@ -9,14 +9,74 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { FileText, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/auth-context';
+import { getFlaggedReceiptsForManager } from '@/lib/receipt-store';
+import { getEmployeesForManager } from '@/lib/user-store';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleGenerateReportClick = () => {
+    if (!user) return;
+
+    const teamMembers = getEmployeesForManager(user.id);
+    if (teamMembers.length === 0) {
+      toast({
+        title: 'No Employees Found',
+        description: 'You have no employees assigned to you to generate a report for.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const receiptsToExport = getFlaggedReceiptsForManager(user.id);
+    if (receiptsToExport.length === 0) {
+      toast({
+        title: 'No Receipts to Export',
+        description: "There are no receipts in your team's audit queue to export.",
+      });
+      return;
+    }
+
+    const headers = [
+      'ID', 'File Name', 'Uploaded By', 'Uploaded At', 'Fraud Probability', 
+      'Status', 'Vendor', 'Date', 'Total Amount'
+    ];
+    const csvRows = [headers.join(',')];
+
+    receiptsToExport.forEach(receipt => {
+      const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
+      const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
+      const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
+      
+      const row = [
+        receipt.id,
+        `"${receipt.fileName.replace(/"/g, '""')}"`,
+        receipt.uploadedBy,
+        new Date(receipt.uploadedAt).toISOString(),
+        receipt.fraudProbability.toFixed(2),
+        receipt.status || 'pending_approval',
+        `"${vendor.replace(/"/g, '""')}"`,
+        `"${date.replace(/"/g, '""')}"`,
+        `"${total.replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `audit_queue_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     toast({
-      title: 'Feature Coming Soon',
-      description: 'Full report generation and download functionality will be available in a future update.',
+      title: 'Report Generated',
+      description: 'Your CSV report for the audit queue has been downloaded.',
     });
   };
 
@@ -27,7 +87,7 @@ export default function ManagerDashboardPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
           <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
-        <Button onClick={handleGenerateReportClick} size="lg" className="shadow-sm w-full sm:w-auto" disabled>
+        <Button onClick={handleGenerateReportClick} size="lg" className="shadow-sm w-full sm:w-auto">
           <FileText className="mr-2 h-5 w-5" />
           Generate Report
         </Button>
