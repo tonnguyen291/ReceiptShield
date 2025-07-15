@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/user-store';
 import { Separator } from '@/components/ui/separator';
+import { EmployeeView } from '@/components/manager/employee-view';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
@@ -132,6 +133,9 @@ export default function ManagerDashboardPage() {
           <FlaggedReceiptsTable />
         </CardContent>
       </Card>
+
+      <EmployeeView />
+      
        <Separator className="my-8" />
        <div className="flex justify-center">
         <Button
