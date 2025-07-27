@@ -41,8 +41,9 @@ export default function ManagerDashboardPage() {
     }
 
     const headers = [
-      'ID', 'File Name', 'Uploaded By', 'Uploaded At', 'Fraud Probability', 
-      'Status', 'Vendor', 'Date', 'Total Amount'
+      'ID', 'File Name', 'Uploaded By', 'Uploaded At', 'Status', 
+      'Fraud Probability', 'AI Explanation', 'Manager Notes', 
+      'Vendor', 'Date', 'Total Amount'
     ];
     const csvRows = [headers.join(',')];
 
@@ -51,16 +52,28 @@ export default function ManagerDashboardPage() {
       const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
       const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
       
+      const escapeCsvField = (field: string | undefined) => {
+        if (field === null || field === undefined) return '""';
+        const str = String(field);
+        // If the field contains a comma, double-quote, or newline, enclose it in double-quotes.
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }
+      
       const row = [
         receipt.id,
-        `"${receipt.fileName.replace(/"/g, '""')}"`,
-        receipt.uploadedBy,
+        escapeCsvField(receipt.fileName),
+        escapeCsvField(receipt.uploadedBy),
         new Date(receipt.uploadedAt).toISOString(),
+        escapeCsvField(receipt.status || (receipt.isFraudulent ? 'pending_approval' : 'clear')),
         receipt.fraudProbability.toFixed(2),
-        receipt.status || (receipt.isFraudulent ? 'pending_approval' : 'clear'),
-        `"${vendor.replace(/"/g, '""')}"`,
-        `"${date.replace(/"/g, '""')}"`,
-        `"${total.replace(/"/g, '""')}"`
+        escapeCsvField(receipt.explanation),
+        escapeCsvField(receipt.managerNotes),
+        escapeCsvField(vendor),
+        escapeCsvField(date),
+        escapeCsvField(total)
       ];
       csvRows.push(row.join(','));
     });
@@ -96,18 +109,47 @@ export default function ManagerDashboardPage() {
         return;
     }
 
-    // Dynamically import libraries to ensure they are client-side only
     const { default: jsPDF } = await import('jspdf');
     const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF();
     
-    doc.setFontSize(18);
-    doc.text(`Team Activity Report - ${user.name}`, 14, 22);
+    const totalExpenses = receiptsToExport.reduce((acc, r) => {
+        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+        return acc + (isNaN(amountValue) ? 0 : amountValue);
+    }, 0);
+    const totalFlagged = receiptsToExport.filter(r => r.isFraudulent).length;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Receipt Shield - Team Expense Report', 14, 22);
     doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Manager: ${user.name}`, 14, 30);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 150, 30, { align: 'right' });
+
+    // Summary Section
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Summary', 14, 45);
+    doc.setLineWidth(0.5);
+    doc.line(14, 46, 200, 46);
     
+    autoTable(doc, {
+        startY: 48,
+        body: [
+            ['Total Receipts:', receiptsToExport.length.toString()],
+            ['Total Expenses:', `$${totalExpenses.toFixed(2)}`],
+            ['Flagged for Review:', totalFlagged.toString()],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10 },
+        columnStyles: { 0: { fontStyle: 'bold' } }
+    });
+
+    // Main Table
     const tableData = receiptsToExport.map(receipt => {
         const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
         const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
@@ -119,23 +161,33 @@ export default function ManagerDashboardPage() {
             vendor,
             date,
             total,
+            `${Math.round(receipt.fraudProbability * 100)}%`,
             status
         ];
     });
 
     autoTable(doc, {
-        startY: 35,
-        head: [['Employee', 'Vendor', 'Date', 'Amount', 'Status']],
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        head: [['Employee', 'Vendor', 'Date', 'Amount', 'Fraud Score', 'Status']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [38, 43, 51] }, // Dark grey for header
+        headStyles: { fillColor: [38, 43, 51], textColor: [255,255,255] },
     });
+
+    // Footer with Page Numbers
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, 287, { align: 'center' });
+    }
     
-    doc.save(`team_activity_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`team_expense_report_${new Date().toISOString().split('T')[0]}.pdf`);
 
     toast({
       title: 'PDF Report Generated',
-      description: 'A PDF report for your team\'s activity has been downloaded.',
+      description: 'An enhanced PDF report for your team\'s activity has been downloaded.',
     });
     setIsGenerating(false);
   };
@@ -225,3 +277,5 @@ export default function ManagerDashboardPage() {
     </div>
   );
 }
+
+    
