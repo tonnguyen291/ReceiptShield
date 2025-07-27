@@ -1,12 +1,13 @@
 
 'use client';
 
+import { useState } from 'react';
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Filter, LogOut, ChevronDown } from 'lucide-react';
+import { FileText, Filter, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -17,18 +18,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager } from '@/lib/receipt-store';
-import { getEmployeesForManager } from '@/lib/user-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerateCsvReport = () => {
     if (!user) return;
+    setIsGenerating(true);
 
     const receiptsToExport = getReceiptsForManager(user.id);
     if (receiptsToExport.length === 0) {
@@ -36,6 +36,7 @@ export default function ManagerDashboardPage() {
         title: 'No Receipts to Export',
         description: "There are no receipts from your team to export.",
       });
+      setIsGenerating(false);
       return;
     }
 
@@ -78,10 +79,12 @@ export default function ManagerDashboardPage() {
       title: 'CSV Report Generated',
       description: 'A CSV report for your team\'s activity has been downloaded.',
     });
+    setIsGenerating(false);
   };
 
-  const handleGeneratePdfReport = () => {
+  const handleGeneratePdfReport = async () => {
     if (!user) return;
+    setIsGenerating(true);
 
     const receiptsToExport = getReceiptsForManager(user.id);
     if (receiptsToExport.length === 0) {
@@ -89,8 +92,13 @@ export default function ManagerDashboardPage() {
             title: 'No Receipts to Export',
             description: "There are no receipts from your team to export.",
         });
+        setIsGenerating(false);
         return;
     }
+
+    // Dynamically import libraries to ensure they are client-side only
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF();
     
@@ -120,7 +128,7 @@ export default function ManagerDashboardPage() {
         head: [['Employee', 'Vendor', 'Date', 'Amount', 'Status']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [38, 43, 51] },
+        headStyles: { fillColor: [38, 43, 51] }, // Dark grey for header
     });
     
     doc.save(`team_activity_report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -129,6 +137,7 @@ export default function ManagerDashboardPage() {
       title: 'PDF Report Generated',
       description: 'A PDF report for your team\'s activity has been downloaded.',
     });
+    setIsGenerating(false);
   };
 
   return (
@@ -140,17 +149,21 @@ export default function ManagerDashboardPage() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="lg" className="shadow-sm w-full sm:w-auto">
-              <FileText className="mr-2 h-5 w-5" />
-              Generate Report
+            <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled={isGenerating}>
+              {isGenerating ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <FileText className="mr-2 h-5 w-5" />
+              )}
+              {isGenerating ? 'Generating...' : 'Generate Report'}
               <ChevronDown className="ml-2 h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleGenerateCsvReport}>
+            <DropdownMenuItem onClick={handleGenerateCsvReport} disabled={isGenerating}>
               Export as CSV
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleGeneratePdfReport}>
+            <DropdownMenuItem onClick={handleGeneratePdfReport} disabled={isGenerating}>
               Export as PDF
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -202,7 +215,7 @@ export default function ManagerDashboardPage() {
        <div className="flex justify-center">
         <Button
           variant="ghost"
-          onClick={logout}
+          onClick={() => useAuth().logout()}
           className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
         >
           <LogOut className="mr-2 h-4 w-4" />
