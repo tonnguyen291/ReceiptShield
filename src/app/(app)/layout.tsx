@@ -226,6 +226,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <SidebarFooter>
                 {sharedNavBottom}
+                 <SidebarMenuItem>
+                    <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
+                        <LogOut />
+                        <span>Sign Out</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
             </SidebarFooter>
         </SidebarMenu>
       </Sidebar>
