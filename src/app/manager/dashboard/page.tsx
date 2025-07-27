@@ -25,7 +25,7 @@ import { getUsers } from '@/lib/user-store';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportUser, setReportUser] = useState<string | null>(null);
 
@@ -298,7 +298,7 @@ export default function ManagerDashboardPage() {
        <div className="flex justify-center">
         <Button
           variant="ghost"
-          onClick={() => useAuth().logout()}
+          onClick={logout}
           className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
         >
           <LogOut className="mr-2 h-4 w-4" />
