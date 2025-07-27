@@ -15,22 +15,25 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, UserCog } from 'lucide-react';
+import { MoreHorizontal, Pencil, UserCog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ReassignSupervisorDialog } from './reassign-supervisor-dialog';
+import { EditUserDialog } from './edit-user-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 export function UserManagementTable() {
     const [users, setUsers] = useState<User[]>([]);
     const [managers, setManagers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const loadData = () => {
@@ -44,11 +47,16 @@ export function UserManagementTable() {
         loadData();
     }, []);
     
-    const handleOpenDialog = (user: User) => {
+    const handleOpenReassignDialog = (user: User) => {
         if(user.role === 'employee') {
             setSelectedUser(user);
-            setIsDialogOpen(true);
+            setIsReassignDialogOpen(true);
         }
+    };
+
+    const handleOpenEditDialog = (user: User) => {
+        setSelectedUser(user);
+        setIsEditDialogOpen(true);
     };
 
     const handleSupervisorReassigned = () => {
@@ -57,6 +65,10 @@ export function UserManagementTable() {
             title: "Supervisor Reassigned",
             description: "The user's supervisor has been successfully updated."
         });
+    };
+
+    const handleUserUpdated = () => {
+        loadData();
     };
 
     const getSupervisorName = (supervisorId?: string) => {
@@ -112,16 +124,19 @@ export function UserManagementTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem disabled>Edit User</DropdownMenuItem>
-                                    <DropdownMenuItem disabled>Change Role</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOpenEditDialog(user)}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Edit User
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => handleOpenDialog(user)}
+                                        onClick={() => handleOpenReassignDialog(user)}
                                         disabled={user.role !== 'employee'}
                                     >
                                         <UserCog className="mr-2 h-4 w-4" />
                                         Reassign Supervisor
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem disabled className="text-destructive">Deactivate User</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem disabled className="text-destructive focus:text-destructive">Deactivate User</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
@@ -131,11 +146,19 @@ export function UserManagementTable() {
         </Table>
         {selectedUser && (
             <ReassignSupervisorDialog
-                isOpen={isDialogOpen}
-                onClose={() => setIsDialogOpen(false)}
+                isOpen={isReassignDialogOpen}
+                onClose={() => setIsReassignDialogOpen(false)}
                 user={selectedUser}
                 managers={managers}
                 onSupervisorReassigned={handleSupervisorReassigned}
+            />
+        )}
+        {selectedUser && (
+            <EditUserDialog
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                user={selectedUser}
+                onUserUpdated={handleUserUpdated}
             />
         )}
         </>

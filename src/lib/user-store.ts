@@ -67,6 +67,17 @@ export function addUser(user: User): void {
   setUsers([...users, user]);
 }
 
+export function updateUser(updatedUser: User): void {
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.id === updatedUser.id);
+
+    if (userIndex !== -1) {
+        users[userIndex] = updatedUser;
+        setUsers(users);
+    }
+}
+
+
 export function getUserByEmail(email: string): User | undefined {
   const users = getUsers();
   return users.find(u => u.email.toLowerCase() === email.toLowerCase());
