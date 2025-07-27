@@ -180,7 +180,7 @@ export function UserManagementTable() {
                                         <DropdownMenuItem 
                                             className="text-destructive focus:text-destructive"
                                             onClick={() => handleOpenDeactivateDialog(user)}
-                                            disabled={user.id === currentUser?.id}
+                                            disabled={user.role === 'admin'}
                                         >
                                             <UserX className="mr-2 h-4 w-4" />
                                             Deactivate User
