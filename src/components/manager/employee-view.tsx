@@ -23,10 +23,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, ShieldQuestion, Loader2, Users } from 'lucide-react';
+import { CheckCircle, XCircle, ShieldQuestion, Loader2, Users, FileText, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export function EmployeeView() {
+interface EmployeeViewProps {
+    onGeneratePdf: (employeeEmail: string) => void;
+    onGenerateCsv: (employeeEmail: string) => void;
+    isGenerating: boolean;
+    reportUser: string | null;
+}
+
+export function EmployeeView({ onGeneratePdf, onGenerateCsv, isGenerating, reportUser }: EmployeeViewProps) {
   const { user } = useAuth();
   const [employees, setEmployees] = useState<User[]>([]);
   const [receiptsByEmployee, setReceiptsByEmployee] = useState<Record<string, ProcessedReceipt[]>>({});
@@ -42,7 +51,7 @@ export function EmployeeView() {
       teamMembers.forEach(employee => {
         if (employee.email) {
           allReceipts[employee.id] = getAllReceiptsForUser(employee.email)
-            .filter(r => r.explanation !== "Pending user verification."); // Filter out unsubmitted receipts
+            .filter(r => r.explanation !== "Pending user verification.");
         }
       });
       setReceiptsByEmployee(allReceipts);
@@ -87,7 +96,7 @@ export function EmployeeView() {
     <Card className="shadow-md">
       <CardHeader>
         <CardTitle>Employee View</CardTitle>
-        <CardDescription>View submitted receipts for each employee on your team.</CardDescription>
+        <CardDescription>View submitted receipts and generate individual reports for each employee on your team.</CardDescription>
       </CardHeader>
       <CardContent>
         {employees.length === 0 ? (
@@ -101,19 +110,40 @@ export function EmployeeView() {
             {employees.map(employee => (
               <AccordionItem value={employee.id} key={employee.id}>
                 <AccordionTrigger>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                        <AvatarImage src={`https://placehold.co/40x40.png?text=${employee.name ? employee.name[0] : 'U'}`} data-ai-hint="abstract letter" />
-                        <AvatarFallback>{employee.name?.substring(0, 2)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div className="font-medium text-left">{employee.name}</div>
-                        <div className="text-xs text-muted-foreground text-left">{employee.email}</div>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage src={`https://placehold.co/40x40.png?text=${employee.name ? employee.name[0] : 'U'}`} data-ai-hint="abstract letter" />
+                                <AvatarFallback>{employee.name?.substring(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <div className="font-medium text-left">{employee.name}</div>
+                                <div className="text-xs text-muted-foreground text-left">{employee.email}</div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="p-2 bg-muted/50 rounded-md">
+                    <div className="flex justify-end mb-4">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" disabled={isGenerating && reportUser === employee.email}>
+                                     {isGenerating && reportUser === employee.email ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                     ) : (
+                                        <FileText className="mr-2 h-4 w-4" />
+                                     )}
+                                    Generate Report
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => employee.email && onGenerateCsv(employee.email)} disabled={isGenerating}>Export as CSV</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => employee.email && onGeneratePdf(employee.email)} disabled={isGenerating}>Export as PDF</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                     {receiptsByEmployee[employee.id]?.length > 0 ? (
                        <Table>
                         <TableHeader>

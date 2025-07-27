@@ -17,26 +17,38 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
-import { getReceiptsForManager } from '@/lib/receipt-store';
+import { getReceiptsForManager, getAllReceiptsForUser } from '@/lib/receipt-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
+import type { ProcessedReceipt } from '@/types';
+import { getUsers } from '@/lib/user-store';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reportUser, setReportUser] = useState<string | null>(null);
 
-  const handleGenerateCsvReport = () => {
+  const handleGenerateCsvReport = (employeeEmail?: string) => {
     if (!user) return;
     setIsGenerating(true);
+    if(employeeEmail) setReportUser(employeeEmail);
 
-    const receiptsToExport = getReceiptsForManager(user.id);
+    const receiptsToExport = employeeEmail 
+        ? getAllReceiptsForUser(employeeEmail) 
+        : getReceiptsForManager(user.id);
+        
+    const reportTitle = employeeEmail
+        ? `activity_report_${employeeEmail}`
+        : 'team_activity_report';
+
     if (receiptsToExport.length === 0) {
       toast({
         title: 'No Receipts to Export',
-        description: "There are no receipts from your team to export.",
+        description: `There are no receipts for the selected scope to export.`,
       });
       setIsGenerating(false);
+      setReportUser(null);
       return;
     }
 
@@ -55,7 +67,6 @@ export default function ManagerDashboardPage() {
       const escapeCsvField = (field: string | undefined) => {
         if (field === null || field === undefined) return '""';
         const str = String(field);
-        // If the field contains a comma, double-quote, or newline, enclose it in double-quotes.
         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
           return `"${str.replace(/"/g, '""')}"`;
         }
@@ -83,29 +94,39 @@ export default function ManagerDashboardPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `team_activity_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `${reportTitle}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({
       title: 'CSV Report Generated',
-      description: 'A CSV report for your team\'s activity has been downloaded.',
+      description: 'The CSV report has been downloaded.',
     });
     setIsGenerating(false);
+    setReportUser(null);
   };
 
-  const handleGeneratePdfReport = async () => {
+  const handleGeneratePdfReport = async (employeeEmail?: string) => {
     if (!user) return;
     setIsGenerating(true);
+    if(employeeEmail) setReportUser(employeeEmail);
 
-    const receiptsToExport = getReceiptsForManager(user.id);
+    const receiptsToExport = employeeEmail 
+        ? getAllReceiptsForUser(employeeEmail)
+        : getReceiptsForManager(user.id);
+        
+    const reportTitle = employeeEmail
+        ? `Expense Report for ${getUsers().find(u => u.email === employeeEmail)?.name || employeeEmail}`
+        : 'Team Expense Report';
+    
     if (receiptsToExport.length === 0) {
         toast({
             title: 'No Receipts to Export',
-            description: "There are no receipts from your team to export.",
+            description: "There are no receipts for the selected scope to export.",
         });
         setIsGenerating(false);
+        setReportUser(null);
         return;
     }
 
@@ -124,11 +145,11 @@ export default function ManagerDashboardPage() {
     // Header
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Receipt Shield - Team Expense Report', 14, 22);
+    doc.text('Receipt Shield - ' + reportTitle, 14, 22);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.text(`Manager: ${user.name}`, 14, 30);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 150, 30, { align: 'right' });
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 200, 30, { align: 'right' });
 
     // Summary Section
     doc.setFontSize(12);
@@ -183,13 +204,18 @@ export default function ManagerDashboardPage() {
         doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, 287, { align: 'center' });
     }
     
-    doc.save(`team_expense_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    const fileName = employeeEmail
+        ? `expense_report_${employeeEmail}_${new Date().toISOString().split('T')[0]}.pdf`
+        : `team_expense_report_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    doc.save(fileName);
 
     toast({
       title: 'PDF Report Generated',
-      description: 'An enhanced PDF report for your team\'s activity has been downloaded.',
+      description: 'An enhanced PDF report has been downloaded.',
     });
     setIsGenerating(false);
+    setReportUser(null);
   };
 
   return (
@@ -201,21 +227,21 @@ export default function ManagerDashboardPage() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled={isGenerating}>
-              {isGenerating ? (
+            <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled={isGenerating && !reportUser}>
+              {isGenerating && !reportUser ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               ) : (
                 <FileText className="mr-2 h-5 w-5" />
               )}
-              {isGenerating ? 'Generating...' : 'Generate Report'}
+              {isGenerating && !reportUser ? 'Generating...' : 'Generate Team Report'}
               <ChevronDown className="ml-2 h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleGenerateCsvReport} disabled={isGenerating}>
+            <DropdownMenuItem onClick={() => handleGenerateCsvReport()} disabled={isGenerating}>
               Export as CSV
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleGeneratePdfReport} disabled={isGenerating}>
+            <DropdownMenuItem onClick={() => handleGeneratePdfReport()} disabled={isGenerating}>
               Export as PDF
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -261,7 +287,12 @@ export default function ManagerDashboardPage() {
         </CardContent>
       </Card>
 
-      <EmployeeView />
+      <EmployeeView 
+        onGeneratePdf={handleGeneratePdfReport} 
+        onGenerateCsv={handleGenerateCsvReport}
+        isGenerating={isGenerating}
+        reportUser={reportUser}
+      />
       
        <Separator className="my-8" />
        <div className="flex justify-center">
@@ -277,5 +308,3 @@ export default function ManagerDashboardPage() {
     </div>
   );
 }
-
-    
