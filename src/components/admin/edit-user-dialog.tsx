@@ -33,6 +33,7 @@ export function EditUserDialog({
   onUserUpdated,
 }: EditUserDialogProps) {
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -40,6 +41,7 @@ export function EditUserDialog({
   useEffect(() => {
     if (user) {
       setName(user.name || '');
+      setEmail(user.email);
       setRole(user.role);
     }
   }, [user]);
@@ -48,9 +50,11 @@ export function EditUserDialog({
 
   const handleSave = () => {
     setIsSaving(true);
+    // In a real app, you'd add validation to check if the new email already exists
     const updatedUser: User = {
         ...user,
         name,
+        email,
         role,
         // If role is changed from employee, supervisorId should be cleared
         supervisorId: role === 'employee' ? user.supervisorId : undefined,
@@ -78,7 +82,7 @@ export function EditUserDialog({
         <DialogHeader>
           <DialogTitle>Edit User Details</DialogTitle>
           <DialogDescription>
-            Modify the details for <strong>{user.name}</strong> ({user.email}).
+            Modify the details for <strong>{user.name}</strong>.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -116,11 +120,14 @@ export function EditUserDialog({
                 <Label htmlFor="edit-email">Email</Label>
                 <Input
                     id="edit-email"
-                    value={user.email}
-                    disabled
-                    readOnly
-                    className="bg-muted/50"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    disabled={isSaving}
                 />
+                 <p className="text-xs text-muted-foreground">
+                    Caution: Changing the email affects login and receipt history.
+                </p>
           </div>
         </div>
         <DialogFooter>

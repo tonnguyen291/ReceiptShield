@@ -60,6 +60,8 @@ export function getUsers(): User[] {
 function setUsers(users: User[]): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
+   // Dispatch a storage event so other components can update
+  window.dispatchEvent(new Event('storage'));
 }
 
 export function addUser(user: User): void {
