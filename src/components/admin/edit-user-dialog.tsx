@@ -12,11 +12,21 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { updateUser } from '@/lib/user-store';
-import { Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditUserDialogProps {
@@ -36,6 +46,7 @@ export function EditUserDialog({
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
   const [isSaving, setIsSaving] = useState(false);
+  const [isConfirmingAdmin, setIsConfirmingAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,7 +59,7 @@ export function EditUserDialog({
 
   if (!user) return null;
 
-  const handleSave = () => {
+  const proceedWithSave = () => {
     setIsSaving(true);
     // In a real app, you'd add validation to check if the new email already exists
     const updatedUser: User = {
@@ -65,6 +76,7 @@ export function EditUserDialog({
     // Simulate a small delay for user feedback
     setTimeout(() => {
         setIsSaving(false);
+        if (isConfirmingAdmin) setIsConfirmingAdmin(false);
         onUserUpdated();
         toast({
             title: "User Updated",
@@ -72,74 +84,110 @@ export function EditUserDialog({
         });
         onClose();
     }, 500);
+  }
+
+  const handleSave = () => {
+    // If the role is being changed TO admin and the original role was NOT admin, show confirmation
+    if (role === 'admin' && user.role !== 'admin') {
+      setIsConfirmingAdmin(true);
+      return;
+    }
+    proceedWithSave();
   };
   
   const canChangeRole = user.role !== 'admin';
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit User Details</DialogTitle>
-          <DialogDescription>
-            Modify the details for <strong>{user.name}</strong>.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Full Name</Label>
-              <Input
-                id="edit-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="User's full name"
-                disabled={isSaving}
-              />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Select
-                    value={role}
-                    onValueChange={(value) => setRole(value as UserRole)}
-                    disabled={isSaving || !canChangeRole}
-                >
-                    <SelectTrigger id="edit-role">
-                    <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                </Select>
-                {!canChangeRole && (
-                    <p className="text-xs text-muted-foreground">The role of an admin cannot be changed.</p>
-                )}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
+    <>
+      <Dialog open={isOpen && !isConfirmingAdmin} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User Details</DialogTitle>
+            <DialogDescription>
+              Modify the details for <strong>{user.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Full Name</Label>
                 <Input
-                    id="edit-email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    disabled={isSaving}
+                  id="edit-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="User's full name"
+                  disabled={isSaving}
                 />
-                 <p className="text-xs text-muted-foreground">
-                    Caution: Changing the email affects login and receipt history.
-                </p>
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="edit-role">Role</Label>
+                  <Select
+                      value={role}
+                      onValueChange={(value) => setRole(value as UserRole)}
+                      disabled={isSaving || !canChangeRole}
+                  >
+                      <SelectTrigger id="edit-role">
+                      <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                  </Select>
+                  {!canChangeRole && (
+                      <p className="text-xs text-muted-foreground">The role of an admin cannot be changed.</p>
+                  )}
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                      id="edit-email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="user@example.com"
+                      disabled={isSaving}
+                  />
+                   <p className="text-xs text-muted-foreground">
+                      Caution: Changing the email affects login and receipt history.
+                  </p>
+            </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={isConfirmingAdmin} onOpenChange={setIsConfirmingAdmin}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-destructive"/>
+                Are you absolutely sure?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+                You are about to promote <strong>{name}</strong> to an <strong>Admin</strong>.
+                This action is irreversible through this interface. Are you sure you want to continue?
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsConfirmingAdmin(false)} disabled={isSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+                onClick={proceedWithSave}
+                disabled={isSaving}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Yes, Make Admin
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+   </>
   );
 }
