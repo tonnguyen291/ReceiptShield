@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { ExpenseSummaryChart } from '@/components/employee/expense-summary-chart';
 import { PlusCircle, FileUp, DollarSign, BarChart, AlertTriangle, Bot, LogOut } from 'lucide-react';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 
@@ -23,7 +22,7 @@ export default function EmployeeDashboardPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Manage your expenses and receipts here.</p>
         </div>
-        <Button onClick={() => router.push('/employee/upload')} size="lg" className="shadow-sm w-full sm:w-auto">
+        <Button onClick={() => router.push('/employee/submit-receipt')} size="lg" className="shadow-sm w-full sm:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" />
           Upload New Receipt
         </Button>

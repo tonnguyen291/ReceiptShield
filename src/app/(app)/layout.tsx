@@ -74,8 +74,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
       </SidebarMenuItem>
        <SidebarMenuItem>
-        <Link href="/employee/upload" passHref>
-          <SidebarMenuButton isActive={pathname.startsWith('/employee/upload')} tooltip={{children: 'Submit New Receipt'}}>
+        <Link href="/employee/submit-receipt" passHref>
+          <SidebarMenuButton isActive={pathname.startsWith('/employee/submit-receipt')} tooltip={{children: 'Submit New Receipt'}}>
             <FileUp />
             <span>Submit Receipt</span>
           </SidebarMenuButton>
