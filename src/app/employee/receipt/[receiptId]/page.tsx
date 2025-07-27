@@ -13,10 +13,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, FileType, Eye } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function ReceiptDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [receipt, setReceipt] = useState<ProcessedReceipt | null | undefined>(undefined); // undefined for loading state
   const receiptId = params.receiptId as string;
 
@@ -26,6 +28,14 @@ export default function ReceiptDetailsPage() {
       setReceipt(foundReceipt);
     }
   }, [receiptId]);
+  
+  const handleBackToDashboard = () => {
+    if (user?.role === 'manager') {
+      router.push('/manager/dashboard');
+    } else {
+      router.push('/employee/dashboard');
+    }
+  };
   
   const openPdfInNewTab = () => {
     if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
@@ -56,7 +66,7 @@ export default function ReceiptDetailsPage() {
         </CardHeader>
         <CardContent>
           <p>The receipt you are looking for could not be found. It might have been deleted or the ID is incorrect.</p>
-          <Button onClick={() => router.push('/employee/dashboard')} className="mt-6">
+          <Button onClick={handleBackToDashboard} className="mt-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
@@ -93,7 +103,7 @@ export default function ReceiptDetailsPage() {
                 Uploaded by: {receipt.uploadedBy} on {new Date(receipt.uploadedAt).toLocaleDateString()}
                 </CardDescription>
             </div>
-            <Button onClick={() => router.push('/employee/dashboard')} variant="outline" size="sm">
+            <Button onClick={handleBackToDashboard} variant="outline" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
             </Button>
