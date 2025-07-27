@@ -35,7 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
       if (storedUserJSON) {
         const storedUser: User = JSON.parse(storedUserJSON);
-        setUser(storedUser);
+        // Ensure user is still active on load
+        const freshUser = getUserByEmail(storedUser.email);
+        if (freshUser && freshUser.status === 'active') {
+          setUser(storedUser);
+        } else {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+        }
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage", error);
@@ -58,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const foundUser = getUserByEmail(email);
 
     if (foundUser && foundUser.role === role) {
+      if (foundUser.status === 'inactive') {
+        return { success: false, message: 'Your account has been deactivated. Please contact an administrator.' };
+      }
       setUser(foundUser);
       if (role === 'admin') {
         router.push('/admin/dashboard');
@@ -87,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email, 
       role, 
       supervisorId: role === 'employee' ? supervisorId : undefined,
+      status: 'active',
     };
     
     addUserToDB(newUser);
