@@ -6,31 +6,29 @@ import { ManagerOverviewCharts } from '@/components/manager/manager-overview-cha
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Filter, LogOut } from 'lucide-react';
+import { FileText, Filter, LogOut, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/user-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  const handleGenerateReportClick = () => {
+  const handleGenerateCsvReport = () => {
     if (!user) return;
-
-    const teamMembers = getEmployeesForManager(user.id);
-    if (teamMembers.length === 0) {
-      toast({
-        title: 'No Employees Found',
-        description: 'You have no employees assigned to you to generate a report for.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     const receiptsToExport = getReceiptsForManager(user.id);
     if (receiptsToExport.length === 0) {
@@ -77,8 +75,59 @@ export default function ManagerDashboardPage() {
     document.body.removeChild(link);
     
     toast({
-      title: 'Report Generated',
+      title: 'CSV Report Generated',
       description: 'A CSV report for your team\'s activity has been downloaded.',
+    });
+  };
+
+  const handleGeneratePdfReport = () => {
+    if (!user) return;
+
+    const receiptsToExport = getReceiptsForManager(user.id);
+    if (receiptsToExport.length === 0) {
+        toast({
+            title: 'No Receipts to Export',
+            description: "There are no receipts from your team to export.",
+        });
+        return;
+    }
+
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text(`Team Activity Report - ${user.name}`, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    
+    const tableData = receiptsToExport.map(receipt => {
+        const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
+        const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
+        const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
+        const status = receipt.status || (receipt.isFraudulent ? 'pending_approval' : 'clear');
+        
+        return [
+            receipt.uploadedBy,
+            vendor,
+            date,
+            total,
+            status
+        ];
+    });
+
+    autoTable(doc, {
+        startY: 35,
+        head: [['Employee', 'Vendor', 'Date', 'Amount', 'Status']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [38, 43, 51] },
+    });
+    
+    doc.save(`team_activity_report_${new Date().toISOString().split('T')[0]}.pdf`);
+
+    toast({
+      title: 'PDF Report Generated',
+      description: 'A PDF report for your team\'s activity has been downloaded.',
     });
   };
 
@@ -89,10 +138,23 @@ export default function ManagerDashboardPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
           <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
-        <Button onClick={handleGenerateReportClick} size="lg" className="shadow-sm w-full sm:w-auto">
-          <FileText className="mr-2 h-5 w-5" />
-          Generate Report
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="lg" className="shadow-sm w-full sm:w-auto">
+              <FileText className="mr-2 h-5 w-5" />
+              Generate Report
+              <ChevronDown className="ml-2 h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleGenerateCsvReport}>
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleGeneratePdfReport}>
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ManagerOverviewCharts />
