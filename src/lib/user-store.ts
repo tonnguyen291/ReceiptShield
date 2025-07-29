@@ -9,8 +9,6 @@ const USERS_DB_KEY = 'receiptShieldUsersDB';
 function getOrInitializeUsersDB(): User[] {
   if (typeof window === 'undefined') return [];
   
-  let storedUsers = localStorage.getItem(USERS_DB_KEY);
-  
   const defaultUsers: User[] = [
       {
         id: 'admin-001',
@@ -44,26 +42,25 @@ function getOrInitializeUsersDB(): User[] {
       }
   ];
 
-  if (!storedUsers) {
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
-    return defaultUsers;
-  }
-  
+  let storedUsersJson = localStorage.getItem(USERS_DB_KEY);
+
+  // If no users are stored, or if parsing fails, set and return the default users.
   try {
-    const users: User[] = JSON.parse(storedUsers);
-    // Migration for existing users to add status
-    const usersNeedMigration = users.some(u => !u.status);
-    if(usersNeedMigration) {
-      const migratedUsers = users.map(u => ({ ...u, status: u.status || 'active' }));
-      localStorage.setItem(USERS_DB_KEY, JSON.stringify(migratedUsers));
-      return migratedUsers;
+    if (storedUsersJson) {
+      const storedUsers = JSON.parse(storedUsersJson);
+       // Simple check to see if it's a valid user array
+      if (Array.isArray(storedUsers) && storedUsers.length > 0) {
+        return storedUsers;
+      }
     }
-    return users;
-  } catch (error) {
-    console.error("Failed to parse users from localStorage, resetting to defaults", error);
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
-    return defaultUsers;
+  } catch (e) {
+     console.error("Failed to parse user data from local storage, resetting.", e);
   }
+
+  // If we reach here, it's because storage was empty, invalid, or corrupted.
+  // We reset it with the default users.
+  localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
+  return defaultUsers;
 }
 
 
