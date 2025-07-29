@@ -13,8 +13,10 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
+import { getPredictionFromML, calculateOverallRiskAssessment } from '@/lib/ml-fraud-service';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context'; // Import useAuth
+import type { FraudAnalysis } from '@/types';
 
 export default function VerifyReceiptPage() {
   const params = useParams();
@@ -72,31 +74,87 @@ export default function VerifyReceiptPage() {
 
     setIsProcessing(true);
     try {
-      const fraudResult = await flagFraudulentReceipt({
-        items: editableItems,
+      // Step 1: Get ML prediction first
+      toast({
+        title: 'Starting Analysis',
+        description: 'Running ML fraud detection model...',
+      });
+
+      const mlPrediction = await getPredictionFromML(editableItems);
+      
+      // Step 2: Get AI fraud detection
+      toast({
+        title: 'Analysis in Progress',
+        description: 'Running AI fraud analysis...',
+      });
+
+      const receiptDataString = editableItems
+        .map(item => `${item.label}: ${item.value}`)
+        .join('\n');
+
+      const aiFraudResult = await flagFraudulentReceipt({
+        receiptData: receiptDataString,
         receiptImage: receipt.imageDataUri,
       });
 
+      // Step 3: Check for missing critical information
       const hasMissingCriticalInfo = editableItems.some(item =>
         (item.label.toLowerCase().includes('date') || item.label.toLowerCase().includes('total') || item.label.toLowerCase().includes('amount')) &&
         (item.value.trim() === '' || item.value.toLowerCase() === 'not found' || item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"))
       );
 
-      const isActuallyFraudulent = fraudResult.fraudulent || hasMissingCriticalInfo;
-      let finalExplanation = fraudResult.explanation;
+      // Step 4: Create comprehensive fraud analysis
+      const fraudAnalysis: FraudAnalysis = {
+        ml_prediction: mlPrediction || undefined,
+        ai_detection: {
+          fraudulent: aiFraudResult.fraudulent,
+          fraudProbability: aiFraudResult.fraudProbability,
+          explanation: aiFraudResult.explanation
+        },
+        overall_risk_assessment: calculateOverallRiskAssessment(
+          mlPrediction?.risk_level,
+          aiFraudResult.fraudProbability
+        ),
+        analysis_timestamp: new Date().toISOString()
+      };
 
-      if (hasMissingCriticalInfo && !fraudResult.fraudulent) {
-        finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total) confirmed by user. Original AI Assessment: ${fraudResult.explanation || "Not applicable or no issues found by AI."}`;
-      } else if (hasMissingCriticalInfo && fraudResult.fraudulent) {
-        finalExplanation = `Flagged due to missing/problematic critical information. Additionally, AI reported: ${fraudResult.explanation}`;
+      // Step 5: Determine final fraud status and explanation
+      const mlSaysFraud = mlPrediction?.is_fraudulent || false;
+      const aiSaysFraud = aiFraudResult.fraudulent;
+      const isActuallyFraudulent = mlSaysFraud || aiSaysFraud || hasMissingCriticalInfo;
+
+      let finalExplanation = '';
+      if (hasMissingCriticalInfo) {
+        finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total). `;
+      }
+      
+      if (mlPrediction) {
+        finalExplanation += `ML Model: ${mlPrediction.risk_level} risk (${(mlPrediction.fraud_probability * 100).toFixed(1)}% fraud probability). `;
+      } else {
+        finalExplanation += `ML Model: Unavailable (server offline). `;
+      }
+      
+      finalExplanation += `AI Analysis: ${aiFraudResult.explanation}`;
+
+      // Step 6: Calculate final fraud probability (weighted average)
+      let finalFraudProbability = aiFraudResult.fraudProbability;
+      if (mlPrediction) {
+        // Average ML and AI probabilities, giving ML slightly more weight
+        finalFraudProbability = (mlPrediction.fraud_probability * 0.6) + (aiFraudResult.fraudProbability * 0.4);
+      }
+      if (hasMissingCriticalInfo) {
+        finalFraudProbability = Math.max(finalFraudProbability, 0.75); // Boost if missing info
       }
       
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
         items: editableItems,
+        // Legacy fields for backward compatibility
         isFraudulent: isActuallyFraudulent,
-        fraudProbability: hasMissingCriticalInfo && !fraudResult.fraudulent ? 0.75 : fraudResult.fraudProbability,
+        fraudProbability: finalFraudProbability,
         explanation: finalExplanation,
+        // New comprehensive analysis
+        fraud_analysis: fraudAnalysis,
         status: isActuallyFraudulent ? 'pending_approval' : undefined,
       };
 
@@ -104,7 +162,7 @@ export default function VerifyReceiptPage() {
 
       toast({
         title: `Receipt ${user?.role === 'manager' ? 'Updated' : 'Verified'} & Analyzed!`,
-        description: `Redirecting to ${user?.role === 'manager' ? 'manager dashboard' : 'final details...'}`,
+        description: `ML Risk: ${fraudAnalysis.ml_prediction?.risk_level || 'N/A'}, AI Risk: ${(aiFraudResult.fraudProbability * 100).toFixed(1)}%`,
       });
 
       if (user?.role === 'manager') {
@@ -123,7 +181,7 @@ export default function VerifyReceiptPage() {
        if (receipt && !receipt.explanation.toLowerCase().includes("error occurred during ai fraud analysis")) {
          const errorReceipt = {
             ...receipt,
-            explanation: "A local error occurred while preparing data for AI fraud analysis. Please check your inputs or try again."
+            explanation: "A local error occurred while preparing data for fraud analysis. Please check your inputs or try again."
          }
          updateReceipt(errorReceipt);
        }

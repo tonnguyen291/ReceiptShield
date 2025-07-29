@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, FileType, Eye } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, Brain, Bot, TrendingUp, FileType, Eye } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -136,28 +136,128 @@ export default function ReceiptDetailsPage() {
                   <span className="text-sm font-medium">Overall Status:</span>
                   {getStatusBadge()}
                 </div>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
-                  <span className="text-sm font-medium">AI Fraud Probability:</span>
-                  <div className="flex items-center gap-2">
-                    <Progress 
-                      value={fraudProbabilityPercent} 
-                      className="w-28 h-2.5"
-                      indicatorClassName={
-                        fraudProbabilityPercent > 70 ? 'bg-destructive' :
-                        fraudProbabilityPercent > 40 ? 'bg-yellow-500' : 'bg-green-500'
-                      }
-                    />
-                    <span className={`font-semibold text-sm ${fraudProbabilityPercent > 70 ? 'text-destructive' : fraudProbabilityPercent > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {fraudProbabilityPercent}%
-                    </span>
+                {/* Combined Fraud Analysis Results */}
+                {receipt.fraud_analysis ? (
+                  <div className="space-y-3">
+                    {/* Overall Risk Assessment */}
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
+                      <span className="text-sm font-medium flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Overall Risk Assessment:
+                      </span>
+                      <Badge 
+                        variant={
+                          receipt.fraud_analysis.overall_risk_assessment === 'HIGH' ? 'destructive' :
+                          receipt.fraud_analysis.overall_risk_assessment === 'MEDIUM' ? 'secondary' : 'default'
+                        }
+                        className={
+                          receipt.fraud_analysis.overall_risk_assessment === 'HIGH' ? 'bg-red-500' :
+                          receipt.fraud_analysis.overall_risk_assessment === 'MEDIUM' ? 'bg-yellow-500' : 'bg-green-500'
+                        }
+                      >
+                        {receipt.fraud_analysis.overall_risk_assessment} RISK
+                      </Badge>
+                    </div>
+
+                    {/* ML Model Results */}
+                    {receipt.fraud_analysis.ml_prediction ? (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-md border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <Brain className="w-4 h-4 text-blue-600" />
+                            ML Model Analysis:
+                          </span>
+                          <Badge variant="outline" className="border-blue-300">
+                            {receipt.fraud_analysis.ml_prediction.risk_level} RISK
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress 
+                            value={Math.round(receipt.fraud_analysis.ml_prediction.fraud_probability * 100)} 
+                            className="w-full h-2"
+                            indicatorClassName="bg-blue-500"
+                          />
+                          <span className="font-semibold text-sm text-blue-600 min-w-[45px]">
+                            {Math.round(receipt.fraud_analysis.ml_prediction.fraud_probability * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          Confidence: {Math.round(receipt.fraud_analysis.ml_prediction.confidence * 100)}%
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-950/20 rounded-md border border-gray-200">
+                        <span className="text-sm font-medium flex items-center gap-2 text-gray-600">
+                          <Brain className="w-4 h-4" />
+                          ML Model: Unavailable (server offline)
+                        </span>
+                      </div>
+                    )}
+
+                    {/* AI Analysis Results */}
+                    {receipt.fraud_analysis.ai_detection ? (
+                      <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-md border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <Bot className="w-4 h-4 text-purple-600" />
+                            AI Analysis:
+                          </span>
+                          <Badge variant="outline" className="border-purple-300">
+                            {receipt.fraud_analysis.ai_detection.fraudulent ? 'FLAGGED' : 'CLEAR'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Progress 
+                            value={Math.round(receipt.fraud_analysis.ai_detection.fraudProbability * 100)} 
+                            className="w-full h-2"
+                            indicatorClassName="bg-purple-500"
+                          />
+                          <span className="font-semibold text-sm text-purple-600 min-w-[45px]">
+                            {Math.round(receipt.fraud_analysis.ai_detection.fraudProbability * 100)}%
+                          </span>
+                        </div>
+                        <ScrollArea className="h-24 mt-2">
+                          <p className="text-xs text-purple-700 dark:text-purple-300 whitespace-pre-wrap">
+                            {receipt.fraud_analysis.ai_detection.explanation}
+                          </p>
+                        </ScrollArea>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-950/20 rounded-md border border-gray-200">
+                        <span className="text-sm font-medium flex items-center gap-2 text-gray-600">
+                          <Bot className="w-4 h-4" />
+                          AI Analysis: Unavailable
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="space-y-1 p-3 bg-muted/50 rounded-md shadow-sm">
-                  <span className="text-sm font-medium">AI Explanation:</span>
-                  <ScrollArea className="h-36">
-                      <p className="text-xs p-2 rounded-md min-h-[40px] whitespace-pre-wrap">{receipt.explanation || 'No AI explanation provided.'}</p>
-                  </ScrollArea>
-                </div>
+                ) : (
+                  /* Legacy Display for Old Receipts */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md shadow-sm">
+                      <span className="text-sm font-medium">Fraud Probability:</span>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={fraudProbabilityPercent} 
+                          className="w-28 h-2.5"
+                          indicatorClassName={
+                            fraudProbabilityPercent > 70 ? 'bg-destructive' :
+                            fraudProbabilityPercent > 40 ? 'bg-yellow-500' : 'bg-green-500'
+                          }
+                        />
+                        <span className={`font-semibold text-sm ${fraudProbabilityPercent > 70 ? 'text-destructive' : fraudProbabilityPercent > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {fraudProbabilityPercent}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 p-3 bg-muted/50 rounded-md shadow-sm">
+                      <span className="text-sm font-medium">Analysis Explanation:</span>
+                      <ScrollArea className="h-36">
+                          <p className="text-xs p-2 rounded-md min-h-[40px] whitespace-pre-wrap">{receipt.explanation || 'No explanation provided.'}</p>
+                      </ScrollArea>
+                    </div>
+                  </div>
+                )}
                 {receipt.managerNotes && (
                   <Card className="mt-3 shadow-sm">
                     <CardHeader className="p-3">
