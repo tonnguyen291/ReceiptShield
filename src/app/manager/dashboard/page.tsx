@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-table';
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileText, Filter, LogOut, ChevronDown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,14 +19,21 @@ import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager, getAllReceiptsForUser } from '@/lib/receipt-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
-import type { ProcessedReceipt } from '@/types';
-import { getUsers } from '@/lib/user-store';
+import type { User } from '@/types';
+import { getUsers, getEmployeesForManager } from '@/lib/user-store';
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
   const { user, logout } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportUser, setReportUser] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
+
+  useEffect(() => {
+    if(user && user.role === 'manager') {
+      setTeamMembers(getEmployeesForManager(user.id));
+    }
+  }, [user]);
 
   const handleGenerateCsvReport = (employeeEmail?: string) => {
     if (!user) return;
@@ -267,23 +273,10 @@ export default function ManagerDashboardPage() {
                 <CardTitle>Receipt Audit Queue</CardTitle>
                 <CardDescription>These receipts were flagged by AI and require manual approval.</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                 <Filter className="w-4 h-4 text-muted-foreground" />
-                 <Select defaultValue="all">
-                    <SelectTrigger className="w-[180px] h-8 text-xs">
-                        <SelectValue placeholder="Filter by employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Employees</SelectItem>
-                        <SelectItem value="user1">employee1@example.com</SelectItem>
-                        <SelectItem value="user2">employee2@example.com</SelectItem>
-                    </SelectContent>
-                 </Select>
-              </div>
             </div>
         </CardHeader>
         <CardContent>
-          <FlaggedReceiptsTable />
+          <FlaggedReceiptsTable teamMembers={teamMembers} />
         </CardContent>
       </Card>
 

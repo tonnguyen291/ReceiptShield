@@ -17,8 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ReceiptDetailsDialog } from './receipt-details-dialog';
-import { AlertCircle, CheckCircle, Eye, Loader2, Pencil, XCircle, ShieldQuestion } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
+import { AlertCircle, CheckCircle, Eye, Loader2, Pencil, XCircle, ShieldQuestion, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -32,22 +31,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
-import { getUsers } from '@/lib/user-store';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-export function FlaggedReceiptsTable() {
+interface FlaggedReceiptsTableProps {
+  teamMembers: User[];
+}
+
+export function FlaggedReceiptsTable({ teamMembers }: FlaggedReceiptsTableProps) {
   const { user } = useAuth();
-  const [receipts, setReceipts] = useState<ProcessedReceipt[]>([]);
+  const [allFlaggedReceipts, setAllFlaggedReceipts] = useState<ProcessedReceipt[]>([]);
+  const [filteredReceipts, setFilteredReceipts] = useState<ProcessedReceipt[]>([]);
   const [selectedReceipt, setSelectedReceipt] = useState<ProcessedReceipt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [actionReceipt, setActionReceipt] = useState<ProcessedReceipt | null>(null);
   const [dialogActionType, setDialogActionType] = useState<'approve' | 'reject' | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const router = useRouter();
   const { toast } = useToast();
 
   const loadReceipts = () => {
     if (user?.id) {
-        setReceipts(getFlaggedReceiptsForManager(user.id));
+        const flagged = getFlaggedReceiptsForManager(user.id);
+        setAllFlaggedReceipts(flagged);
+        setFilteredReceipts(flagged);
     }
     setIsLoading(false);
   };
@@ -59,6 +66,17 @@ export function FlaggedReceiptsTable() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [user]);
+
+  useEffect(() => {
+    if (selectedEmployee === 'all') {
+      setFilteredReceipts(allFlaggedReceipts);
+    } else {
+      setFilteredReceipts(
+        allFlaggedReceipts.filter(receipt => receipt.uploadedBy === selectedEmployee)
+      );
+    }
+  }, [selectedEmployee, allFlaggedReceipts]);
+
 
   const handleViewDetails = (receipt: ProcessedReceipt) => {
     setSelectedReceipt(receipt);
@@ -84,23 +102,40 @@ export function FlaggedReceiptsTable() {
       rejectReceipt(actionReceipt.id);
       toast({ title: "Receipt Rejected", description: `Receipt "${actionReceipt.fileName}" has been rejected.`, variant: 'destructive' });
     }
-    loadReceipts();
+    loadReceipts(); // This re-fetches and will reset filters, which is acceptable
+    setSelectedEmployee('all');
     setActionReceipt(null);
     setDialogActionType(null);
   };
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+            <SelectTrigger className="w-[220px] h-8 text-xs">
+                <SelectValue placeholder="Filter by employee" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">All Employees</SelectItem>
+                {teamMembers.map(member => (
+                    <SelectItem key={member.id} value={member.email}>{member.name}</SelectItem>
+                ))}
+            </SelectContent>
+            </Select>
+        </div>
+      </div>
       {isLoading ? (
         <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
           Loading flagged receipts...
         </div>
-      ) : receipts.length === 0 ? (
+      ) : filteredReceipts.length === 0 ? (
           <div className="h-40 flex flex-col items-center justify-center text-muted-foreground">
           <ShieldQuestion className="mx-auto h-12 w-12 text-primary mb-4" />
           <p className="font-semibold">All clear!</p>
-          <p>No receipts from your team are currently pending review.</p>
+          <p>No receipts match the current filter.</p>
         </div>
       ) : (
         <Table>
@@ -115,7 +150,7 @@ export function FlaggedReceiptsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {receipts.map((receipt) => (
+            {filteredReceipts.map((receipt) => (
               <TableRow key={receipt.id}>
                 <TableCell className="font-medium truncate max-w-[200px] sm:max-w-xs">{receipt.fileName}</TableCell>
                 <TableCell className="truncate max-w-[150px] sm:max-w-xs">{receipt.uploadedBy}</TableCell>
