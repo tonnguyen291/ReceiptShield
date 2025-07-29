@@ -1,18 +1,28 @@
+"use client";
 
-'use client';
-
-import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { getAllReceipts, getAllReceiptsForUser, getReceiptsForManager } from '@/lib/receipt-store';
-import { runAssistant } from '@/ai/flows/assistant-flow';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, Loader2, Send, User, UploadCloud } from 'lucide-react';
-import type { ProcessedReceipt } from '@/types';
+import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  getAllReceipts,
+  getAllReceiptsForUser,
+  getReceiptsForManager,
+} from "@/lib/receipt-store";
+import { runAssistant } from "@/ai/flows/assistant-flow";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bot, Loader2, Send, User, UploadCloud } from "lucide-react";
+import type { ProcessedReceipt } from "@/types";
 
 interface ChatbotProps {
   isOpen: boolean;
@@ -21,7 +31,7 @@ interface ChatbotProps {
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   action?: {
     label: string;
@@ -33,19 +43,21 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isResponding, setIsResponding] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-        setMessages([
-          {
-            id: 'init',
-            role: 'assistant',
-            content: `Hello ${user?.name || 'there'}! I am your AI assistant. How can I help you today?`,
-          },
-        ]);
+      setMessages([
+        {
+          id: "init",
+          role: "assistant",
+          content: `Hello ${
+            user?.name || "there"
+          }! I am your AI assistant. How can I help you today?`,
+        },
+      ]);
     }
   }, [isOpen, user]);
 
@@ -53,7 +65,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
         top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   }, [messages]);
@@ -62,28 +74,32 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     e.preventDefault();
     if (!input.trim() || !user || isResponding) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+    };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsResponding(true);
 
     try {
       let relevantReceipts: ProcessedReceipt[];
 
-      if (user.role === 'admin') {
+      if (user.role === "admin") {
         relevantReceipts = getAllReceipts();
-      } else if (user.role === 'manager') {
+      } else if (user.role === "manager") {
         relevantReceipts = getReceiptsForManager(user.id);
       } else {
         relevantReceipts = getAllReceiptsForUser(user.email);
       }
 
       const receiptHistoryString = JSON.stringify(
-        relevantReceipts.map(r => ({ 
-            fileName: r.fileName, 
-            status: r.status || (r.isFraudulent ? 'flagged' : 'clear'), 
-            uploaded_at: r.uploadedAt,
-            uploadedBy: r.uploadedBy 
+        relevantReceipts.map((r) => ({
+          fileName: r.fileName,
+          status: r.status || (r.isFraudulent ? "flagged" : "clear"),
+          uploaded_at: r.uploadedAt,
+          uploadedBy: r.uploadedBy,
         }))
       );
 
@@ -93,30 +109,30 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         userRole: user.role,
         receiptHistory: receiptHistoryString,
       });
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
+        role: "assistant",
         content: result.response,
       };
 
-      if (result.suggestUpload && user.role === 'employee') {
+      if (result.suggestUpload && user.role === "employee") {
         assistantMessage.action = {
-          label: 'Upload a Receipt',
+          label: "Upload a Receipt",
           onClick: () => {
-            router.push('/employee/upload');
+            router.push("/employee/submit-receipt");
             onClose();
           },
         };
       }
       setMessages((prev) => [...prev, assistantMessage]);
-
     } catch (error) {
-      console.error('Chatbot error:', error);
+      console.error("Chatbot error:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'I\'m sorry, but I encountered an error. Please try again later.',
+        role: "assistant",
+        content:
+          "I'm sorry, but I encountered an error. Please try again later.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -134,27 +150,43 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
           </SheetTitle>
           <SheetDescription>
             Ask questions about policy or check receipt status.
-            {user?.role === 'manager' && ' As a manager, you can also ask for team-wide summaries.'}
-            {user?.role === 'admin' && ' As an admin, you can ask for organization-wide summaries.'}
+            {user?.role === "manager" &&
+              " As a manager, you can also ask for team-wide summaries."}
+            {user?.role === "admin" &&
+              " As an admin, you can ask for organization-wide summaries."}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="flex-grow p-6 pt-2" ref={scrollAreaRef}>
           <div className="space-y-6">
             {messages.map((message) => (
-              <div key={message.id} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                {message.role === 'assistant' && (
+              <div
+                key={message.id}
+                className={`flex items-start gap-3 ${
+                  message.role === "user" ? "justify-end" : ""
+                }`}
+              >
+                {message.role === "assistant" && (
                   <Avatar className="h-9 w-9 border border-primary">
-                    <AvatarFallback><Bot className="w-5 h-5" /></AvatarFallback>
+                    <AvatarFallback>
+                      <Bot className="w-5 h-5" />
+                    </AvatarFallback>
                   </Avatar>
                 )}
                 <div
                   className={`rounded-lg px-4 py-3 max-w-[85%] ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }} />
+                  <p
+                    className="whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{
+                      __html: message.content
+                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                        .replace(/\n/g, "<br />"),
+                    }}
+                  />
                   {message.action && (
                     <Button
                       onClick={message.action.onClick}
@@ -167,28 +199,35 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
                     </Button>
                   )}
                 </div>
-                 {message.role === 'user' && (
+                {message.role === "user" && (
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback><User className="w-5 h-5" /></AvatarFallback>
+                    <AvatarFallback>
+                      <User className="w-5 h-5" />
+                    </AvatarFallback>
                   </Avatar>
                 )}
               </div>
             ))}
             {isResponding && (
-                <div className="flex items-start gap-3">
-                     <Avatar className="h-9 w-9 border border-primary">
-                        <AvatarFallback><Bot className="w-5 h-5" /></AvatarFallback>
-                    </Avatar>
-                    <div className="rounded-lg px-4 py-3 bg-muted text-muted-foreground flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Thinking...</span>
-                    </div>
+              <div className="flex items-start gap-3">
+                <Avatar className="h-9 w-9 border border-primary">
+                  <AvatarFallback>
+                    <Bot className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="rounded-lg px-4 py-3 bg-muted text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Thinking...</span>
                 </div>
+              </div>
             )}
           </div>
         </ScrollArea>
         <SheetFooter className="p-4 border-t bg-background">
-          <form onSubmit={handleSubmit} className="w-full flex items-center gap-2">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full flex items-center gap-2"
+          >
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -196,14 +235,18 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
               className="min-h-0 flex-1 resize-none"
               rows={1}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
               }}
               disabled={isResponding}
             />
-            <Button type="submit" size="icon" disabled={!input.trim() || isResponding}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim() || isResponding}
+            >
               <Send className="h-5 w-5" />
             </Button>
           </form>

@@ -2,6 +2,7 @@
 export type UserRole = 'employee' | 'manager' | 'admin';
 
 export interface User {
+  status: string;
   id: string;
   name?: string; // Added for full name
   email: string;
