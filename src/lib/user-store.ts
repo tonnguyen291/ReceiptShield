@@ -42,10 +42,8 @@ function getOrInitializeUsersDB(): User[] {
       }
   ];
 
-  let storedUsersJson = localStorage.getItem(USERS_DB_KEY);
-
-  // If no users are stored, or if parsing fails, set and return the default users.
   try {
+    const storedUsersJson = localStorage.getItem(USERS_DB_KEY);
     if (storedUsersJson) {
       const storedUsers = JSON.parse(storedUsersJson);
        // Simple check to see if it's a valid user array
@@ -53,14 +51,15 @@ function getOrInitializeUsersDB(): User[] {
         return storedUsers;
       }
     }
+     // If storage is empty or invalid, set it with default users
+    localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
+    return defaultUsers;
   } catch (e) {
      console.error("Failed to parse user data from local storage, resetting.", e);
+     // If parsing fails, reset with default users
+     localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
+     return defaultUsers;
   }
-
-  // If we reach here, it's because storage was empty, invalid, or corrupted.
-  // We reset it with the default users.
-  localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
-  return defaultUsers;
 }
 
 
