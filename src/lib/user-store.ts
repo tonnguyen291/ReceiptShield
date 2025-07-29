@@ -9,40 +9,42 @@ const USERS_DB_KEY = 'receiptShieldUsersDB';
 function getOrInitializeUsersDB(): User[] {
   if (typeof window === 'undefined') return [];
   
-  const storedUsers = localStorage.getItem(USERS_DB_KEY);
+  let storedUsers = localStorage.getItem(USERS_DB_KEY);
+  
+  const defaultUsers: User[] = [
+      {
+        id: 'admin-001',
+        name: 'Alex Admin',
+        email: 'admin@corp.com',
+        role: 'admin',
+        status: 'active',
+      },
+      {
+        id: 'manager-001',
+        name: 'Bob Manager',
+        email: 'manager@example.com',
+        role: 'manager',
+        status: 'active',
+      },
+      {
+        id: 'employee-001',
+        name: 'Charlie Employee',
+        email: 'employee@example.com',
+        role: 'employee',
+        supervisorId: 'manager-001',
+        status: 'active',
+      },
+      {
+        id: 'employee-002',
+        name: 'Dana Employee',
+        email: 'employee2@example.com',
+        role: 'employee',
+        supervisorId: 'manager-001',
+        status: 'active',
+      }
+  ];
+
   if (!storedUsers) {
-    const defaultUsers: User[] = [
-        {
-          id: 'admin-001',
-          name: 'Alex Admin',
-          email: 'admin@corp.com',
-          role: 'admin',
-          status: 'active',
-        },
-        {
-          id: 'manager-001',
-          name: 'Bob Manager',
-          email: 'manager@example.com',
-          role: 'manager',
-          status: 'active',
-        },
-        {
-          id: 'employee-001',
-          name: 'Charlie Employee',
-          email: 'employee@example.com',
-          role: 'employee',
-          supervisorId: 'manager-001',
-          status: 'active',
-        },
-        {
-          id: 'employee-002',
-          name: 'Dana Employee',
-          email: 'employee2@example.com',
-          role: 'employee',
-          supervisorId: 'manager-001',
-          status: 'active',
-        }
-    ];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
     return defaultUsers;
   }
@@ -59,9 +61,8 @@ function getOrInitializeUsersDB(): User[] {
     return users;
   } catch (error) {
     console.error("Failed to parse users from localStorage, resetting to defaults", error);
-    // If parsing fails, reset to default users
-    localStorage.removeItem(USERS_DB_KEY);
-    return getOrInitializeUsersDB();
+    localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
+    return defaultUsers;
   }
 }
 

@@ -31,17 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Initialize users DB on load
+    getUsers(); 
     try {
-      // Ensure users are initialized before trying to get one
-      getUsers(); 
       const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
       if (storedUserJSON) {
         const storedUser: User = JSON.parse(storedUserJSON);
-        // Ensure user is still active on load
+        // Ensure user is still valid and active on load
         const freshUser = getUserByEmail(storedUser.email);
         if (freshUser && freshUser.status === 'active') {
           setUser(storedUser);
         } else {
+          // If user doesn't exist or is inactive, clear from storage
           localStorage.removeItem(AUTH_STORAGE_KEY);
         }
       }
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // This effect runs only when the user state changes *after* initial loading
     if (!isLoading) { 
       if (user) {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: 'Your account has been deactivated. Please contact an administrator.' };
       }
       setUser(foundUser);
+      // Let the AppLayout's useEffect handle redirection based on role
       if (role === 'admin') {
         router.push('/admin/dashboard');
       } else if (role === 'manager') {
@@ -79,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: true, message: 'Login successful.' };
     } else {
-      // In a real app, you'd show an error from the backend
       const message = "Login failed. Check your credentials and selected role.";
       console.error(message);
       return { success: false, message: "Login failed. Check your credentials and selected role." };
@@ -104,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addUserToDB(newUser);
     setUser(newUser);
     
+    // Let the AppLayout's useEffect handle redirection based on role
     if (role === 'admin') {
       router.push('/admin/dashboard');
     } else if (role === 'manager') {
