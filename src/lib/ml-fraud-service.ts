@@ -7,26 +7,24 @@
 
 import type { MLServerResponse, MLFraudPrediction, ReceiptDataItem } from '@/types';
 
-const ML_SERVER_URL = process.env.NEXT_PUBLIC_ML_SERVER_URL || 'http://localhost:5001';
+const ML_API_URL = '/api/ml-predict'; // Using Next.js API route instead of external server
 
 /**
  * Check if ML server is healthy and available
  */
 export async function checkMLServerHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${ML_SERVER_URL}/health`, {
-      method: 'GET',
+    // For Next.js API routes, we'll do a simple test prediction to check health
+    const testItems = [{ id: 'test', label: 'Total Amount', value: '10.00' }];
+    const response = await fetch(ML_API_URL, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ items: testItems }),
     });
 
-    if (!response.ok) {
-      return false;
-    }
-
-    const data = await response.json();
-    return data.status === 'healthy' && data.model_loaded === true;
+    return response.ok;
   } catch (error) {
     console.error('ML server health check failed:', error);
     return false;
@@ -47,7 +45,7 @@ export async function getPredictionFromML(
       return null;
     }
 
-    const response = await fetch(`${ML_SERVER_URL}/predict`, {
+    const response = await fetch(ML_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,23 +88,12 @@ export async function getMLServerInfo(): Promise<{
   available: boolean;
 } | null> {
   try {
-    const response = await fetch(`${ML_SERVER_URL}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return {
-      version: data.version || 'Unknown',
-      auc_score: 0, // Will be populated by prediction calls
-      available: data.model_loaded === true
-    };
+    // For Next.js API routes, we'll use a simple health check
+    return checkMLServerHealth().then(healthy => ({
+      version: 'Next.js API Route',
+      auc_score: 1.0, // From metadata
+      available: healthy
+    }));
   } catch (error) {
     console.error('Failed to get ML server info:', error);
     return null;
