@@ -1,10 +1,9 @@
+"use client";
 
-'use client';
-
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, type ReactNode, useState } from 'react';
-import AppHeader from '@/components/shared/app-header';
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, type ReactNode, useState } from "react";
+import AppHeader from "@/components/shared/app-header";
 import {
   Loader2,
   LayoutDashboard,
@@ -23,7 +22,7 @@ import {
   FileWarning,
   Briefcase,
   ListCollapse,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -32,9 +31,9 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-} from '@/components/ui/sidebar';
-import Link from 'next/link';
-import { Chatbot } from '@/components/shared/chatbot';
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import { Chatbot } from "@/components/shared/chatbot";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, isLoading, logout } = useAuth();
@@ -46,21 +45,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     if (!user) {
-      router.replace('/login');
+      router.replace("/login");
       return;
     }
 
-    const isEmployeeRoute = pathname.startsWith('/employee');
-    const isManagerRoute = pathname.startsWith('/manager');
-    const isAdminRoute = pathname.startsWith('/admin');
-    const isSharedRoute = pathname.startsWith('/profile');
+    const isEmployeeRoute = pathname.startsWith("/employee");
+    const isManagerRoute = pathname.startsWith("/manager");
+    const isAdminRoute = pathname.startsWith("/admin");
+    const isSharedRoute = pathname.startsWith("/profile");
 
-    if (user.role === 'employee' && !isEmployeeRoute && !isSharedRoute) {
-      router.replace('/employee/dashboard');
-    } else if (user.role === 'manager' && !isManagerRoute && !isSharedRoute) {
-      router.replace('/manager/dashboard');
-    } else if (user.role === 'admin' && !isAdminRoute && !isSharedRoute) {
-      router.replace('/admin/dashboard');
+    if (user.role === "employee" && !isEmployeeRoute && !isSharedRoute) {
+      router.replace("/employee/dashboard");
+    } else if (user.role === "manager" && !isManagerRoute && !isSharedRoute) {
+      router.replace("/manager/dashboard");
+    } else if (user.role === "admin" && !isAdminRoute && !isSharedRoute) {
+      router.replace("/admin/dashboard");
     }
   }, [user, isLoading, router, pathname]);
 
@@ -77,8 +76,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/employee/dashboard" passHref>
           <SidebarMenuButton
-            isActive={pathname === '/employee/dashboard'}
-            tooltip={{ children: 'Dashboard' }}
+            isActive={pathname === "/employee/dashboard"}
+            tooltip={{ children: "Dashboard" }}
           >
             <LayoutDashboard />
             <span>Dashboard</span>
@@ -88,8 +87,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/employee/dashboard" passHref>
           <SidebarMenuButton
-            isActive={pathname.startsWith('/employee/receipt')}
-            tooltip={{ children: 'My Receipts' }}
+            isActive={pathname.startsWith("/employee/receipt")}
+            tooltip={{ children: "My Receipts" }}
           >
             <ReceiptText />
             <span>My Receipts</span>
@@ -99,8 +98,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/employee/submit-receipt" passHref>
           <SidebarMenuButton
-            isActive={pathname.startsWith('/employee/submit-receipt')}
-            tooltip={{ children: 'Submit New Receipt' }}
+            isActive={pathname.startsWith("/employee/submit-receipt")}
+            tooltip={{ children: "Submit New Receipt" }}
           >
             <FileUp />
             <span>Submit Receipt</span>
@@ -109,7 +108,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={{ children: 'Reimbursement Status' }}
+          tooltip={{ children: "Reimbursement Status" }}
           disabled
         >
           <FileBarChart />
@@ -119,7 +118,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <SidebarMenuButton
           onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: 'AI Help Center' }}
+          tooltip={{ children: "AI Help Center" }}
         >
           <Bot />
           <span>Help Center</span>
@@ -133,8 +132,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/manager/dashboard" passHref>
           <SidebarMenuButton
-            isActive={pathname === '/manager/dashboard'}
-            tooltip={{ children: 'Dashboard' }}
+            isActive={pathname === "/manager/dashboard"}
+            tooltip={{ children: "Dashboard" }}
           >
             <LayoutDashboard />
             <span>Dashboard</span>
@@ -143,7 +142,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: 'Team Receipts' }}>
+          <SidebarMenuButton tooltip={{ children: "Team Receipts" }}>
             <Users />
             <span>Team Receipts</span>
           </SidebarMenuButton>
@@ -151,20 +150,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: 'Audit & Approvals' }}>
+          <SidebarMenuButton tooltip={{ children: "Audit & Approvals" }}>
             <ShieldAlert />
             <span>Audit & Approvals</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton tooltip={{ children: 'Fraud Reports' }} disabled>
+        <SidebarMenuButton tooltip={{ children: "Fraud Reports" }} disabled>
           <FileWarning />
           <span>Fraud Reports</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton tooltip={{ children: 'Export Data' }} disabled>
+        <SidebarMenuButton tooltip={{ children: "Export Data" }} disabled>
           <Download />
           <span>Export Data</span>
         </SidebarMenuButton>
@@ -172,7 +171,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <SidebarMenuButton
           onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: 'AI Help Center' }}
+          tooltip={{ children: "AI Help Center" }}
         >
           <Bot />
           <span>Help Center</span>
@@ -186,8 +185,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/admin/dashboard" passHref>
           <SidebarMenuButton
-            isActive={pathname === '/admin/dashboard'}
-            tooltip={{ children: 'Overview Dashboard' }}
+            isActive={pathname === "/admin/dashboard"}
+            tooltip={{ children: "Overview Dashboard" }}
           >
             <LayoutDashboard />
             <span>Overview</span>
@@ -196,7 +195,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <Link href="/admin/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: 'All Users' }}>
+          <SidebarMenuButton tooltip={{ children: "All Users" }}>
             <Users />
             <span>All Users</span>
           </SidebarMenuButton>
@@ -204,7 +203,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <Link href="/admin/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: 'Receipts Overview' }}>
+          <SidebarMenuButton tooltip={{ children: "Receipts Overview" }}>
             <ReceiptText />
             <span>All Receipts</span>
           </SidebarMenuButton>
@@ -212,7 +211,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={{ children: 'Fraud Detection Logs' }}
+          tooltip={{ children: "Fraud Detection Logs" }}
           disabled
         >
           <FileWarning />
@@ -221,7 +220,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={{ children: 'Approvals & Audits' }}
+          tooltip={{ children: "Approvals & Audits" }}
           disabled
         >
           <ShieldAlert />
@@ -231,7 +230,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <SidebarMenuButton
           onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: 'AI Help Center' }}
+          tooltip={{ children: "AI Help Center" }}
         >
           <Bot />
           <span>Help Center</span>
@@ -242,11 +241,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNav = () => {
     switch (user?.role) {
-      case 'admin':
+      case "admin":
         return adminNav;
-      case 'manager':
+      case "manager":
         return managerNav;
-      case 'employee':
+      case "employee":
         return employeeNav;
       default:
         return null;
@@ -258,8 +257,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/profile" passHref>
           <SidebarMenuButton
-            isActive={pathname.startsWith('/profile')}
-            tooltip={{ children: 'Settings' }}
+            isActive={pathname.startsWith("/profile")}
+            tooltip={{ children: "Settings" }}
           >
             <Settings />
             <span>Settings</span>
