@@ -1,61 +1,131 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TrendingUp, FileWarning, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, DollarSign, Files, ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { getReceiptsForManager } from '@/lib/receipt-store';
+import { subMonths, format, startOfMonth, endOfMonth } from 'date-fns';
 
-// Sample data - replace with actual data fetching and processing logic in a real application
-const totalExpensesData = [
-  { name: 'Jan', total: 4000 }, { name: 'Feb', total: 3000 }, { name: 'Mar', total: 5000 },
-  { name: 'Apr', total: 4500 }, { name: 'May', total: 6000 }, { name: 'Jun', total: 5500 },
-];
+interface MonthlyTotal {
+  name: string;
+  total: number;
+}
 
 export function ManagerOverviewCharts() {
-  return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <Card className="shadow-lg col-span-1 lg:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Expenses This Period</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">$23,580.00</div>
-          <p className="text-xs text-muted-foreground">+10.2% from last period (mock data)</p>
-        </CardContent>
-      </Card>
-       <Card className="shadow-lg col-span-1 lg:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Approved Receipts</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">125</div>
-          <p className="text-xs text-muted-foreground">85% of total submissions (mock data)</p>
-        </CardContent>
-      </Card>
-       <Card className="shadow-lg col-span-1 lg:col-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Flagged for Review</CardTitle>
-          <FileWarning className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">15</div>
-          <p className="text-xs text-muted-foreground">Action required (mock data)</p>
-        </CardContent>
-      </Card>
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalExpenses: 0,
+    totalReceipts: 0,
+    fraudAlerts: 0,
+    pendingApprovals: 0,
+  });
+  const [monthlyData, setMonthlyData] = useState<MonthlyTotal[]>([]);
 
-      <Card className="shadow-lg md:col-span-2 lg:col-span-3">
+  useEffect(() => {
+    if (user?.id) {
+      const allReceipts = getReceiptsForManager(user.id);
+
+      const totalExpenses = allReceipts.reduce((acc, r) => {
+        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+        return acc + (isNaN(amountValue) ? 0 : amountValue);
+      }, 0);
+
+      const fraudAlerts = allReceipts.filter(r => r.isFraudulent).length;
+      const pendingApprovals = allReceipts.filter(r => r.status === 'pending_approval').length;
+      
+      setStats({
+        totalExpenses,
+        totalReceipts: allReceipts.length,
+        fraudAlerts,
+        pendingApprovals,
+      });
+
+      // Generate data for the last 6 months
+      const sixMonthsData: MonthlyTotal[] = [];
+      const today = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const date = subMonths(today, i);
+        const monthName = format(date, 'MMM');
+        const start = startOfMonth(date);
+        const end = endOfMonth(date);
+
+        const monthReceipts = allReceipts.filter(r => {
+          const receiptDate = new Date(r.uploadedAt);
+          return receiptDate >= start && receiptDate <= end;
+        });
+
+        const monthTotal = monthReceipts.reduce((acc, r) => {
+            const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+            const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+            return acc + (isNaN(amountValue) ? 0 : amountValue);
+        }, 0);
+
+        sixMonthsData.push({ name: monthName, total: monthTotal });
+      }
+      setMonthlyData(sixMonthsData);
+    }
+  }, [user]);
+
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Team Expenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${stats.totalExpenses.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Sum of all team receipts</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receipts Submitted</CardTitle>
+            <Files className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalReceipts}</div>
+            <p className="text-xs text-muted-foreground">Total submissions by team</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fraud Alerts Triggered</CardTitle>
+            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{stats.fraudAlerts}</div>
+            <p className="text-xs text-muted-foreground">Flagged by AI analysis</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
+            <p className="text-xs text-muted-foreground">Receipts requiring review</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Monthly Expense Trends</CardTitle>
-          <CardDescription>Overview of expenses over the last 6 months (mock data).</CardDescription>
+          <CardDescription>Overview of team-wide expenses over the last 6 months.</CardDescription>
         </CardHeader>
         <CardContent className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={totalExpensesData}>
+            <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`} />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}

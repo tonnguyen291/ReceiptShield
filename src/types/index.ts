@@ -1,5 +1,5 @@
 
-export type UserRole = 'employee' | 'manager';
+export type UserRole = 'employee' | 'manager' | 'admin';
 
 export interface User {
   id: string;
@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role: UserRole;
   dob?: string; // Date of Birth
+  supervisorId?: string; // ID of the user's manager
 }
 
 export interface ReceiptDataItem {
@@ -54,6 +55,7 @@ export interface ProcessedReceipt {
   
   uploadedAt: string; // ISO Date string
   uploadedBy: string; // user email (identifier for the employee)
+  supervisorId?: string; // supervisorId of the employee who uploaded
   status?: 'pending_approval' | 'approved' | 'rejected'; // Status for manager workflow
   managerNotes?: string; // Notes from manager during review
 }

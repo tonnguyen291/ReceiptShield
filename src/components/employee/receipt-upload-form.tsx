@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2, UploadCloud, FileType } from 'lucide-react';
 import { summarizeReceipt } from '@/ai/flows/summarize-receipt';
 import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
@@ -23,6 +23,7 @@ export function ReceiptUploadForm() {
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
+  const [isPdf, setIsPdf] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -30,15 +31,17 @@ export function ReceiptUploadForm() {
       if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
           title: 'File too large',
-          description: 'Please upload an image smaller than 5MB.',
+          description: 'Please upload a file smaller than 5MB.',
           variant: 'destructive',
         });
         setFile(null);
         setPreview(null);
+        setIsPdf(false);
         e.target.value = ''; // Reset file input
         return;
       }
       setFile(selectedFile);
+      setIsPdf(selectedFile.type === 'application/pdf');
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -47,6 +50,7 @@ export function ReceiptUploadForm() {
     } else {
       setFile(null);
       setPreview(null);
+      setIsPdf(false);
     }
   };
 
@@ -85,6 +89,7 @@ export function ReceiptUploadForm() {
         explanation: "Pending user verification.",
         uploadedAt: new Date().toISOString(),
         uploadedBy: user.email,
+        supervisorId: user.supervisorId, // Add supervisorId to receipt
       };
 
       addReceipt(initialReceipt);
@@ -96,6 +101,7 @@ export function ReceiptUploadForm() {
       
       setFile(null);
       setPreview(null);
+      setIsPdf(false);
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
@@ -117,33 +123,39 @@ export function ReceiptUploadForm() {
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Upload Expense Receipt</CardTitle>
-        <CardDescription>Submit a photo of your receipt for AI processing.</CardDescription>
+        <CardDescription>Submit a photo or PDF of your receipt for AI processing.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="receipt-upload" className="text-base">Receipt Image</Label>
+            <Label htmlFor="receipt-upload" className="text-base">Receipt Document</Label>
             <Input
               id="receipt-upload"
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               onChange={handleFileChange}
               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
               disabled={isProcessing}
             />
-            <p className="text-xs text-muted-foreground">Max file size: 5MB. Accepted formats: JPG, PNG, GIF.</p>
+            <p className="text-xs text-muted-foreground">Max file size: 5MB. Accepted formats: JPG, PNG, PDF.</p>
           </div>
 
           {preview && (
             <div className="mt-4 border border-dashed border-border rounded-md p-4 text-center">
-              <Image
-                src={preview}
-                alt="Receipt preview"
-                width={400}
-                height={400}
-                className="max-w-full max-h-64 object-contain rounded-md mx-auto"
-                data-ai-hint="receipt scan"
-              />
+              {isPdf ? (
+                <div className="flex flex-col items-center justify-center p-4">
+                  <FileType className="h-16 w-16 text-muted-foreground" />
+                </div>
+              ) : (
+                <Image
+                  src={preview}
+                  alt="Receipt preview"
+                  width={400}
+                  height={400}
+                  className="max-w-full max-h-64 object-contain rounded-md mx-auto"
+                  data-ai-hint="receipt scan"
+                />
+              )}
               <p className="text-sm text-muted-foreground mt-2">{file?.name}</p>
             </div>
           )}
