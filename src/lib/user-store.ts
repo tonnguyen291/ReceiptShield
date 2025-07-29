@@ -5,9 +5,10 @@ import type { User } from '@/types';
 
 const USERS_DB_KEY = 'receiptShieldUsersDB';
 
-// Seed with default users if none exist
-function initializeUsersDB(): void {
-  if (typeof window === 'undefined') return;
+// This function now returns the users array, ensuring it's always initialized before use.
+function getOrInitializeUsersDB(): User[] {
+  if (typeof window === 'undefined') return [];
+  
   const storedUsers = localStorage.getItem(USERS_DB_KEY);
   if (!storedUsers) {
     const defaultUsers: User[] = [
@@ -43,30 +44,30 @@ function initializeUsersDB(): void {
         }
     ];
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(defaultUsers));
-  } else {
-    // Migration for existing users to add status
+    return defaultUsers;
+  }
+  
+  try {
     const users: User[] = JSON.parse(storedUsers);
+    // Migration for existing users to add status
     const usersNeedMigration = users.some(u => !u.status);
     if(usersNeedMigration) {
       const migratedUsers = users.map(u => ({ ...u, status: u.status || 'active' }));
       localStorage.setItem(USERS_DB_KEY, JSON.stringify(migratedUsers));
+      return migratedUsers;
     }
+    return users;
+  } catch (error) {
+    console.error("Failed to parse users from localStorage, resetting to defaults", error);
+    // If parsing fails, reset to default users
+    localStorage.removeItem(USERS_DB_KEY);
+    return getOrInitializeUsersDB();
   }
 }
 
-initializeUsersDB();
 
 export function getUsers(): User[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-  try {
-    const storedUsers = localStorage.getItem(USERS_DB_KEY);
-    return storedUsers ? JSON.parse(storedUsers) : [];
-  } catch (error) {
-    console.error("Failed to parse users from localStorage", error);
-    return [];
-  }
+  return getOrInitializeUsersDB();
 }
 
 function setUsers(users: User[]): void {

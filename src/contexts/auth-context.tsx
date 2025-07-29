@@ -4,7 +4,7 @@
 import type { User, UserRole } from '@/types';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getUserByEmail, addUser as addUserToDB } from '@/lib/user-store';
+import { getUserByEmail, addUser as addUserToDB, getUsers } from '@/lib/user-store';
 import { useRouter } from 'next/navigation';
 
 interface AuthResponse {
@@ -32,6 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      // Ensure users are initialized before trying to get one
+      getUsers(); 
       const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
       if (storedUserJSON) {
         const storedUser: User = JSON.parse(storedUserJSON);
