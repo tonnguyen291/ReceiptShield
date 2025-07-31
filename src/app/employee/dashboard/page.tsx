@@ -1,18 +1,60 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { ExpenseSummaryChart } from '@/components/employee/expense-summary-chart';
-import { PlusCircle, FileUp, DollarSign, BarChart, AlertTriangle, Bot, LogOut } from 'lucide-react';
+import { PlusCircle, DollarSign, BarChart, AlertTriangle, Bot, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
+import { getAllReceiptsForUser } from '@/lib/receipt-store';
+import type { ProcessedReceipt } from '@/types';
+import { subMonths, isWithinInterval } from 'date-fns';
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [stats, setStats] = useState({
+    totalExpensesThisMonth: 0,
+    receiptsUploadedThisMonth: 0,
+    pendingAmount: 0,
+    pendingCount: 0,
+  });
+
+  useEffect(() => {
+    if (user?.email) {
+      const allReceipts = getAllReceiptsForUser(user.email);
+      const now = new Date();
+      const oneMonthAgo = subMonths(now, 1);
+
+      const receiptsThisMonth = allReceipts.filter(r => 
+        isWithinInterval(new Date(r.uploadedAt), { start: oneMonthAgo, end: now })
+      );
+
+      const totalExpensesThisMonth = receiptsThisMonth.reduce((acc, r) => {
+        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+        return acc + (isNaN(amountValue) ? 0 : amountValue);
+      }, 0);
+
+      const pendingReceipts = allReceipts.filter(r => r.status === 'pending_approval' || r.isFraudulent);
+      const pendingAmount = pendingReceipts.reduce((acc, r) => {
+        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+        return acc + (isNaN(amountValue) ? 0 : amountValue);
+      }, 0);
+
+      setStats({
+        totalExpensesThisMonth,
+        receiptsUploadedThisMonth: receiptsThisMonth.length,
+        pendingAmount,
+        pendingCount: pendingReceipts.length,
+      });
+    }
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -36,18 +78,18 @@ export default function EmployeeDashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$450.75</div>
-            <p className="text-xs text-muted-foreground">(mock data)</p>
+            <div className="text-2xl font-bold">${stats.totalExpensesThisMonth.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Based on your uploads in last 30 days</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receipts Uploaded</CardTitle>
+            <CardTitle className="text-sm font-medium">Receipts Uploaded (Month)</CardTitle>
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+3 from last month (mock data)</p>
+            <div className="text-2xl font-bold">{stats.receiptsUploadedThisMonth}</div>
+            <p className="text-xs text-muted-foreground">Receipts submitted in last 30 days</p>
           </CardContent>
         </Card>
         <Card>
@@ -56,8 +98,8 @@ export default function EmployeeDashboardPage() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$250.00 Pending</div>
-            <p className="text-xs text-muted-foreground">2 receipts awaiting approval</p>
+            <div className="text-2xl font-bold">${stats.pendingAmount.toFixed(2)} Pending</div>
+            <p className="text-xs text-muted-foreground">{stats.pendingCount} receipts awaiting approval</p>
           </CardContent>
         </Card>
       </div>
