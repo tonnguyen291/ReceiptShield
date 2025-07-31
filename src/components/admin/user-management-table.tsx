@@ -59,6 +59,14 @@ export function UserManagementTable() {
 
     useEffect(() => {
         loadData();
+        // Add event listeners to ensure data is fresh
+        window.addEventListener('storage', loadData);
+        window.addEventListener('focus', loadData);
+
+        return () => {
+            window.removeEventListener('storage', loadData);
+            window.removeEventListener('focus', loadData);
+        };
     }, []);
     
     const handleOpenReassignDialog = (user: User) => {
