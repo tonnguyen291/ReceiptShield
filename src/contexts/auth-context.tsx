@@ -83,7 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true, message: 'Login successful.' };
     } else {
       const message = "Login failed. Check your credentials and selected role.";
-      console.error(message);
       return { success: false, message: "Login failed. Check your credentials and selected role." };
     }
   };
@@ -94,6 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: "An account with this email already exists." };
     }
     
+    // Clear any existing session data before creating a new account
+    logout();
+
     const newUser: User = { 
       id: `user-${Date.now()}`, 
       name, 
