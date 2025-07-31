@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Chatbot } from "@/components/shared/chatbot";
+import { Button } from "@/components/ui/button";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, isLoading, logout } = useAuth();
@@ -115,15 +117,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <span>Reimbursements</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: "AI Help Center" }}
-        >
-          <Bot />
-          <span>Help Center</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
     </>
   );
 
@@ -166,15 +159,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SidebarMenuButton tooltip={{ children: "Export Data" }} disabled>
           <Download />
           <span>Export Data</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: "AI Help Center" }}
-        >
-          <Bot />
-          <span>Help Center</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </>
@@ -227,15 +211,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <span>Audits</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          onClick={() => setChatbotOpen(true)}
-          tooltip={{ children: "AI Help Center" }}
-        >
-          <Bot />
-          <span>Help Center</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
     </>
   );
 
@@ -285,7 +260,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </SidebarMenu>
       </Sidebar>
       <SidebarInset>
-        <div className="min-h-screen flex flex-col bg-background/95">
+        <div className="min-h-screen flex flex-col bg-background/95 relative">
           <AppHeader onChatbotClick={() => setChatbotOpen(true)} />
           <main className="flex-grow p-8">
             {children}
@@ -294,6 +269,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               onClose={() => setChatbotOpen(false)}
             />
           </main>
+          <Button 
+             onClick={() => setChatbotOpen(true)}
+             className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl"
+             size="icon"
+          >
+              <Bot className="h-7 w-7"/>
+              <span className="sr-only">Open AI Assistant</span>
+          </Button>
         </div>
       </SidebarInset>
     </SidebarProvider>
