@@ -36,7 +36,9 @@ export function ExpenseSummaryChart() {
               backgroundColor: 'hsl(var(--background))',
               border: '1px solid hsl(var(--border))',
               borderRadius: 'var(--radius)',
+              color: 'hsl(var(--foreground))',
             }}
+            itemStyle={{ color: 'hsl(var(--foreground))' }}
           />
           <Legend wrapperStyle={{ fontSize: "12px" }} />
         </PieChart>
