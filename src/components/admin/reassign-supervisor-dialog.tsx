@@ -14,14 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { updateUserSupervisor } from '@/lib/user-store';
+import { updateUserSupervisor, getManagers } from '@/lib/user-store';
 import { Loader2 } from 'lucide-react';
 
 interface ReassignSupervisorDialogProps {
   isOpen: boolean;
   onClose: () => void;
   user: User;
-  managers: User[];
   onSupervisorReassigned: () => void;
 }
 
@@ -29,7 +28,6 @@ export function ReassignSupervisorDialog({
   isOpen,
   onClose,
   user,
-  managers,
   onSupervisorReassigned,
 }: ReassignSupervisorDialogProps) {
   const [selectedSupervisorId, setSelectedSupervisorId] = useState(user.supervisorId || '');
@@ -38,10 +36,11 @@ export function ReassignSupervisorDialog({
 
   useEffect(() => {
     // Ensure the user being edited cannot be their own supervisor
-    if (user) {
-      setAvailableManagers(managers.filter(manager => manager.id !== user.id));
+    if (isOpen) {
+        const allManagers = getManagers();
+        setAvailableManagers(allManagers.filter(manager => manager.id !== user.id));
     }
-  }, [user, managers]);
+  }, [user, isOpen]);
 
   const handleSave = () => {
     if (!selectedSupervisorId || selectedSupervisorId === user.supervisorId) {

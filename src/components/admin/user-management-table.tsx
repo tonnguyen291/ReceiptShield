@@ -214,7 +214,6 @@ export function UserManagementTable() {
                 isOpen={isReassignDialogOpen}
                 onClose={() => setIsReassignDialogOpen(false)}
                 user={selectedUser}
-                managers={managers}
                 onSupervisorReassigned={handleSupervisorReassigned}
             />
         )}
