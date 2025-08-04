@@ -97,12 +97,12 @@ export function getUserByEmail(email: string): User | undefined {
 
 export function getManagers(): User[] {
   const users = getUsers();
-  return users.filter(u => u.role === 'manager' && u.status === 'active');
+  return users.filter(u => u.role === 'manager');
 }
 
 export function getEmployeesForManager(managerId: string): User[] {
     const users = getUsers();
-    return users.filter(u => u.role === 'employee' && u.supervisorId === managerId && u.status === 'active');
+    return users.filter(u => u.role === 'employee' && u.supervisorId === managerId);
 }
 
 export function updateUserSupervisor(userId: string, newSupervisorId: string): void {
