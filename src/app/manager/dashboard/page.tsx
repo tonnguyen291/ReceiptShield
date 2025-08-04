@@ -31,7 +31,8 @@ export default function ManagerDashboardPage() {
 
   useEffect(() => {
     if(user && user.role === 'manager') {
-      setTeamMembers(getEmployeesForManager(user.id));
+      const employees = getEmployeesForManager(user.id);
+      setTeamMembers(employees);
     }
   }, [user]);
 
@@ -70,7 +71,7 @@ export default function ManagerDashboardPage() {
       const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
       const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
       
-      const escapeCsvField = (field: string | undefined) => {
+      const escapeCsvField = (field: string | undefined | null) => {
         if (field === null || field === undefined) return '""';
         const str = String(field);
         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -245,10 +246,10 @@ export default function ManagerDashboardPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => handleGenerateCsvReport()} disabled={isGenerating}>
-              Export as CSV
+              Export Team as CSV
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleGeneratePdfReport()} disabled={isGenerating}>
-              Export as PDF
+              Export Team as PDF
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -40,7 +40,7 @@ export default function EmployeeDashboardPage() {
         return acc + (isNaN(amountValue) ? 0 : amountValue);
       }, 0);
 
-      const pendingReceipts = allReceipts.filter(r => r.status === 'pending_approval' || r.isFraudulent);
+      const pendingReceipts = allReceipts.filter(r => r.status === 'pending_approval');
       const pendingAmount = pendingReceipts.reduce((acc, r) => {
         const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
         const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
@@ -62,11 +62,11 @@ export default function EmployeeDashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">Employee Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Manage your expenses and receipts here.</p>
+          <p className="text-muted-foreground">Welcome back, {user?.name}! Manage your expenses and receipts here.</p>
         </div>
         <Button onClick={() => router.push('/employee/submit-receipt')} size="lg" className="shadow-sm w-full sm:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" />
-          Upload New Receipt
+          Submit New Receipt
         </Button>
       </div>
 
@@ -74,7 +74,7 @@ export default function EmployeeDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">Expenses This Month</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -94,11 +94,11 @@ export default function EmployeeDashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reimbursement Status</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Reimbursement</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.pendingAmount.toFixed(2)} Pending</div>
+            <div className="text-2xl font-bold">${stats.pendingAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">{stats.pendingCount} receipts awaiting approval</p>
           </CardContent>
         </Card>
@@ -109,8 +109,8 @@ export default function EmployeeDashboardPage() {
         <div className="md:col-span-2">
             <Card className="shadow-md h-full">
                 <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Your recently uploaded receipts.</CardDescription>
+                <CardTitle>Submission History</CardTitle>
+                <CardDescription>Your recently uploaded receipts and their status.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <SubmissionHistoryTable />

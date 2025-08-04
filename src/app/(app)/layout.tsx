@@ -9,20 +9,15 @@ import {
   Loader2,
   LayoutDashboard,
   ReceiptText,
-  BarChart3,
   Settings,
   ShieldAlert,
   Users,
   LogOut,
-  FileText,
   FileUp,
-  HelpCircle,
   FileBarChart,
   Download,
   Bot,
   FileWarning,
-  Briefcase,
-  ListCollapse,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -44,25 +39,28 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [isChatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      return; // Wait until authentication state is resolved
+    }
 
     if (!user) {
       router.replace("/login");
       return;
     }
 
-    const isEmployeeRoute = pathname.startsWith("/employee");
-    const isManagerRoute = pathname.startsWith("/manager");
-    const isAdminRoute = pathname.startsWith("/admin");
-    const isSharedRoute = pathname.startsWith("/profile");
+    const currentBaseRoute = pathname.split('/')[1]; // e.g., "employee", "manager", "admin", "profile"
+    const userBaseRoute = user.role;
 
-    if (user.role === "employee" && !isEmployeeRoute && !isSharedRoute) {
-      router.replace("/employee/dashboard");
-    } else if (user.role === "manager" && !isManagerRoute && !isSharedRoute) {
-      router.replace("/manager/dashboard");
-    } else if (user.role === "admin" && !isAdminRoute && !isSharedRoute) {
-      router.replace("/admin/dashboard");
+    // Allow access to profile pages for any role
+    if (currentBaseRoute === 'profile') {
+      return;
     }
+
+    // If the user is on a page that doesn't match their role, redirect them
+    if (currentBaseRoute !== userBaseRoute) {
+      router.replace(`/${userBaseRoute}/dashboard`);
+    }
+
   }, [user, isLoading, router, pathname]);
 
   if (isLoading || !user) {
@@ -78,22 +76,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <SidebarMenuItem>
         <Link href="/employee/dashboard" passHref>
           <SidebarMenuButton
-            isActive={pathname === "/employee/dashboard"}
+            isActive={pathname.includes("/employee/dashboard") || pathname.startsWith("/employee/receipt")}
             tooltip={{ children: "Dashboard" }}
           >
             <LayoutDashboard />
             <span>Dashboard</span>
-          </SidebarMenuButton>
-        </Link>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <Link href="/employee/dashboard" passHref>
-          <SidebarMenuButton
-            isActive={pathname.startsWith("/employee/receipt")}
-            tooltip={{ children: "My Receipts" }}
-          >
-            <ReceiptText />
-            <span>My Receipts</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
@@ -134,20 +121,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: "Team Receipts" }}>
+        <SidebarMenuButton tooltip={{ children: "Team Receipts" }} disabled>
             <Users />
             <span>Team Receipts</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: "Audit & Approvals" }}>
+        <SidebarMenuButton tooltip={{ children: "Audit & Approvals" }} disabled>
             <ShieldAlert />
             <span>Audit & Approvals</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton tooltip={{ children: "Fraud Reports" }} disabled>
@@ -178,20 +161,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/admin/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: "All Users" }}>
+        <SidebarMenuButton tooltip={{ children: "All Users" }} disabled>
             <Users />
             <span>All Users</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/admin/dashboard" passHref>
-          <SidebarMenuButton tooltip={{ children: "Receipts Overview" }}>
+        <SidebarMenuButton tooltip={{ children: "Receipts Overview" }} disabled>
             <ReceiptText />
             <span>All Receipts</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton
