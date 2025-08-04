@@ -7,7 +7,7 @@ import { ManagerOverviewCharts } from '@/components/manager/manager-overview-cha
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Filter, LogOut, ChevronDown, Loader2 } from 'lucide-react';
+import { FileText, Filter, LogOut, ChevronDown, Loader2, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -19,8 +19,15 @@ import { useAuth } from '@/contexts/auth-context';
 import { getReceiptsForManager, getAllReceiptsForUser } from '@/lib/receipt-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
-import type { User } from '@/types';
+import type { User, ProcessedReceipt } from '@/types';
 import { getUsers, getEmployeesForManager } from '@/lib/user-store';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, isWithinInterval } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
+
+type ReceiptStatusFilter = "all" | "pending_approval" | "approved" | "rejected";
 
 export default function ManagerDashboardPage() {
   const { toast } = useToast();
@@ -28,6 +35,11 @@ export default function ManagerDashboardPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportUser, setReportUser] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<User[]>([]);
+
+  // State for filtering
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<ReceiptStatusFilter>('all');
+
 
   useEffect(() => {
     if(user && user.role === 'manager') {
@@ -73,7 +85,6 @@ export default function ManagerDashboardPage() {
       const escapeCsvField = (field: string | number | undefined | null) => {
           if (field === null || field === undefined) return '""';
           const str = String(field);
-          // Use a regex to check if the string contains a comma, double quote, or newline
           if (/[",\n]/.test(str)) {
             return `"${str.replace(/"/g, '""')}"`;
           }
@@ -84,15 +95,14 @@ export default function ManagerDashboardPage() {
         const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
         const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
         const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
-
-        // Standardize status field for clarity
+        
         let status;
         if (receipt.status) {
-          status = receipt.status; // 'approved', 'rejected', 'pending_approval'
+          status = receipt.status; 
         } else if (receipt.isFraudulent) {
-          status = 'pending_approval'; // Should have been caught by flagged logic, but a good fallback
+          status = 'pending_approval';
         } else {
-          status = 'clear'; // Not flagged, no final status from manager yet
+          status = 'clear'; 
         }
         
         const row = [
@@ -143,18 +153,33 @@ export default function ManagerDashboardPage() {
     setIsGenerating(true);
     if(employeeEmail) setReportUser(employeeEmail);
     try {
-        const receiptsToExport = employeeEmail 
+        let baseReceipts = employeeEmail 
             ? getAllReceiptsForUser(employeeEmail)
             : getReceiptsForManager(user.id);
             
+        // Apply filters
+        let filteredReceipts = baseReceipts.filter(receipt => {
+          // Status filter
+          if (statusFilter !== 'all' && receipt.status !== statusFilter) {
+            return false;
+          }
+          // Date range filter
+          if (dateRange?.from && dateRange?.to) {
+             if (!isWithinInterval(new Date(receipt.uploadedAt), {start: dateRange.from, end: dateRange.to})) {
+               return false;
+             }
+          }
+          return true;
+        });
+
         const reportTitle = employeeEmail
             ? `Expense Report for ${getUsers().find(u => u.email === employeeEmail)?.name || employeeEmail}`
             : 'Team Expense Report';
         
-        if (receiptsToExport.length === 0) {
+        if (filteredReceipts.length === 0) {
             toast({
                 title: 'No Receipts to Export',
-                description: "There are no receipts for the selected scope to export.",
+                description: "There are no receipts for the selected filters to export.",
             });
             setIsGenerating(false);
             setReportUser(null);
@@ -166,12 +191,12 @@ export default function ManagerDashboardPage() {
 
         const doc = new jsPDF();
         
-        const totalExpenses = receiptsToExport.reduce((acc, r) => {
+        const totalExpenses = filteredReceipts.reduce((acc, r) => {
             const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
             const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
             return acc + (isNaN(amountValue) ? 0 : amountValue);
         }, 0);
-        const totalFlagged = receiptsToExport.filter(r => r.isFraudulent).length;
+        const totalFlagged = filteredReceipts.filter(r => r.isFraudulent).length;
 
         // Header
         doc.setFontSize(20);
@@ -181,6 +206,14 @@ export default function ManagerDashboardPage() {
         doc.setFont('helvetica', 'normal');
         doc.text(`Manager: ${user.name}`, 14, 30);
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 200, 30, { align: 'right' });
+        
+        // Filters section
+        let filterText = 'Filters Applied: ';
+        const appliedFilters = [];
+        if (statusFilter !== 'all') appliedFilters.push(`Status: ${statusFilter.replace('_', ' ')}`);
+        if (dateRange?.from && dateRange?.to) appliedFilters.push(`Date: ${format(dateRange.from, "LLL dd, y")} to ${format(dateRange.to, "LLL dd, y")}`);
+        filterText += appliedFilters.length > 0 ? appliedFilters.join(', ') : 'None';
+        doc.text(filterText, 14, 36);
 
         // Summary Section
         doc.setFontSize(12);
@@ -192,7 +225,7 @@ export default function ManagerDashboardPage() {
         autoTable(doc, {
             startY: 48,
             body: [
-                ['Total Receipts:', receiptsToExport.length.toString()],
+                ['Total Receipts:', filteredReceipts.length.toString()],
                 ['Total Expenses:', `$${totalExpenses.toFixed(2)}`],
                 ['Flagged for Review:', totalFlagged.toString()],
             ],
@@ -202,7 +235,7 @@ export default function ManagerDashboardPage() {
         });
 
         // Main Table
-        const tableData = receiptsToExport.map(receipt => {
+        const tableData = filteredReceipts.map(receipt => {
             const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
             const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
             const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
@@ -265,28 +298,95 @@ export default function ManagerDashboardPage() {
           <h1 className="text-3xl font-headline font-bold tracking-tight">Manager Dashboard</h1>
           <p className="text-muted-foreground">Oversee expenses, review flagged receipts, and manage your team.</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled={isGenerating && !reportUser}>
-              {isGenerating && !reportUser ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <FileText className="mr-2 h-5 w-5" />
-              )}
-              {isGenerating && !reportUser ? 'Generating...' : 'Generate Team Report'}
-              <ChevronDown className="ml-2 h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleGenerateCsvReport()} disabled={isGenerating}>
-              Export Team as CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleGeneratePdfReport()} disabled={isGenerating}>
-              Export Team as PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
+      
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Generate Reports</CardTitle>
+          <CardDescription>Export team or individual reports in CSV or PDF format. Apply filters for PDF exports.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* Main Export Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="lg" className="shadow-sm" disabled={isGenerating && !reportUser}>
+                  {isGenerating && !reportUser ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <FileText className="mr-2 h-5 w-5" />
+                  )}
+                  {isGenerating && !reportUser ? 'Generating...' : 'Generate Team Report'}
+                  <ChevronDown className="ml-2 h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleGenerateCsvReport()} disabled={isGenerating}>
+                  Export Team as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePdfReport()} disabled={isGenerating}>
+                  Export Team as PDF (with filters)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Filters for PDF */}
+            <div className="flex flex-wrap gap-2 items-center border p-2 rounded-md">
+                <span className="text-sm font-medium mr-2 text-muted-foreground">PDF Filters:</span>
+                <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val as ReceiptStatusFilter)}>
+                    <SelectTrigger className="w-[180px] h-9">
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending_approval">Pending Review</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className="w-[260px] justify-start text-left font-normal h-9"
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                        dateRange.to ? (
+                            <>
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {format(dateRange.to, "LLL dd, y")}
+                            </>
+                        ) : (
+                            format(dateRange.from, "LLL dd, y")
+                        )
+                        ) : (
+                        <span>Pick a date range</span>
+                        )}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                    />
+                    </PopoverContent>
+                </Popover>
+                { (dateRange || statusFilter !== 'all') && (
+                    <Button variant="ghost" size="sm" onClick={() => { setDateRange(undefined); setStatusFilter('all'); }}>
+                        <X className="mr-2 h-4 w-4" /> Clear
+                    </Button>
+                )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
 
       <ManagerOverviewCharts />
 
