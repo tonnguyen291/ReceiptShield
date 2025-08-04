@@ -99,7 +99,7 @@ export function FlaggedReceiptsTable({ teamMembers }: FlaggedReceiptsTableProps)
       approveReceipt(actionReceipt.id);
       toast({ title: "Receipt Approved", description: `Receipt "${actionReceipt.fileName}" has been approved.` });
     } else if (dialogActionType === 'reject') {
-      rejectReceipt(actionReceipt.id);
+      rejectReceipt(actionReceipt.id, 'Rejected by manager.');
       toast({ title: "Receipt Rejected", description: `Receipt "${actionReceipt.fileName}" has been rejected.`, variant: 'destructive' });
     }
     loadReceipts(); // This re-fetches and will reset filters, which is acceptable
