@@ -39,88 +39,102 @@ export default function ManagerDashboardPage() {
   const handleGenerateCsvReport = (employeeEmail?: string) => {
     if (!user) return;
     setIsGenerating(true);
-    if(employeeEmail) setReportUser(employeeEmail);
+    if (employeeEmail) setReportUser(employeeEmail);
 
     try {
-        const receiptsToExport = employeeEmail 
-            ? getAllReceiptsForUser(employeeEmail) 
-            : getReceiptsForManager(user.id);
-            
-        const reportTitle = employeeEmail
-            ? `activity_report_${employeeEmail}`
-            : 'team_activity_report';
+      const employeeUser = employeeEmail ? getUsers().find(u => u.email === employeeEmail) : null;
 
-        if (receiptsToExport.length === 0) {
-          toast({
-            title: 'No Receipts to Export',
-            description: `There are no receipts for the selected scope to export.`,
-          });
-          setIsGenerating(false);
-          setReportUser(null);
-          return;
-        }
+      const receiptsToExport = employeeEmail
+        ? getAllReceiptsForUser(employeeEmail)
+        : getReceiptsForManager(user.id);
 
-        const headers = [
-          'ID', 'File Name', 'Uploaded By', 'Uploaded At', 'Status', 
-          'Fraud Probability', 'AI Explanation', 'Manager Notes', 
-          'Vendor', 'Date', 'Total Amount'
-        ];
-        const csvRows = [headers.join(',')];
-
-        receiptsToExport.forEach(receipt => {
-          const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
-          const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
-          const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
-          
-          const escapeCsvField = (field: string | undefined | null) => {
-            if (field === null || field === undefined) return '""';
-            const str = String(field);
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-              return `"${str.replace(/"/g, '""')}"`;
-            }
-            return str;
-          }
-          
-          const row = [
-            receipt.id,
-            escapeCsvField(receipt.fileName),
-            escapeCsvField(receipt.uploadedBy),
-            new Date(receipt.uploadedAt).toISOString(),
-            escapeCsvField(receipt.status || (receipt.isFraudulent ? 'pending_approval' : 'clear')),
-            receipt.fraudProbability.toFixed(2),
-            escapeCsvField(receipt.explanation),
-            escapeCsvField(receipt.managerNotes),
-            escapeCsvField(vendor),
-            escapeCsvField(date),
-            escapeCsvField(total)
-          ];
-          csvRows.push(row.join(','));
-        });
-
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${reportTitle}_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
+      const reportTitle = employeeEmail && employeeUser
+        ? `activity_report_${employeeUser.name.replace(/\s+/g, '_')}`
+        : 'team_activity_report';
+      
+      if (receiptsToExport.length === 0) {
         toast({
-          title: 'CSV Report Generated',
-          description: 'The CSV report has been downloaded.',
+          title: 'No Receipts to Export',
+          description: 'There are no receipts for the selected scope to export.',
         });
-    } catch (error) {
-        console.error("Error generating CSV report:", error);
-        toast({
-            title: 'Report Generation Failed',
-            description: 'An unexpected error occurred while creating the CSV file.',
-            variant: 'destructive',
-        });
-    } finally {
         setIsGenerating(false);
         setReportUser(null);
+        return;
+      }
+      
+      const headers = [
+        'ID', 'File Name', 'Uploaded By', 'Uploaded At', 'Status',
+        'Fraud Probability', 'AI Explanation', 'Manager Notes',
+        'Vendor', 'Date', 'Total Amount'
+      ];
+      
+      const csvRows = [headers.join(',')];
+
+      const escapeCsvField = (field: string | number | undefined | null) => {
+          if (field === null || field === undefined) return '""';
+          const str = String(field);
+          // Use a regex to check if the string contains a comma, double quote, or newline
+          if (/[",\n]/.test(str)) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+      };
+
+      receiptsToExport.forEach(receipt => {
+        const vendor = receipt.items.find(i => i.label.toLowerCase() === 'vendor')?.value || 'N/A';
+        const date = receipt.items.find(i => i.label.toLowerCase() === 'date')?.value || 'N/A';
+        const total = receipt.items.find(i => i.label.toLowerCase().includes('total'))?.value || 'N/A';
+
+        // Standardize status field for clarity
+        let status;
+        if (receipt.status) {
+          status = receipt.status; // 'approved', 'rejected', 'pending_approval'
+        } else if (receipt.isFraudulent) {
+          status = 'pending_approval'; // Should have been caught by flagged logic, but a good fallback
+        } else {
+          status = 'clear'; // Not flagged, no final status from manager yet
+        }
+        
+        const row = [
+          receipt.id,
+          escapeCsvField(receipt.fileName),
+          escapeCsvField(receipt.uploadedBy),
+          new Date(receipt.uploadedAt).toISOString(),
+          escapeCsvField(status),
+          receipt.fraudProbability.toFixed(2),
+          escapeCsvField(receipt.explanation),
+          escapeCsvField(receipt.managerNotes),
+          escapeCsvField(vendor),
+          escapeCsvField(date),
+          escapeCsvField(total)
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${reportTitle}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: 'CSV Report Generated',
+        description: 'The CSV report has been downloaded.',
+      });
+    } catch (error) {
+      console.error("Error generating CSV report:", error);
+      toast({
+        title: 'Report Generation Failed',
+        description: 'An unexpected error occurred while creating the CSV file.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+      setReportUser(null);
     }
   };
 
