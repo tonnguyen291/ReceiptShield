@@ -239,25 +239,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </SidebarMenu>
       </Sidebar>
       <SidebarInset>
-        <div className="min-h-screen flex flex-col bg-background/95 relative">
+        <div className="min-h-screen flex flex-col bg-background/95">
           <AppHeader onChatbotClick={() => setChatbotOpen(true)} />
           <main className="flex-grow p-8">
             {children}
-            <Chatbot
-              isOpen={isChatbotOpen}
-              onClose={() => setChatbotOpen(false)}
-            />
           </main>
-          <Button 
-             onClick={() => setChatbotOpen(true)}
-             className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl"
-             size="icon"
-          >
-              <Bot className="h-7 w-7"/>
-              <span className="sr-only">Open AI Assistant</span>
-          </Button>
         </div>
       </SidebarInset>
+       <Chatbot
+          isOpen={isChatbotOpen}
+          onClose={() => setChatbotOpen(false)}
+        />
+        <Button 
+            onClick={() => setChatbotOpen(true)}
+            className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-50"
+            size="icon"
+        >
+            <Bot className="h-8 w-8"/>
+            <span className="sr-only">Open AI Assistant</span>
+        </Button>
     </SidebarProvider>
   );
 }
