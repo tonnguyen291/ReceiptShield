@@ -252,7 +252,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         />
       <Button 
           onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-50"
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-[9999] bg-blue-500"
           size="icon"
       >
           <Bot className="h-8 w-8"/>
