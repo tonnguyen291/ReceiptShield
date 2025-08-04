@@ -63,48 +63,57 @@ const summarizeReceiptFlow = ai.defineFlow(
     outputSchema: SummarizeReceiptOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output || !output.items) {
-      // If the model fails to produce schema-compliant output or items are missing,
-      // return a default structure indicating failure for key fields.
-      // This allows the user to still see the verification page and manually enter data.
-      return { items: [
-        { label: "Vendor", value: "Extraction Failed - Edit me" },
-        { label: "Date", value: "Extraction Failed - Edit me" },
-        { label: "Total Amount", value: "Extraction Failed - Edit me" },
-        { label: "Note", value: "AI could not extract details. Please review the image and fill in the fields above. Try uploading a clearer image if needed."}
-      ] };
-    }
-    // Ensure at least the critical fields are present, even if returned by AI as "Not found"
-    const ensureField = (label: string, items: Array<{label: string, value: string}>) => {
-        if (!items.some(item => item.label.toLowerCase() === label.toLowerCase())) {
-            items.push({label: label, value: "Not found - Edit me"});
+    try {
+        const {output} = await prompt(input);
+        if (!output || !output.items) {
+          // If the model fails to produce schema-compliant output or items are missing,
+          // return a default structure indicating failure for key fields.
+          // This allows the user to still see the verification page and manually enter data.
+          return { items: [
+            { label: "Vendor", value: "Extraction Failed - Edit me" },
+            { label: "Date", value: "Extraction Failed - Edit me" },
+            { label: "Total Amount", value: "Extraction Failed - Edit me" },
+            { label: "Note", value: "AI could not extract details. Please review the image and fill in the fields above. Try uploading a clearer image if needed."}
+          ] };
         }
-    };
+        // Ensure at least the critical fields are present, even if returned by AI as "Not found"
+        const ensureField = (label: string, items: Array<{label: string, value: string}>) => {
+            if (!items.some(item => item.label.toLowerCase() === label.toLowerCase())) {
+                items.push({label: label, value: "Not found - Edit me"});
+            }
+        };
 
-    let resultItems = [...output.items];
-    ensureField("Vendor", resultItems);
-    ensureField("Date", resultItems);
-    ensureField("Total Amount", resultItems);
-    
-    // Filter out any potential duplicate "Not found" items if the AI already provided them
-    // and then we added our own "Not found - Edit me"
-    const uniqueItems = resultItems.reduce((acc, current) => {
-      const x = acc.find(item => item.label === current.label);
-      if (!x) {
-        return acc.concat([current]);
-      } else {
-        // Prefer non-"Extraction Failed" or non-"Not found - Edit me" if duplicates exist
-        if (x.value.includes("Extraction Failed") || x.value.includes("Not found - Edit me")) {
-            acc = acc.filter(item => item.label !== x.label);
+        let resultItems = [...output.items];
+        ensureField("Vendor", resultItems);
+        ensureField("Date", resultItems);
+        ensureField("Total Amount", resultItems);
+        
+        // Filter out any potential duplicate "Not found" items if the AI already provided them
+        // and then we added our own "Not found - Edit me"
+        const uniqueItems = resultItems.reduce((acc, current) => {
+          const x = acc.find(item => item.label === current.label);
+          if (!x) {
             return acc.concat([current]);
-        }
-        return acc;
-      }
-    }, [] as Array<{label: string, value: string}>);
+          } else {
+            // Prefer non-"Extraction Failed" or non-"Not found - Edit me" if duplicates exist
+            if (x.value.includes("Extraction Failed") || x.value.includes("Not found - Edit me")) {
+                acc = acc.filter(item => item.label !== x.label);
+                return acc.concat([current]);
+            }
+            return acc;
+          }
+        }, [] as Array<{label: string, value: string}>);
 
 
-    return { items: uniqueItems };
+        return { items: uniqueItems };
+    } catch(e) {
+        console.error("Error in summarizeReceiptFlow: ", e);
+        return { items: [
+            { label: "Vendor", value: "Extraction Failed - Edit me" },
+            { label: "Date", value: "Extraction Failed - Edit me" },
+            { label: "Total Amount", value: "Extraction Failed - Edit me" },
+            { label: "Note", value: "An unexpected error occurred during AI processing. Please review the image and fill in the fields manually."}
+        ] };
+    }
   }
 );
-

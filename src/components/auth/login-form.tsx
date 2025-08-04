@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Shield } from 'lucide-react';
 import { getManagers } from '@/lib/user-store';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export function LoginForm() {
   const [managers, setManagers] = useState<User[]>([]);
@@ -27,11 +28,11 @@ export function LoginForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
   const [supervisorId, setSupervisorId] = useState<string>('');
-  const [error, setError] = useState('');
   const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
   
   const { login, createAccount, user, isLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     // If the user is already logged in (e.g., from a previous session), redirect them.
@@ -54,53 +55,59 @@ export function LoginForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+
+    const showErrorToast = (description: string) => {
+        toast({
+            title: isCreateAccountMode ? 'Creation Failed' : 'Login Failed',
+            description,
+            variant: 'destructive',
+        });
+    }
 
     if (!email) {
-      setError('Email is required.');
+      showErrorToast('Email is required.');
       return;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address.');
+      showErrorToast('Please enter a valid email address.');
       return;
     }
     if (!password) {
-      setError('Password is required.');
+      showErrorToast('Password is required.');
       return;
     }
 
     if (isCreateAccountMode) {
       if (!name.trim()) {
-        setError('Full name is required.');
+        showErrorToast('Full name is required.');
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters long.');
+        showErrorToast('Password must be at least 6 characters long.');
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        showErrorToast('Passwords do not match.');
         return;
       }
       if (role === 'employee' && !supervisorId) {
-        setError('You must select a supervisor.');
+        showErrorToast('You must select a supervisor.');
         return;
       }
       const response = createAccount(name, email, role, supervisorId);
       if (!response.success) {
-        setError(response.message || "Failed to create account.");
+        showErrorToast(response.message || "Failed to create account.");
       }
     } else {
       const response = login(email, role);
       if (!response.success) {
-        setError(response.message || "Login failed.");
+        showErrorToast(response.message || "Login failed.");
       }
     }
   };
 
   const toggleMode = () => {
     setIsCreateAccountMode(!isCreateAccountMode);
-    setError('');
     // Reset fields
     setName('');
     setEmail('');
@@ -232,12 +239,12 @@ export function LoginForm() {
               </Select>
             </div>
           )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             type="submit"
             className="w-full"
+            disabled={isLoading}
           >
-            {isCreateAccountMode ? 'Create Account' : 'Sign In'}
+            {isLoading ? <Loader2 className="animate-spin" /> : (isCreateAccountMode ? 'Create Account' : 'Sign In')}
           </Button>
         </form>
       </CardContent>
