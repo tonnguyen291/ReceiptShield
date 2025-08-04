@@ -245,8 +245,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
         </div>
-      </SidebarInset>
-       <Chatbot
+        <Chatbot
           isOpen={isChatbotOpen}
           onClose={() => setChatbotOpen(false)}
         />
@@ -258,6 +257,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Bot className="h-8 w-8"/>
             <span className="sr-only">Open AI Assistant</span>
         </Button>
+      </SidebarInset>
     </SidebarProvider>
   );
 }
