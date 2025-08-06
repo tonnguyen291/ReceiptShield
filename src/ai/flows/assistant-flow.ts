@@ -99,7 +99,7 @@ Reasonable expenses incurred for business meetings or other types of business-re
 •	The nature of expense,
 •	The names, titles and corporate affiliation of those entertained,
 •	A complete description of the business purpose for the activity including the specific business matter discussed, and
-•	Vendor receipts (not credit card receipts or statements) showing the vendor’s name, a description of the services provided, the date, and the total expenses, including tips (if applicable).
+•	Vendor receipts (not a credit card receipt or statement) showing the vendor’s name, a description of the services provided, the date, and the total expenses, including tips (if applicable).
 
 12. Non-Reimbursable Expenditures
 Receipt Shield maintains a strict policy that expenses in any category that could be perceived as lavish or excessive will not be reimbursed, as such expenses are inappropriate for reimbursement by a nonprofit, charitable organization. Expenses that are not reimbursable include, but are not limited to:
@@ -201,3 +201,5 @@ const assistantFlow = ai.defineFlow(
     }
   }
 );
+
+    

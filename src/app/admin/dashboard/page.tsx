@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { UserManagementTable } from '@/components/admin/user-management-table';
 import { GlobalAnalyticsCards } from '@/components/admin/global-analytics-cards';
 import { Button } from '@/components/ui/button';
-import { FileUp, LogOut, UserPlus } from 'lucide-react';
+import { LogOut, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 
@@ -21,7 +21,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
             <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled>
                 <UserPlus className="mr-2 h-5 w-5" />
-                Invite Users
+                Invite New User
             </Button>
         </div>
       </div>

@@ -104,7 +104,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         assistantMessage.action = {
           label: 'Upload a Receipt',
           onClick: () => {
-            router.push('/employee/upload');
+            router.push('/employee/submit-receipt');
             onClose();
           },
         };
@@ -177,7 +177,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
             {isResponding && (
                 <div className="flex items-start gap-3">
                      <Avatar className="h-9 w-9 border border-primary">
-                        <AvatarFallback><Bot className="w-5 h-5" /></AvatarFallback>
+                        <AvatarFallback><Bot className="w-5 h-h" /></AvatarFallback>
                     </Avatar>
                     <div className="rounded-lg px-4 py-3 bg-muted text-muted-foreground flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -212,3 +212,5 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
     </Sheet>
   );
 }
+
+    

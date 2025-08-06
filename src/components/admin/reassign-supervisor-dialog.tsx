@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { User } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,14 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { updateUserSupervisor } from '@/lib/user-store';
+import { updateUserSupervisor, getManagers } from '@/lib/user-store';
 import { Loader2 } from 'lucide-react';
 
 interface ReassignSupervisorDialogProps {
   isOpen: boolean;
   onClose: () => void;
   user: User;
-  managers: User[];
   onSupervisorReassigned: () => void;
 }
 
@@ -29,11 +28,19 @@ export function ReassignSupervisorDialog({
   isOpen,
   onClose,
   user,
-  managers,
   onSupervisorReassigned,
 }: ReassignSupervisorDialogProps) {
   const [selectedSupervisorId, setSelectedSupervisorId] = useState(user.supervisorId || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [availableManagers, setAvailableManagers] = useState<User[]>([]);
+
+  useEffect(() => {
+    // Ensure the user being edited cannot be their own supervisor
+    if (isOpen) {
+        const allManagers = getManagers();
+        setAvailableManagers(allManagers.filter(manager => manager.id !== user.id));
+    }
+  }, [user, isOpen]);
 
   const handleSave = () => {
     if (!selectedSupervisorId || selectedSupervisorId === user.supervisorId) {
@@ -69,7 +76,7 @@ export function ReassignSupervisorDialog({
               <SelectValue placeholder="Select a manager" />
             </SelectTrigger>
             <SelectContent>
-              {managers.map((manager) => (
+              {availableManagers.map((manager) => (
                 <SelectItem key={manager.id} value={manager.id}>
                   {manager.name} ({manager.email})
                 </SelectItem>

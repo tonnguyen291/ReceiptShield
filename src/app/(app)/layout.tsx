@@ -1,11 +1,24 @@
 
-'use client';
+"use client";
 
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, type ReactNode, useState } from 'react';
-import AppHeader from '@/components/shared/app-header';
-import { Loader2, LayoutDashboard, ReceiptText, BarChart3, Settings, ShieldAlert, Users, LogOut, FileText, FileUp, HelpCircle, FileBarChart, Download, Bot, FileWarning, Briefcase, ListCollapse } from 'lucide-react';
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, type ReactNode, useState } from "react";
+import AppHeader from "@/components/shared/app-header";
+import {
+  Loader2,
+  LayoutDashboard,
+  ReceiptText,
+  Settings,
+  ShieldAlert,
+  Users,
+  LogOut,
+  FileUp,
+  FileBarChart,
+  Download,
+  Bot,
+  FileWarning,
+} from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -14,9 +27,10 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
-} from '@/components/ui/sidebar';
-import Link from 'next/link';
-import { Chatbot } from '@/components/shared/chatbot';
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import { Chatbot } from "@/components/shared/chatbot";
+import { Button } from "@/components/ui/button";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, isLoading, logout } = useAuth();
@@ -25,24 +39,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [isChatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      return; // Wait until authentication state is resolved
+    }
 
     if (!user) {
-      router.replace('/login');
+      router.replace("/login");
       return;
     }
 
-    const isEmployeeRoute = pathname.startsWith('/employee');
-    const isManagerRoute = pathname.startsWith('/manager');
-    const isAdminRoute = pathname.startsWith('/admin');
-    const isSharedRoute = pathname.startsWith('/profile');
+    const currentBaseRoute = pathname.split('/')[1]; // e.g., "employee", "manager", "admin", "profile"
+    const userBaseRoute = user.role;
 
-    if (user.role === 'employee' && !isEmployeeRoute && !isSharedRoute) {
-        router.replace('/employee/dashboard');
-    } else if (user.role === 'manager' && !isManagerRoute && !isSharedRoute) {
-        router.replace('/manager/dashboard');
-    } else if (user.role === 'admin' && !isAdminRoute && !isSharedRoute) {
-        router.replace('/admin/dashboard');
+    // Allow access to profile pages for any role
+    if (currentBaseRoute === 'profile') {
+      return;
+    }
+
+    // If the user is on a page that doesn't match their role, redirect them
+    if (currentBaseRoute !== userBaseRoute) {
+      router.replace(`/${userBaseRoute}/dashboard`);
     }
 
   }, [user, isLoading, router, pathname]);
@@ -59,39 +75,34 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <>
       <SidebarMenuItem>
         <Link href="/employee/dashboard" passHref>
-          <SidebarMenuButton isActive={pathname === '/employee/dashboard'} tooltip={{children: 'Dashboard'}}>
+          <SidebarMenuButton
+            isActive={pathname.includes("/employee/dashboard") || pathname.startsWith("/employee/receipt")}
+            tooltip={{ children: "Dashboard" }}
+          >
             <LayoutDashboard />
             <span>Dashboard</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/employee/dashboard" passHref>
-          <SidebarMenuButton isActive={pathname.startsWith('/employee/receipt')} tooltip={{children: 'My Receipts'}}>
-            <ReceiptText />
-            <span>My Receipts</span>
-          </SidebarMenuButton>
-        </Link>
-      </SidebarMenuItem>
-       <SidebarMenuItem>
-        <Link href="/employee/upload" passHref>
-          <SidebarMenuButton isActive={pathname.startsWith('/employee/upload')} tooltip={{children: 'Submit New Receipt'}}>
+        <Link href="/employee/submit-receipt" passHref>
+          <SidebarMenuButton
+            isActive={pathname.startsWith("/employee/submit-receipt")}
+            tooltip={{ children: "Submit New Receipt" }}
+          >
             <FileUp />
             <span>Submit Receipt</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-          <SidebarMenuButton tooltip={{children: 'Reimbursement Status'}} disabled>
-            <FileBarChart />
-            <span>Reimbursements</span>
-          </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-          <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
-            <Bot />
-            <span>Help Center</span>
-          </SidebarMenuButton>
+        <SidebarMenuButton
+          tooltip={{ children: "Reimbursement Status" }}
+          disabled
+        >
+          <FileBarChart />
+          <span>Reimbursements</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
     </>
   );
@@ -100,133 +111,131 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <>
       <SidebarMenuItem>
         <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton isActive={pathname === '/manager/dashboard'} tooltip={{children: 'Dashboard'}}>
+          <SidebarMenuButton
+            isActive={pathname === "/manager/dashboard"}
+            tooltip={{ children: "Dashboard" }}
+          >
             <LayoutDashboard />
             <span>Dashboard</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{children: 'Team Receipts'}}>
+        <SidebarMenuButton tooltip={{ children: "Team Receipts" }} disabled>
             <Users />
             <span>Team Receipts</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
-       <SidebarMenuItem>
-        <Link href="/manager/dashboard" passHref>
-          <SidebarMenuButton tooltip={{children: 'Audit & Approvals'}}>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{ children: "Audit & Approvals" }} disabled>
             <ShieldAlert />
             <span>Audit & Approvals</span>
-          </SidebarMenuButton>
-        </Link>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton tooltip={{children: 'Fraud Reports'}} disabled>
-            <FileWarning />
-            <span>Fraud Reports</span>
-          </SidebarMenuButton>
-      </SidebarMenuItem>
-        <SidebarMenuItem>
-        <SidebarMenuButton tooltip={{children: 'Export Data'}} disabled>
-            <Download />
-            <span>Export Data</span>
-          </SidebarMenuButton>
+        <SidebarMenuButton tooltip={{ children: "Fraud Reports" }} disabled>
+          <FileWarning />
+          <span>Fraud Reports</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-          <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
-            <Bot />
-            <span>Help Center</span>
-          </SidebarMenuButton>
+        <SidebarMenuButton tooltip={{ children: "Export Data" }} disabled>
+          <Download />
+          <span>Export Data</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
     </>
   );
 
   const adminNav = (
     <>
-        <SidebarMenuItem>
-            <Link href="/admin/dashboard" passHref>
-            <SidebarMenuButton isActive={pathname === '/admin/dashboard'} tooltip={{children: 'Overview Dashboard'}}>
-                <LayoutDashboard />
-                <span>Overview</span>
-            </SidebarMenuButton>
-            </Link>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-            <Link href="/admin/dashboard" passHref>
-            <SidebarMenuButton tooltip={{children: 'All Users'}}>
-                <Users />
-                <span>All Users</span>
-            </SidebarMenuButton>
-            </Link>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-            <Link href="/admin/dashboard" passHref>
-            <SidebarMenuButton tooltip={{children: 'Receipts Overview'}}>
-                <ReceiptText />
-                <span>All Receipts</span>
-            </SidebarMenuButton>
-            </Link>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: 'Fraud Detection Logs'}} disabled>
-                <FileWarning />
-                <span>Fraud Logs</span>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{children: 'Approvals & Audits'}} disabled>
-                <ShieldAlert />
-                <span>Audits</span>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setChatbotOpen(true)} tooltip={{children: 'AI Help Center'}}>
-                <Bot />
-                <span>Help Center</span>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/admin/dashboard" passHref>
+          <SidebarMenuButton
+            isActive={pathname === "/admin/dashboard"}
+            tooltip={{ children: "Overview Dashboard" }}
+          >
+            <LayoutDashboard />
+            <span>Overview</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{ children: "All Users" }} disabled>
+            <Users />
+            <span>All Users</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={{ children: "Receipts Overview" }} disabled>
+            <ReceiptText />
+            <span>All Receipts</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={{ children: "Fraud Detection Logs" }}
+          disabled
+        >
+          <FileWarning />
+          <span>Fraud Logs</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={{ children: "Approvals & Audits" }}
+          disabled
+        >
+          <ShieldAlert />
+          <span>Audits</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     </>
   );
 
   const renderNav = () => {
-    switch(user?.role) {
-        case 'admin':
-            return adminNav;
-        case 'manager':
-            return managerNav;
-        case 'employee':
-            return employeeNav;
-        default:
-            return null;
+    switch (user?.role) {
+      case "admin":
+        return adminNav;
+      case "manager":
+        return managerNav;
+      case "employee":
+        return employeeNav;
+      default:
+        return null;
     }
-  }
+  };
 
   const sharedNavBottom = (
     <>
-        <SidebarMenuItem>
-            <Link href="/profile" passHref>
-            <SidebarMenuButton isActive={pathname.startsWith('/profile')} tooltip={{children: 'Settings'}}>
-                <Settings />
-                <span>Settings</span>
-            </SidebarMenuButton>
-            </Link>
-        </SidebarMenuItem>
+      <SidebarMenuItem>
+        <Link href="/profile" passHref>
+          <SidebarMenuButton
+            isActive={pathname.startsWith("/profile")}
+            tooltip={{ children: "Settings" }}
+          >
+            <Settings />
+            <span>Settings</span>
+          </SidebarMenuButton>
+        </Link>
+      </SidebarMenuItem>
     </>
   );
-
 
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarMenu className="flex flex-col h-full p-2">
-            <div className="flex-grow">
-                {renderNav()}
-            </div>
-            <SidebarFooter>
-                {sharedNavBottom}
-            </SidebarFooter>
+          <div className="flex-grow">{renderNav()}</div>
+          <SidebarFooter>
+            {sharedNavBottom}
+             <SidebarMenuItem>
+                <SidebarMenuButton onClick={logout} tooltip={{children: 'Sign Out'}}>
+                    <LogOut />
+                    <span>Sign Out</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarFooter>
         </SidebarMenu>
       </Sidebar>
       <SidebarInset>
@@ -234,10 +243,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <AppHeader onChatbotClick={() => setChatbotOpen(true)} />
           <main className="flex-grow p-8">
             {children}
-            <Chatbot isOpen={isChatbotOpen} onClose={() => setChatbotOpen(false)} />
           </main>
         </div>
       </SidebarInset>
+       <Chatbot
+          isOpen={isChatbotOpen}
+          onClose={() => setChatbotOpen(false)}
+        />
+      <Button 
+          onClick={() => setChatbotOpen(true)}
+          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-2xl z-[9999] bg-blue-500"
+          size="icon"
+      >
+          <Bot className="h-8 w-8"/>
+          <span className="sr-only">Open AI Assistant</span>
+      </Button>
+      <Button 
+          onClick={() => setChatbotOpen(true)}
+          className="fixed bottom-6 left-6 h-16 w-16 rounded-full shadow-2xl z-50"
+          size="icon"
+      >
+          <Bot className="h-8 w-8"/>
+          <span className="sr-only">Open AI Assistant</span>
+      </Button>
     </SidebarProvider>
   );
 }

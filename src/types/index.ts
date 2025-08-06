@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   dob?: string; // Date of Birth
   supervisorId?: string; // ID of the user's manager
+  status?: 'active' | 'inactive';
 }
 
 export interface ReceiptDataItem {
