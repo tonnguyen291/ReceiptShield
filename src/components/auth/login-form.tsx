@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Shield } from 'lucide-react';
-import { getManagers } from '@/lib/user-store';
+import { getManagers } from '@/lib/firebase-user-store';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +29,7 @@ export function LoginForm() {
   const [role, setRole] = useState<UserRole>('employee');
   const [supervisorId, setSupervisorId] = useState<string>('');
   const [isCreateAccountMode, setIsCreateAccountMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { login, createAccount, user, isLoading } = useAuth();
   const router = useRouter();
@@ -49,12 +50,17 @@ export function LoginForm() {
 
   useEffect(() => {
     if (isCreateAccountMode) {
-      setManagers(getManagers());
+      const loadManagers = async () => {
+        const managersList = await getManagers();
+        setManagers(managersList);
+      };
+      loadManagers();
     }
   }, [isCreateAccountMode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const showErrorToast = (description: string) => {
         toast({
@@ -64,45 +70,52 @@ export function LoginForm() {
         });
     }
 
-    if (!email) {
-      showErrorToast('Email is required.');
-      return;
-    }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      showErrorToast('Please enter a valid email address.');
-      return;
-    }
-    if (!password) {
-      showErrorToast('Password is required.');
-      return;
-    }
+    try {
+      if (!email) {
+        showErrorToast('Email is required.');
+        return;
+      }
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        showErrorToast('Please enter a valid email address.');
+        return;
+      }
+      if (!password) {
+        showErrorToast('Password is required.');
+        return;
+      }
 
-    if (isCreateAccountMode) {
-      if (!name.trim()) {
-        showErrorToast('Full name is required.');
-        return;
+      if (isCreateAccountMode) {
+        if (!name.trim()) {
+          showErrorToast('Full name is required.');
+          return;
+        }
+        if (password.length < 6) {
+          showErrorToast('Password must be at least 6 characters long.');
+          return;
+        }
+        if (password !== confirmPassword) {
+          showErrorToast('Passwords do not match.');
+          return;
+        }
+        if (role === 'employee' && !supervisorId) {
+          showErrorToast('You must select a supervisor.');
+          return;
+        }
+        const response = await createAccount(name, email, role, supervisorId);
+        if (!response.success) {
+          showErrorToast(response.message || "Failed to create account.");
+        }
+      } else {
+        const response = await login(email, role);
+        if (!response.success) {
+          showErrorToast(response.message || "Login failed.");
+        }
       }
-      if (password.length < 6) {
-        showErrorToast('Password must be at least 6 characters long.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        showErrorToast('Passwords do not match.');
-        return;
-      }
-      if (role === 'employee' && !supervisorId) {
-        showErrorToast('You must select a supervisor.');
-        return;
-      }
-      const response = createAccount(name, email, role, supervisorId);
-      if (!response.success) {
-        showErrorToast(response.message || "Failed to create account.");
-      }
-    } else {
-      const response = login(email, role);
-      if (!response.success) {
-        showErrorToast(response.message || "Login failed.");
-      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      showErrorToast('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -242,9 +255,9 @@ export function LoginForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
           >
-            {isLoading ? <Loader2 className="animate-spin" /> : (isCreateAccountMode ? 'Create Account' : 'Sign In')}
+            {(isLoading || isSubmitting) ? <Loader2 className="animate-spin" /> : (isCreateAccountMode ? 'Create Account' : 'Sign In')}
           </Button>
         </form>
       </CardContent>

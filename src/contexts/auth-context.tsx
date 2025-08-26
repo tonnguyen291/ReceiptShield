@@ -4,7 +4,7 @@
 import type { User, UserRole } from '@/types';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getUserByEmail, addUser as addUserToDB, getUsers } from '@/lib/user-store';
+import { getUserByEmail, addUser as addUserToDB, getUsers, initializeDefaultUsers } from '@/lib/firebase-user-store';
 import { useRouter } from 'next/navigation';
 
 interface AuthResponse {
@@ -15,8 +15,8 @@ interface AuthResponse {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, role: UserRole) => AuthResponse;
-  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => AuthResponse;
+  login: (email: string, role: UserRole) => Promise<AuthResponse>;
+  createAccount: (name: string, email: string, role: UserRole, supervisorId?: string) => Promise<AuthResponse>;
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -31,26 +31,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize users DB on load
-    getUsers(); 
-    try {
-      const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (storedUserJSON) {
-        const storedUser: User = JSON.parse(storedUserJSON);
-        // Ensure user is still valid and active on load
-        const freshUser = getUserByEmail(storedUser.email);
-        if (freshUser && freshUser.status === 'active') {
-          setUser(storedUser);
-        } else {
-          // If user doesn't exist or is inactive, clear from storage
-          localStorage.removeItem(AUTH_STORAGE_KEY);
+    // Initialize Firebase users DB on load
+    const initializeAuth = async () => {
+      try {
+        await initializeDefaultUsers();
+        const users = await getUsers();
+        console.log('Loaded users from Firestore:', users.length);
+        
+        const storedUserJSON = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (storedUserJSON) {
+          const storedUser: User = JSON.parse(storedUserJSON);
+          // Ensure user is still valid and active on load
+          const freshUser = await getUserByEmail(storedUser.email);
+          if (freshUser && freshUser.status === 'active') {
+            setUser(storedUser);
+          } else {
+            // If user doesn't exist or is inactive, clear from storage
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+          }
         }
+      } catch (error) {
+        console.error("Failed to initialize Firebase users:", error);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+    
+    initializeAuth();
   }, []);
 
   useEffect(() => {
@@ -64,14 +70,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading]);
 
-  const login = (email: string, role: UserRole): AuthResponse => {
-    const foundUser = getUserByEmail(email);
+  const login = async (email: string, role: UserRole): Promise<AuthResponse> => {
+    try {
+      const foundUser = await getUserByEmail(email);
 
-    if (foundUser && foundUser.role === role) {
-      if (foundUser.status === 'inactive') {
-        return { success: false, message: 'Your account has been deactivated. Please contact an administrator.' };
+      if (foundUser && foundUser.role === role) {
+        if (foundUser.status === 'inactive') {
+          return { success: false, message: 'Your account has been deactivated. Please contact an administrator.' };
+        }
+        setUser(foundUser);
+        // Let the AppLayout's useEffect handle redirection based on role
+        if (role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (role === 'manager') {
+          router.push('/manager/dashboard');
+        } else {
+          router.push('/employee/dashboard');
+        }
+        return { success: true, message: 'Login successful.' };
+      } else {
+        const message = "Login failed. Check your credentials and selected role.";
+        return { success: false, message: "Login failed. Check your credentials and selected role." };
       }
-      setUser(foundUser);
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'Login failed. Please try again.' };
+    }
+  };
+
+  const createAccount = async (name: string, email: string, role: UserRole, supervisorId?: string): Promise<AuthResponse> => {
+    try {
+      const existingUser = await getUserByEmail(email);
+      if (existingUser) {
+          return { success: false, message: "An account with this email already exists." };
+      }
+      
+      // Clear any existing session data before creating a new account
+      logout();
+
+      const newUserData = { 
+        name, 
+        email, 
+        role, 
+        supervisorId: role === 'employee' ? supervisorId : undefined,
+        status: 'active' as const,
+      };
+      
+      const userId = await addUserToDB(newUserData);
+      const newUser: User = { 
+        id: userId,
+        ...newUserData,
+      };
+      
+      setUser(newUser);
+      
       // Let the AppLayout's useEffect handle redirection based on role
       if (role === 'admin') {
         router.push('/admin/dashboard');
@@ -80,43 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         router.push('/employee/dashboard');
       }
-      return { success: true, message: 'Login successful.' };
-    } else {
-      const message = "Login failed. Check your credentials and selected role.";
-      return { success: false, message: "Login failed. Check your credentials and selected role." };
+      return { success: true, message: 'Account created successfully.' };
+    } catch (error) {
+      console.error('Create account error:', error);
+      return { success: false, message: 'Failed to create account. Please try again.' };
     }
-  };
-
-  const createAccount = (name: string, email: string, role: UserRole, supervisorId?: string): AuthResponse => {
-    const existingUser = getUserByEmail(email);
-    if (existingUser) {
-        return { success: false, message: "An account with this email already exists." };
-    }
-    
-    // Clear any existing session data before creating a new account
-    logout();
-
-    const newUser: User = { 
-      id: `user-${Date.now()}`, 
-      name, 
-      email, 
-      role, 
-      supervisorId: role === 'employee' ? supervisorId : undefined,
-      status: 'active',
-    };
-    
-    addUserToDB(newUser);
-    setUser(newUser);
-    
-    // Let the AppLayout's useEffect handle redirection based on role
-    if (role === 'admin') {
-      router.push('/admin/dashboard');
-    } else if (role === 'manager') {
-      router.push('/manager/dashboard');
-    } else {
-      router.push('/employee/dashboard');
-    }
-    return { success: true, message: 'Account created successfully.' };
   };
 
   const logout = () => {

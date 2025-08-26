@@ -3,12 +3,14 @@ export type UserRole = 'employee' | 'manager' | 'admin';
 
 export interface User {
   id: string;
-  name?: string; // Added for full name
+  name: string; // Required for full name
   email: string;
   role: UserRole;
   dob?: string; // Date of Birth
   supervisorId?: string; // ID of the user's manager
-  status?: 'active' | 'inactive';
+  status: 'active' | 'inactive';
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ReceiptDataItem {
