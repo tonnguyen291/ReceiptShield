@@ -139,17 +139,24 @@ export function LoginForm() {
             <Shield className="w-16 h-16 text-primary" />
           </div>
           <CardTitle className="text-3xl font-headline">
-            Authenticating
+            {isLoading ? 'Connecting to Firebase...' : 'Authenticating'}
           </CardTitle>
            <CardDescription>
-            Please wait...
+            {isLoading ? 'Initializing database connection...' : 'Please wait...'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center items-center h-56">
+        <CardContent className="flex flex-col justify-center items-center h-56 space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          {isLoading && (
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              This may take a few seconds on first load while we connect to Firebase...
+            </p>
+          )}
         </CardContent>
         <CardFooter className="flex justify-center">
-           <p className="text-xs text-muted-foreground">&nbsp;</p>
+           <p className="text-xs text-muted-foreground">
+             {isLoading ? 'Initializing...' : 'Redirecting...'}
+           </p>
         </CardFooter>
       </Card>
     );
