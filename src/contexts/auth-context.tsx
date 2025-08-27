@@ -38,9 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const timeoutId = setTimeout(() => {
           console.warn('Firebase initialization taking too long, proceeding without initialization');
           setIsLoading(false);
-        }, 10000); // 10 second timeout
+        }, 5000); // Reduced to 5 seconds
 
-        // Test Firebase connection first
+        // Test Firebase connection first (faster test)
         const isConnected = await testFirebaseConnection();
         if (!isConnected) {
           console.warn('Firebase connection failed, proceeding in offline mode');
@@ -48,7 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        await initializeDefaultUsers();
+        // Initialize default users in background (don't wait for it)
+        initializeDefaultUsers().catch(error => {
+          console.warn('Failed to initialize default users:', error);
+        });
+
+        // Load existing users
         const users = await getUsers();
         console.log('Loaded users from Firestore:', users.length);
         

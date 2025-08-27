@@ -264,7 +264,14 @@ export function LoginForm() {
             className="w-full"
             disabled={isLoading || isSubmitting}
           >
-            {(isLoading || isSubmitting) ? <Loader2 className="animate-spin" /> : (isCreateAccountMode ? 'Create Account' : 'Sign In')}
+            {(isLoading || isSubmitting) ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin" />
+                {isCreateAccountMode ? 'Creating Account...' : 'Signing In...'}
+              </div>
+            ) : (
+              isCreateAccountMode ? 'Create Account' : 'Sign In'
+            )}
           </Button>
         </form>
       </CardContent>

@@ -22,11 +22,9 @@ const USERS_COLLECTION = 'users';
 export async function testFirebaseConnection(): Promise<boolean> {
   try {
     console.log('Testing Firebase connection...');
-    const testDoc = await addDoc(collection(db, 'test'), { test: true, timestamp: new Date() });
-    console.log('Firebase connection successful, test doc created:', testDoc.id);
-    
-    // Clean up test document
-    // Note: In production, you might want to handle this differently
+    // Use a simpler test - just try to get the users collection
+    const usersSnapshot = await getDocs(collection(db, USERS_COLLECTION));
+    console.log('Firebase connection successful, users collection accessible');
     return true;
   } catch (error) {
     console.error('Firebase connection test failed:', error);
@@ -168,13 +166,13 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
       Object.entries(userData).filter(([_, value]) => value !== undefined && value !== null)
     );
     
-    console.log('Adding user with data:', cleanUserData);
+    console.log('Adding user to Firestore...');
     
     const docRef = await addDoc(collection(db, USERS_COLLECTION), cleanUserData);
-    console.log('User added with ID:', docRef.id);
+    console.log('User added successfully with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('Error adding user:', error);
+    console.error('Error adding user to Firestore:', error);
     console.error('User data that caused error:', user);
     throw error;
   }
