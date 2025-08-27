@@ -18,6 +18,22 @@ import type { User } from '@/types';
 
 const USERS_COLLECTION = 'users';
 
+// Test Firebase connection
+export async function testFirebaseConnection(): Promise<boolean> {
+  try {
+    console.log('Testing Firebase connection...');
+    const testDoc = await addDoc(collection(db, 'test'), { test: true, timestamp: new Date() });
+    console.log('Firebase connection successful, test doc created:', testDoc.id);
+    
+    // Clean up test document
+    // Note: In production, you might want to handle this differently
+    return true;
+  } catch (error) {
+    console.error('Firebase connection test failed:', error);
+    return false;
+  }
+}
+
 // Initialize default users in Firestore
 export async function initializeDefaultUsers(): Promise<void> {
   try {
@@ -130,19 +146,36 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 
 export async function addUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
+    // Validate required fields
+    if (!user.name || !user.email || !user.role) {
+      throw new Error('Missing required fields: name, email, and role are required');
+    }
+
+    // Clean and validate the data
     const now = new Date();
     const userData = {
-      ...user,
-      email: user.email.toLowerCase(),
+      name: user.name.trim(),
+      email: user.email.toLowerCase().trim(),
+      role: user.role,
+      status: user.status || 'active',
+      supervisorId: user.supervisorId || null,
       createdAt: now,
       updatedAt: now,
     };
+
+    // Remove any undefined or null values that might cause issues
+    const cleanUserData = Object.fromEntries(
+      Object.entries(userData).filter(([_, value]) => value !== undefined && value !== null)
+    );
     
-    const docRef = await addDoc(collection(db, USERS_COLLECTION), userData);
+    console.log('Adding user with data:', cleanUserData);
+    
+    const docRef = await addDoc(collection(db, USERS_COLLECTION), cleanUserData);
     console.log('User added with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
     console.error('Error adding user:', error);
+    console.error('User data that caused error:', user);
     throw error;
   }
 }

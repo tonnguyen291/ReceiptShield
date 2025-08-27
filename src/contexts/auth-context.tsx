@@ -4,7 +4,7 @@
 import type { User, UserRole } from '@/types';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getUserByEmail, addUser as addUserToDB, getUsers, initializeDefaultUsers } from '@/lib/firebase-user-store';
+import { getUserByEmail, addUser as addUserToDB, getUsers, initializeDefaultUsers, testFirebaseConnection } from '@/lib/firebase-user-store';
 import { useRouter } from 'next/navigation';
 
 interface AuthResponse {
@@ -39,6 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('Firebase initialization taking too long, proceeding without initialization');
           setIsLoading(false);
         }, 10000); // 10 second timeout
+
+        // Test Firebase connection first
+        const isConnected = await testFirebaseConnection();
+        if (!isConnected) {
+          console.warn('Firebase connection failed, proceeding in offline mode');
+          setIsLoading(false);
+          return;
+        }
 
         await initializeDefaultUsers();
         const users = await getUsers();
