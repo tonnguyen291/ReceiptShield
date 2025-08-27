@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Shield } from 'lucide-react';
-import { getManagers } from '@/lib/firebase-user-store';
+import { getManagers } from '@/lib/firebase-auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -101,12 +101,12 @@ export function LoginForm() {
           showErrorToast('You must select a supervisor.');
           return;
         }
-        const response = await createAccount(name, email, role, supervisorId);
+        const response = await createAccount(name, email, password, role, supervisorId);
         if (!response.success) {
           showErrorToast(response.message || "Failed to create account.");
         }
       } else {
-        const response = await login(email, role);
+        const response = await login(email, password);
         if (!response.success) {
           showErrorToast(response.message || "Login failed.");
         }
