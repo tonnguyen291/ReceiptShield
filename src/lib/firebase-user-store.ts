@@ -10,7 +10,8 @@ import {
   query, 
   where,
   onSnapshot,
-  serverTimestamp 
+  serverTimestamp,
+  Timestamp 
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User } from '@/types';
@@ -24,22 +25,23 @@ export async function initializeDefaultUsers(): Promise<void> {
     
     // Only initialize if no users exist
     if (usersSnapshot.empty) {
-      const defaultUsers: Omit<User, 'id'>[] = [
+      const now = new Date();
+      const defaultUsers = [
         {
           name: 'Alex Admin',
           email: 'admin@corp.com',
           role: 'admin',
           status: 'active',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: now,
+          updatedAt: now,
         },
         {
           name: 'Bob Manager',
           email: 'manager@example.com',
           role: 'manager',
           status: 'active',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: now,
+          updatedAt: now,
         },
         {
           name: 'Charlie Employee',
@@ -47,8 +49,8 @@ export async function initializeDefaultUsers(): Promise<void> {
           role: 'employee',
           supervisorId: 'manager-001',
           status: 'active',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: now,
+          updatedAt: now,
         },
         {
           name: 'Dana Employee',
@@ -56,8 +58,8 @@ export async function initializeDefaultUsers(): Promise<void> {
           role: 'employee',
           supervisorId: 'manager-001',
           status: 'active',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: now,
+          updatedAt: now,
         }
       ];
 
@@ -85,8 +87,8 @@ export async function getUsers(): Promise<User[]> {
         role: data.role,
         status: data.status,
         supervisorId: data.supervisorId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
       });
     });
     
@@ -115,8 +117,8 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
         role: data.role,
         status: data.status,
         supervisorId: data.supervisorId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
       };
     }
     return undefined;
@@ -128,11 +130,12 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 
 export async function addUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   try {
+    const now = new Date();
     const userData = {
       ...user,
       email: user.email.toLowerCase(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: now,
+      updatedAt: now,
     };
     
     const docRef = await addDoc(collection(db, USERS_COLLECTION), userData);
@@ -149,7 +152,7 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
     const userRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userRef, {
       ...updates,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
     });
     console.log('User updated successfully');
   } catch (error) {
@@ -177,8 +180,8 @@ export async function getManagers(): Promise<User[]> {
         role: data.role,
         status: data.status,
         supervisorId: data.supervisorId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
       });
     });
     
@@ -209,8 +212,8 @@ export async function getEmployeesForManager(managerId: string): Promise<User[]>
         role: data.role,
         status: data.status,
         supervisorId: data.supervisorId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
       });
     });
     
@@ -226,7 +229,7 @@ export async function updateUserSupervisor(userId: string, newSupervisorId: stri
     const userRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(userRef, {
       supervisorId: newSupervisorId,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
     });
     console.log('User supervisor updated successfully');
   } catch (error) {
@@ -248,8 +251,8 @@ export function subscribeToUsers(callback: (users: User[]) => void): () => void 
         role: data.role,
         status: data.status,
         supervisorId: data.supervisorId,
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
       });
     });
     callback(users);
