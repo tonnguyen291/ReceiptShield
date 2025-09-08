@@ -9,7 +9,7 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": ".next",
+    "public": "out",
     "ignore": [
       "firebase.json",
       "**/.*",
