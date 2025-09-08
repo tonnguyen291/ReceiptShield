@@ -113,6 +113,38 @@ export async function getUsers(): Promise<User[]> {
   }
 }
 
+export async function getUserData(userId: string): Promise<User | null> {
+  try {
+    // --- DIAGNOSTIC LOGGING ---
+    console.log('Attempting to get user data for userId:', userId);
+    console.log('Is the db object available?', db);
+    // --- END DIAGNOSTIC LOGGING ---
+
+    const userRef = doc(db, USERS_COLLECTION, userId);
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        status: data.status,
+        supervisorId: data.supervisorId,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+      };
+    } else {
+      console.log("No such user document!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting user data:", error);
+    return null;
+  }
+}
+
 export async function getUserByEmail(email: string): Promise<User | undefined> {
   try {
     const q = query(

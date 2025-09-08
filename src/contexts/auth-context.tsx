@@ -4,14 +4,15 @@
 import type { User, UserRole } from '@/types';
 import type { Dispatch, ReactNode, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signUpWithEmail, 
-  signInWithEmail, 
-  signOutUser, 
-  onAuthStateChange, 
-  getManagers 
+import {
+  signUpWithEmail,
+  signInWithEmail,
+signOutUser,
+onAuthStateChange,
 } from '@/lib/firebase-auth';
+import { getUserData } from '@/lib/firebase-user-store';
 import { useRouter } from 'next/navigation';
+import { User as FirebaseUser } from 'firebase/auth';
 
 interface AuthResponse {
   success: boolean;
@@ -29,48 +30,60 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_STORAGE_KEY = 'receiptShieldUser';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Listen to Firebase Auth state changes
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChange(async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in, fetch their profile from Firestore
+        const userData = await getUserData(firebaseUser.uid);
+        if (userData) {
+          setUser(userData);
+        } else {
+          // This case might happen if a user is in Auth but not in Firestore.
+          // Handle as appropriate, e.g., by logging them out or creating a profile.
+          setUser(null);
+          await signOutUser();
+        }
+      } else {
+        // User is signed out
+        setUser(null);
+      }
       setIsLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  // Remove localStorage usage since Firebase Auth handles persistence
-
   const login = async (email: string, password: string): Promise<AuthResponse> => {
     try {
-      const user = await signInWithEmail(email, password);
-      setUser(user);
+      const userData = await signInWithEmail(email, password);
       
-      // Let the AppLayout's useEffect handle redirection based on role
-      if (user.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (user.role === 'manager') {
-        router.push('/manager/dashboard');
+      if (userData) {
+        setUser(userData);
+        // Redirect based on role after setting user data
+        if (userData.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (userData.role === 'manager') {
+          router.push('/manager/dashboard');
+        } else {
+          router.push('/employee/dashboard');
+        }
+        return { success: true, message: 'Login successful.' };
       } else {
-        router.push('/employee/dashboard');
+        // This should not happen in a normal login flow
+        await signOutUser();
+        return { success: false, message: 'User profile not found.' };
       }
-      return { success: true, message: 'Login successful.' };
     } catch (error: any) {
       console.error('Login error:', error);
       let message = 'Login failed. Please try again.';
       
-      if (error.code === 'auth/user-not-found') {
-        message = 'No account found with this email address.';
-      } else if (error.code === 'auth/wrong-password') {
-        message = 'Incorrect password.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = 'Invalid email or password.';
       } else if (error.code === 'auth/invalid-email') {
         message = 'Invalid email address.';
       } else if (error.message) {
@@ -83,16 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const createAccount = async (name: string, email: string, password: string, role: UserRole, supervisorId?: string): Promise<AuthResponse> => {
     try {
-      // Clear any existing session data before creating a new account
-      logout();
-
-      const user = await signUpWithEmail(email, password, name, role, supervisorId);
-      setUser(user);
+      // Create user in Firebase Auth and Firestore
+      const newUser = await signUpWithEmail(email, password, name, role, supervisorId);
+      setUser(newUser);
       
-      // Let the AppLayout's useEffect handle redirection based on role
-      if (role === 'admin') {
+      // Redirect based on role
+      if (newUser.role === 'admin') {
         router.push('/admin/dashboard');
-      } else if (role === 'manager') {
+      } else if (newUser.role === 'manager') {
         router.push('/manager/dashboard');
       } else {
         router.push('/employee/dashboard');

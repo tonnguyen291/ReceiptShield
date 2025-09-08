@@ -11,9 +11,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud, FileType } from 'lucide-react';
 import { summarizeReceipt } from '@/ai/flows/summarize-receipt';
-import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
+import type { Receipt, ReceiptDataItem } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { addReceipt } from '@/lib/receipt-store';
+import { uploadReceipt } from '@/lib/firebase-receipt-store';
 import { fileToDataUri } from '@/lib/utils';
 
 export function ReceiptUploadForm() {
@@ -56,10 +56,10 @@ export function ReceiptUploadForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !user || !user.email) {
+    if (!file || !user || !user.id) {
       toast({
         title: 'Error',
-        description: 'Please select a file and ensure you are logged in with a valid user account.',
+        description: 'Please select a file and ensure you are properly logged in.',
         variant: 'destructive',
       });
       return;
@@ -69,43 +69,46 @@ export function ReceiptUploadForm() {
     try {
       const imageDataUri = await fileToDataUri(file);
 
+      // 1. Summarize receipt with AI
       const summaryResult = await summarizeReceipt({ photoDataUri: imageDataUri });
       if (!summaryResult || !summaryResult.items) {
         throw new Error('Failed to summarize receipt. The AI did not return structured items.');
       }
-      
+
       const processedItems: ReceiptDataItem[] = summaryResult.items.map((item, index) => ({
         ...item,
         id: `item-${Date.now()}-${index}`,
       }));
 
-      const initialReceipt: ProcessedReceipt = {
-        id: Date.now().toString(),
+      // 2. Prepare receipt data for Firestore
+      const receiptData: Omit<Receipt, 'id' | 'imageUrl' | 'userId'> = {
         fileName: file.name,
-        imageDataUri,
         items: processedItems,
+        status: 'pending',
         isFraudulent: false,
         fraudProbability: 0,
         explanation: "Pending user verification.",
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: user.email,
-        supervisorId: user.supervisorId, // Add supervisorId to receipt
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        supervisorId: user.supervisorId,
       };
 
-      addReceipt(initialReceipt);
+      // 3. Upload to Firebase Storage and Firestore
+      const newReceiptId = await uploadReceipt(user.id, receiptData, file);
 
       toast({
         title: 'Receipt Items Extracted!',
         description: 'Please verify the extracted information.',
       });
-      
+
+      // 4. Cleanup and redirect
       setFile(null);
       setPreview(null);
       setIsPdf(false);
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
-      
-      router.push(`/employee/verify-receipt/${initialReceipt.id}`);
+
+      router.push(`/employee/verify-receipt/${newReceiptId}`);
 
     } catch (error: any) {
       console.error('Error processing receipt:', error);
