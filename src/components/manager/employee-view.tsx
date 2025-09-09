@@ -23,7 +23,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, ShieldQuestion, Loader2, Users, FileText, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, ShieldQuestion, Loader2, Users, FileText, ChevronDown, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -63,8 +63,8 @@ export function EmployeeView({ onGeneratePdf, onGenerateCsv, isGenerating, repor
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
-    if (receipt.status === 'rejected') {
-      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    if (receipt.status === 'draft' || receipt.isDraft) {
+      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
     }
     if (receipt.status === 'pending_approval') {
       return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;

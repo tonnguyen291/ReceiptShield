@@ -41,7 +41,9 @@ export default function EmployeeDashboardPage() {
       }, 0);
 
       const pendingReceipts = allReceipts.filter(r => r.status === 'pending_approval');
-      const pendingAmount = pendingReceipts.reduce((acc, r) => {
+      const draftReceipts = allReceipts.filter(r => r.status === 'draft' || r.isDraft);
+      const totalPendingReceipts = [...pendingReceipts, ...draftReceipts];
+      const pendingAmount = totalPendingReceipts.reduce((acc, r) => {
         const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
         const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
         return acc + (isNaN(amountValue) ? 0 : amountValue);
@@ -51,7 +53,7 @@ export default function EmployeeDashboardPage() {
         totalExpensesThisMonth,
         receiptsUploadedThisMonth: receiptsThisMonth.length,
         pendingAmount,
-        pendingCount: pendingReceipts.length,
+        pendingCount: totalPendingReceipts.length,
       });
     }
   }, [user]);

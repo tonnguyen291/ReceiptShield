@@ -24,7 +24,6 @@
  *     • decline / approval history (for CARD_DECLINE_RETRY)
  *
  * External deps (add with npm i -D …):
- *     image-hash          – perceptual pHash
  *     sharp               – image processing / blur metric
  *     tesseract.js        – lightweight OCR
  *     csv-writer, dotenv  – already present in your repo
@@ -33,7 +32,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import 'dotenv/config';
-const imageHash = require('image-hash');
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
 import { summarizeReceipt } from '../src/ai/flows/summarize-receipt';

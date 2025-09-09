@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, Brain, Bot, TrendingUp, FileType, Eye } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, Brain, Bot, TrendingUp, FileType, Eye, Edit3 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
@@ -82,8 +82,8 @@ export default function ReceiptDetailsPage() {
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-4 h-4 mr-1.5"/>Approved by Manager</Badge>;
     }
-    if (receipt.status === 'rejected') {
-      return <Badge variant="destructive"><XCircle className="w-4 h-4 mr-1.5"/>Rejected by Manager</Badge>;
+    if (receipt.status === 'draft' || receipt.isDraft) {
+      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-4 h-4 mr-1.5"/>Needs Revision</Badge>;
     }
     if (receipt.status === 'pending_approval') {
       return <Badge variant="secondary"><ShieldQuestion className="w-4 h-4 mr-1.5"/>Pending Manager Review</Badge>;

@@ -59,8 +59,9 @@ export interface ProcessedReceipt {
   uploadedAt: string; // ISO Date string
   uploadedBy: string; // user email (identifier for the employee)
   supervisorId?: string; // supervisorId of the employee who uploaded
-  status?: 'pending_approval' | 'approved' | 'rejected'; // Status for manager workflow
+  status?: 'pending_approval' | 'approved' | 'rejected' | 'draft'; // Status for manager workflow
   managerNotes?: string; // Notes from manager during review
+  isDraft?: boolean; // Flag to indicate if receipt is in draft state (can be edited by employee)
 }
 
 // API Response types for ML server

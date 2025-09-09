@@ -93,7 +93,7 @@ export default function VerifyReceiptPage() {
         .join('\n');
 
       const aiFraudResult = await flagFraudulentReceipt({
-        receiptData: receiptDataString,
+        items: editableItems,
         receiptImage: receipt.imageDataUri,
       });
 
@@ -156,6 +156,7 @@ export default function VerifyReceiptPage() {
         // New comprehensive analysis
         fraud_analysis: fraudAnalysis,
         status: isActuallyFraudulent ? 'pending_approval' : undefined,
+        isDraft: false, // Clear draft status when resubmitting
       };
 
       updateReceipt(finalReceipt);

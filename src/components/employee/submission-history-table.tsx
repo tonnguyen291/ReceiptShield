@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ProcessedReceipt } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllReceiptsForUser, deleteReceipt } from '@/lib/receipt-store';
+import { getAllReceiptsForUser, deleteReceipt, resubmitDraftReceipt } from '@/lib/receipt-store';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle, ShieldQuestion, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle, ShieldQuestion, CheckCircle, XCircle, Edit3, Send } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +43,7 @@ export function SubmissionHistoryTable() {
   const [receipts, setReceipts] = useState<ProcessedReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [receiptToDelete, setReceiptToDelete] = useState<ProcessedReceipt | null>(null);
+  const [receiptToResubmit, setReceiptToResubmit] = useState<ProcessedReceipt | null>(null);
 
   useEffect(() => {
     if (user?.email) {
@@ -89,12 +90,34 @@ export function SubmissionHistoryTable() {
     }
   };
 
+  const handleResubmitClick = (receipt: ProcessedReceipt) => {
+    setReceiptToResubmit(receipt);
+  };
+
+  const confirmResubmit = () => {
+    if (receiptToResubmit) {
+      resubmitDraftReceipt(receiptToResubmit.id);
+      setReceipts(prevReceipts => 
+        prevReceipts.map(r => 
+          r.id === receiptToResubmit.id 
+            ? { ...r, status: 'pending_approval', isDraft: false, managerNotes: undefined }
+            : r
+        )
+      );
+      toast({
+        title: "Receipt Resubmitted",
+        description: `Receipt "${receiptToResubmit.fileName}" has been resubmitted for manager review.`,
+      });
+      setReceiptToResubmit(null);
+    }
+  };
+
   const getStatusBadge = (receipt: ProcessedReceipt): JSX.Element => {
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
-    if (receipt.status === 'rejected') {
-      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    if (receipt.status === 'draft' || receipt.isDraft) {
+      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
     }
     if (receipt.status === 'pending_approval') {
       return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
@@ -157,7 +180,8 @@ export function SubmissionHistoryTable() {
           <TableBody>
             {receipts.map((receipt) => {
               const isPendingEmployeeVerification = receipt.explanation === "Pending user verification.";
-              const isActionableByEmployee = isPendingEmployeeVerification || (!receipt.status || receipt.status === 'pending_approval');
+              const isDraftReceipt = receipt.status === 'draft' || receipt.isDraft;
+              const isActionableByEmployee = isPendingEmployeeVerification || isDraftReceipt || (!receipt.status || receipt.status === 'pending_approval');
 
               return (
                 <TableRow key={receipt.id}>
@@ -191,7 +215,29 @@ export function SubmissionHistoryTable() {
                         </Tooltip>
                       )}
                       
-                      {isActionableByEmployee && !isPendingEmployeeVerification && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+                      {isDraftReceipt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Edit Receipt</p></TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {isDraftReceipt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="default" size="sm" onClick={() => handleResubmitClick(receipt)}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Resubmit for Review</p></TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {isActionableByEmployee && !isPendingEmployeeVerification && !isDraftReceipt && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
@@ -240,6 +286,37 @@ export function SubmissionHistoryTable() {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!receiptToResubmit} onOpenChange={(open) => !open && setReceiptToResubmit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+                <Send className="w-6 h-6 mr-2 text-green-600" />
+                Resubmit Receipt
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you ready to resubmit this receipt for manager review? <br />
+              <strong>{receiptToResubmit?.fileName}</strong>
+              {receiptToResubmit?.managerNotes && (
+                <>
+                  <br /><br />
+                  <strong>Manager's feedback:</strong><br />
+                  <em className="text-sm text-muted-foreground">{receiptToResubmit.managerNotes}</em>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setReceiptToResubmit(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmResubmit}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Resubmit
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

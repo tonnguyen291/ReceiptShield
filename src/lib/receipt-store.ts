@@ -65,7 +65,12 @@ export function approveReceipt(receiptId: string): void {
 export function rejectReceipt(receiptId: string, notes?: string): void {
   const receipts = getStoredReceipts();
   const updatedReceipts = receipts.map(r => 
-    r.id === receiptId ? { ...r, status: 'rejected', managerNotes: notes || 'Rejected by manager.' } : r
+    r.id === receiptId ? { 
+      ...r, 
+      status: 'draft', 
+      isDraft: true,
+      managerNotes: notes || 'Rejected by manager. Please review and resubmit.' 
+    } : r
   );
   setStoredReceipts(updatedReceipts);
 }
@@ -90,4 +95,17 @@ export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {
 export function getReceiptById(id: string): ProcessedReceipt | undefined {
   const receipts = getStoredReceipts();
   return receipts.find(receipt => receipt.id === id);
+}
+
+export function resubmitDraftReceipt(receiptId: string): void {
+  const receipts = getStoredReceipts();
+  const updatedReceipts = receipts.map(r => 
+    r.id === receiptId ? { 
+      ...r, 
+      status: 'pending_approval', 
+      isDraft: false,
+      managerNotes: undefined // Clear previous manager notes
+    } : r
+  );
+  setStoredReceipts(updatedReceipts);
 }

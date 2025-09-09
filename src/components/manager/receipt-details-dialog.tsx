@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '../ui/separator';
-import { Info, CheckCircle, XCircle, ShieldQuestion, FileType, Eye } from 'lucide-react';
+import { Info, CheckCircle, XCircle, ShieldQuestion, FileType, Eye, Edit3 } from 'lucide-react';
 
 interface ReceiptDetailsDialogProps {
   receipt: ProcessedReceipt | null;
@@ -43,8 +43,8 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
-    if (receipt.status === 'rejected') {
-      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    if (receipt.status === 'draft' || receipt.isDraft) {
+      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
     }
     if (receipt.status === 'pending_approval') {
       return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;

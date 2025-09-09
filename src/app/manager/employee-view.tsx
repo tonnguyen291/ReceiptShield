@@ -34,7 +34,7 @@ import {
   ShieldQuestion,
   Loader2,
   Users,
-} from "lucide-react";
+  Edit3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function EmployeeView() {
@@ -76,11 +76,11 @@ export function EmployeeView() {
         </Badge>
       );
     }
-    if (receipt.status === "rejected") {
+    if (receipt.status === "draft" || receipt.isDraft) {
       return (
-        <Badge variant="destructive">
-          <XCircle className="w-3 h-3 mr-1" />
-          Rejected
+        <Badge variant="outline" className="border-orange-500 text-orange-600">
+          <Edit3 className="w-3 h-3 mr-1" />
+          Needs Revision
         </Badge>
       );
     }
