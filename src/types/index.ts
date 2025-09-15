@@ -76,3 +76,25 @@ export interface MLServerResponse {
   error?: string;
   message?: string;
 }
+
+// Invitation system types
+export interface Invitation {
+  id: string;
+  email: string;
+  role: UserRole;
+  supervisorId?: string; // For employees, who their manager will be
+  invitedBy: string; // Email of the admin who sent the invitation
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  token: string; // Unique token for invitation link
+  expiresAt: Date;
+  createdAt: Date;
+  acceptedAt?: Date;
+  acceptedBy?: string; // User ID of who accepted the invitation
+}
+
+export interface InvitationRequest {
+  email: string;
+  role: UserRole;
+  supervisorId?: string;
+  message?: string; // Optional custom message from admin
+}
