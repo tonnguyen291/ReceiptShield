@@ -103,7 +103,7 @@ const summarizeReceiptFlow = ai.defineFlow(
       }
     }, [] as Array<{label: string, value: string}>);
 
-
+    try {
         return { items: uniqueItems };
     } catch(e) {
         console.error("Error in summarizeReceiptFlow: ", e);

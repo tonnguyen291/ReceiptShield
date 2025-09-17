@@ -23,14 +23,17 @@ export default function EmployeeDashboardPage() {
     pendingAmount: 0,
     pendingCount: 0,
   });
+  const [allReceipts, setAllReceipts] = useState<ProcessedReceipt[]>([]);
 
   useEffect(() => {
     if (user?.email) {
-      const allReceipts = getAllReceiptsForUser(user.email);
+      const receipts = getAllReceiptsForUser(user.email);
+      setAllReceipts(receipts);
+      
       const now = new Date();
       const oneMonthAgo = subMonths(now, 1);
 
-      const receiptsThisMonth = allReceipts.filter(r => 
+      const receiptsThisMonth = receipts.filter(r => 
         isWithinInterval(new Date(r.uploadedAt), { start: oneMonthAgo, end: now })
       );
 
@@ -40,7 +43,7 @@ export default function EmployeeDashboardPage() {
         return acc + (isNaN(amountValue) ? 0 : amountValue);
       }, 0);
 
-      const pendingReceipts = allReceipts.filter(r => r.status === 'pending_approval');
+      const pendingReceipts = receipts.filter(r => r.status === 'pending_approval');
       const pendingAmount = pendingReceipts.reduce((acc, r) => {
         const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
         const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
@@ -126,7 +129,7 @@ export default function EmployeeDashboardPage() {
                     <CardDescription>Spending by category this month.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ExpenseSummaryChart />
+                    <ExpenseSummaryChart receipts={allReceipts} />
                 </CardContent>
             </Card>
             <Card className="shadow-md bg-accent/20 border-accent/50">
