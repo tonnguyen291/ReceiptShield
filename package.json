@@ -69,7 +69,7 @@
     "@types/node": "^20",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "firebase-tools": "^14.14.0",
+    "firebase-tools": "^14.17.0",
     "genkit-cli": "^1.8.0",
     "postcss": "^8",
     "sharp": "^0.34.3",

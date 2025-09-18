@@ -149,10 +149,10 @@ export async function getReceipt(receiptId: string): Promise<ProcessedReceipt | 
  */
 export async function getReceiptsByUser(userEmail: string): Promise<ProcessedReceipt[]> {
   try {
-    // Temporary: Remove orderBy until indexes are built
     const q = query(
       collection(db, RECEIPTS_COLLECTION),
-      where('uploadedBy', '==', userEmail)
+      where('uploadedBy', '==', userEmail),
+      orderBy('uploadedAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
@@ -175,8 +175,7 @@ export async function getReceiptsByUser(userEmail: string): Promise<ProcessedRec
       } as ProcessedReceipt);
     });
     
-    // Manual sorting since we removed orderBy temporarily
-    return receipts.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+    return receipts;
   } catch (error) {
     console.error('Error getting receipts by user from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -192,11 +191,10 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
   try {
     console.log('getReceiptsBySupervisor called with supervisorId:', supervisorId);
     
-    // Temporary: Remove orderBy until indexes are built
-    // TODO: Add back orderBy once indexes are ready
     const q = query(
       collection(db, RECEIPTS_COLLECTION),
-      where('supervisorId', '==', supervisorId)
+      where('supervisorId', '==', supervisorId),
+      orderBy('uploadedAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
@@ -209,22 +207,20 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
       receipts.push({
         id: doc.id,
         ...data,
-        uploadedAt: data.uploadedAt instanceof Timestamp 
-          ? data.uploadedAt.toDate().toISOString() 
+        uploadedAt: data.uploadedAt instanceof Timestamp
+          ? data.uploadedAt.toDate().toISOString()
           : data.uploadedAt,
-        createdAt: data.createdAt instanceof Timestamp 
-          ? data.createdAt.toDate().toISOString() 
+        createdAt: data.createdAt instanceof Timestamp
+          ? data.createdAt.toDate().toISOString()
           : data.createdAt,
-        updatedAt: data.updatedAt instanceof Timestamp 
-          ? data.updatedAt.toDate().toISOString() 
+        updatedAt: data.updatedAt instanceof Timestamp
+          ? data.updatedAt.toDate().toISOString()
           : data.updatedAt,
       } as ProcessedReceipt);
     });
     
-    // Manual sorting since we removed orderBy temporarily
-    const sortedReceipts = receipts.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
-    console.log('getReceiptsBySupervisor returning:', sortedReceipts.length, 'receipts');
-    return sortedReceipts;
+    console.log('getReceiptsBySupervisor returning:', receipts.length, 'receipts');
+    return receipts;
   } catch (error) {
     console.error('Error getting receipts by supervisor from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -240,9 +236,9 @@ export async function getAllReceipts(limitCount?: number): Promise<ProcessedRece
   try {
     console.log('getAllReceipts called with limitCount:', limitCount);
     
-    // Temporary: Remove orderBy until indexes are built
     let q = query(
-      collection(db, RECEIPTS_COLLECTION)
+      collection(db, RECEIPTS_COLLECTION),
+      orderBy('uploadedAt', 'desc')
     );
     
     if (limitCount) {
@@ -259,14 +255,14 @@ export async function getAllReceipts(limitCount?: number): Promise<ProcessedRece
       const receipt = {
         id: doc.id,
         ...data,
-        uploadedAt: data.uploadedAt instanceof Timestamp 
-          ? data.uploadedAt.toDate().toISOString() 
+        uploadedAt: data.uploadedAt instanceof Timestamp
+          ? data.uploadedAt.toDate().toISOString()
           : data.uploadedAt,
-        createdAt: data.createdAt instanceof Timestamp 
-          ? data.createdAt.toDate().toISOString() 
+        createdAt: data.createdAt instanceof Timestamp
+          ? data.createdAt.toDate().toISOString()
           : data.createdAt,
-        updatedAt: data.updatedAt instanceof Timestamp 
-          ? data.updatedAt.toDate().toISOString() 
+        updatedAt: data.updatedAt instanceof Timestamp
+          ? data.updatedAt.toDate().toISOString()
           : data.updatedAt,
       } as ProcessedReceipt;
       
@@ -282,18 +278,14 @@ export async function getAllReceipts(limitCount?: number): Promise<ProcessedRece
       receipts.push(receipt);
     });
     
-    // Manual sorting since we removed orderBy temporarily
-    const sortedReceipts = receipts.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
-    
     // Debug: Log supervisorId values
-    console.log('getAllReceipts - supervisorId values:', sortedReceipts.map(r => ({
+    console.log('getAllReceipts - supervisorId values:', receipts.map(r => ({
       id: r.id,
       supervisorId: r.supervisorId,
       uploadedBy: r.uploadedBy
     })));
     
-    // Apply limit after sorting if specified
-    return limitCount ? sortedReceipts.slice(0, limitCount) : sortedReceipts;
+    return receipts;
   } catch (error) {
     console.error('Error getting all receipts from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -307,10 +299,10 @@ export async function getAllReceipts(limitCount?: number): Promise<ProcessedRece
  */
 export async function getReceiptsByStatus(status: string): Promise<ProcessedReceipt[]> {
   try {
-    // Temporary: Remove orderBy until indexes are built
     const q = query(
       collection(db, RECEIPTS_COLLECTION),
-      where('status', '==', status)
+      where('status', '==', status),
+      orderBy('uploadedAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
@@ -333,8 +325,7 @@ export async function getReceiptsByStatus(status: string): Promise<ProcessedRece
       } as ProcessedReceipt);
     });
     
-    // Manual sorting since we removed orderBy temporarily
-    return receipts.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+    return receipts;
   } catch (error) {
     console.error('Error getting receipts by status from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
