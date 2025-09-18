@@ -191,37 +191,79 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
   try {
     console.log('getReceiptsBySupervisor called with supervisorId:', supervisorId);
     
-    const q = query(
-      collection(db, RECEIPTS_COLLECTION),
-      where('supervisorId', '==', supervisorId),
-      where('status', '!=', 'draft'), // Exclude draft receipts
-      orderBy('uploadedAt', 'desc')
-    );
-    
-    const querySnapshot = await getDocs(q);
-    console.log('Query snapshot size:', querySnapshot.size);
-    
-    const receipts: ProcessedReceipt[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      receipts.push({
-        id: doc.id,
-        ...data,
-        uploadedAt: data.uploadedAt instanceof Timestamp
-          ? data.uploadedAt.toDate().toISOString()
-          : data.uploadedAt,
-        createdAt: data.createdAt instanceof Timestamp
-          ? data.createdAt.toDate().toISOString()
-          : data.createdAt,
-        updatedAt: data.updatedAt instanceof Timestamp
-          ? data.updatedAt.toDate().toISOString()
-          : data.updatedAt,
-      } as ProcessedReceipt);
-    });
-    
-    console.log('getReceiptsBySupervisor returning:', receipts.length, 'receipts (excluding drafts)');
-    return receipts;
+    // Try the optimized query first (requires index)
+    try {
+      const q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('supervisorId', '==', supervisorId),
+        where('status', '!=', 'draft'), // Exclude draft receipts
+        orderBy('uploadedAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log('Query snapshot size:', querySnapshot.size);
+      
+      const receipts: ProcessedReceipt[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        receipts.push({
+          id: doc.id,
+          ...data,
+          uploadedAt: data.uploadedAt instanceof Timestamp
+            ? data.uploadedAt.toDate().toISOString()
+            : data.uploadedAt,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toDate().toISOString()
+            : data.updatedAt,
+        } as ProcessedReceipt);
+      });
+      
+      console.log('getReceiptsBySupervisor returning:', receipts.length, 'receipts (excluding drafts)');
+      return receipts;
+    } catch (indexError: any) {
+      // Fallback: Use simpler query and filter client-side
+      console.warn('Index not ready, using fallback query:', indexError.message);
+      
+      const fallbackQuery = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('supervisorId', '==', supervisorId),
+        orderBy('uploadedAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(fallbackQuery);
+      console.log('Fallback query snapshot size:', querySnapshot.size);
+      
+      const receipts: ProcessedReceipt[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const receipt = {
+          id: doc.id,
+          ...data,
+          uploadedAt: data.uploadedAt instanceof Timestamp
+            ? data.uploadedAt.toDate().toISOString()
+            : data.uploadedAt,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toDate().toISOString()
+            : data.updatedAt,
+        } as ProcessedReceipt;
+        
+        // Filter out drafts client-side
+        if (receipt.status !== 'draft') {
+          receipts.push(receipt);
+        }
+      });
+      
+      console.log('getReceiptsBySupervisor fallback returning:', receipts.length, 'receipts (excluding drafts)');
+      return receipts;
+    }
   } catch (error) {
     console.error('Error getting receipts by supervisor from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -237,57 +279,105 @@ export async function getAllSubmittedReceipts(limitCount?: number): Promise<Proc
   try {
     console.log('getAllSubmittedReceipts called with limitCount:', limitCount);
     
-    let q = query(
-      collection(db, RECEIPTS_COLLECTION),
-      where('status', '!=', 'draft'), // Exclude draft receipts
-      orderBy('uploadedAt', 'desc')
-    );
-    
-    if (limitCount) {
-      q = query(q, limit(limitCount));
-    }
-    
-    const querySnapshot = await getDocs(q);
-    console.log('getAllSubmittedReceipts query snapshot size:', querySnapshot.size);
-    
-    const receipts: ProcessedReceipt[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const receipt = {
-        id: doc.id,
-        ...data,
-        uploadedAt: data.uploadedAt instanceof Timestamp
-          ? data.uploadedAt.toDate().toISOString()
-          : data.uploadedAt,
-        createdAt: data.createdAt instanceof Timestamp
-          ? data.createdAt.toDate().toISOString()
-          : data.createdAt,
-        updatedAt: data.updatedAt instanceof Timestamp
-          ? data.updatedAt.toDate().toISOString()
-          : data.updatedAt,
-      } as ProcessedReceipt;
+    // Try the optimized query first (requires index)
+    try {
+      let q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('status', '!=', 'draft'), // Exclude draft receipts
+        orderBy('uploadedAt', 'desc')
+      );
       
-      // Debug: Check for receipts without IDs
-      if (!receipt.id) {
-        console.error('Found receipt without ID in getAllSubmittedReceipts:', {
-          docId: doc.id,
-          data: data,
-          receipt: receipt
-        });
+      if (limitCount) {
+        q = query(q, limit(limitCount));
       }
       
-      receipts.push(receipt);
-    });
-    
-    // Debug: Log supervisorId values
-    console.log('getAllSubmittedReceipts - supervisorId values:', receipts.map(r => ({
-      id: r.id,
-      supervisorId: r.supervisorId,
-      uploadedBy: r.uploadedBy
-    })));
-    
-    return receipts;
+      const querySnapshot = await getDocs(q);
+      console.log('getAllSubmittedReceipts query snapshot size:', querySnapshot.size);
+      
+      const receipts: ProcessedReceipt[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const receipt = {
+          id: doc.id,
+          ...data,
+          uploadedAt: data.uploadedAt instanceof Timestamp
+            ? data.uploadedAt.toDate().toISOString()
+            : data.uploadedAt,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toDate().toISOString()
+            : data.updatedAt,
+        } as ProcessedReceipt;
+        
+        // Debug: Check for receipts without IDs
+        if (!receipt.id) {
+          console.error('Found receipt without ID in getAllSubmittedReceipts:', {
+            docId: doc.id,
+            data: data,
+            receipt: receipt
+          });
+        }
+        
+        receipts.push(receipt);
+      });
+      
+      // Debug: Log supervisorId values
+      console.log('getAllSubmittedReceipts - supervisorId values:', receipts.map(r => ({
+        id: r.id,
+        supervisorId: r.supervisorId,
+        uploadedBy: r.uploadedBy
+      })));
+      
+      return receipts;
+    } catch (indexError: any) {
+      // Fallback: Use simpler query and filter client-side
+      console.warn('Index not ready, using fallback query:', indexError.message);
+      
+      let fallbackQuery = query(
+        collection(db, RECEIPTS_COLLECTION),
+        orderBy('uploadedAt', 'desc')
+      );
+      
+      if (limitCount) {
+        fallbackQuery = query(fallbackQuery, limit(limitCount * 2)); // Get more to account for filtering
+      }
+      
+      const querySnapshot = await getDocs(fallbackQuery);
+      console.log('getAllSubmittedReceipts fallback query snapshot size:', querySnapshot.size);
+      
+      const receipts: ProcessedReceipt[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const receipt = {
+          id: doc.id,
+          ...data,
+          uploadedAt: data.uploadedAt instanceof Timestamp
+            ? data.uploadedAt.toDate().toISOString()
+            : data.uploadedAt,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp
+            ? data.updatedAt.toDate().toISOString()
+            : data.updatedAt,
+        } as ProcessedReceipt;
+        
+        // Filter out drafts client-side
+        if (receipt.status !== 'draft') {
+          receipts.push(receipt);
+        }
+      });
+      
+      // Apply limit after filtering if specified
+      const finalReceipts = limitCount ? receipts.slice(0, limitCount) : receipts;
+      
+      console.log('getAllSubmittedReceipts fallback returning:', finalReceipts.length, 'receipts (excluding drafts)');
+      return finalReceipts;
+    }
   } catch (error) {
     console.error('Error getting all submitted receipts from Firestore:', error);
     throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
