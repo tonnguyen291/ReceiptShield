@@ -3,6 +3,7 @@ export type UserRole = 'employee' | 'manager' | 'admin';
 
 export interface User {
   id: string;
+  uid: string; // Firebase Auth UID
   name: string; // Required for full name
   email: string;
   role: UserRole;
@@ -44,9 +45,17 @@ export interface FraudAnalysis {
 
 export interface ProcessedReceipt {
   id: string;
+  submissionId?: string; // Primary tracking ID for the entire submission
   fileName: string;
-  imageDataUri: string;
+  imageDataUri?: string; // Optional for backward compatibility
+  imageUrl?: string; // Firebase Storage URL
+  imageStoragePath?: string; // Firebase Storage path for deletion
   items: ReceiptDataItem[];
+  
+  // User tracking
+  userUid?: string; // Firebase Auth UID of the submitter
+  uploadedBy: string; // user email (identifier for the employee)
+  supervisorId?: string; // supervisorId of the employee who uploaded
   
   // Legacy fraud detection fields (for backward compatibility)
   isFraudulent: boolean;
@@ -56,12 +65,89 @@ export interface ProcessedReceipt {
   // New comprehensive fraud analysis
   fraud_analysis?: FraudAnalysis;
   
-  uploadedAt: string; // ISO Date string
-  uploadedBy: string; // user email (identifier for the employee)
-  supervisorId?: string; // supervisorId of the employee who uploaded
+  // Status and workflow
   status?: 'pending_approval' | 'approved' | 'rejected' | 'draft'; // Status for manager workflow
   managerNotes?: string; // Notes from manager during review
   isDraft?: boolean; // Flag to indicate if receipt is in draft state (can be edited by employee)
+  
+  // Timestamps
+  uploadedAt: string; // ISO Date string
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Enhanced submission tracking
+export interface ReceiptSubmission {
+  submissionId: string; // Primary tracking ID
+  receiptId: string; // Firestore document ID
+  userUid: string; // Firebase Auth UID
+  userEmail: string; // User email for display
+  supervisorId?: string; // Manager UID
+  
+  // Timestamps
+  submittedAt: string; // ISO timestamp
+  processedAt?: string; // When OCR completed
+  analyzedAt?: string; // When fraud analysis completed
+  
+  // Status tracking
+  status: 'uploaded' | 'processing' | 'ocr_completed' | 'analysis_completed' | 'verified' | 'approved' | 'rejected';
+  
+  // File information
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  imageStoragePath: string;
+  imageUrl: string;
+  
+  // Processing metadata
+  processingVersion: string; // Version of AI model used
+  errorLog?: string[]; // Any errors during processing
+}
+
+// Enhanced OCR analysis results
+export interface OCRAnalysis {
+  submissionId: string; // Links to submission
+  receiptId: string; // Links to receipt
+  
+  // Raw OCR data
+  rawOcrText: string; // Full OCR dump
+  ocrConfidence: number; // Overall confidence score
+  ocrProcessingTime: number; // Time taken for OCR
+  
+  // AI extraction results
+  extractedItems: ReceiptDataItem[];
+  extractionConfidence: number; // AI extraction confidence
+  
+  // Image analysis
+  imageHash: string; // Perceptual hash for duplicate detection
+  blurScore: number; // Image quality metric
+  imageDimensions: { width: number; height: number };
+  
+  // Metadata
+  analyzedAt: string; // ISO timestamp
+  processingVersion: string; // Version of AI model used
+  errorLog?: string[]; // Any errors during processing
+}
+
+// Enhanced fraud analysis with submission tracking
+export interface EnhancedFraudAnalysis extends FraudAnalysis {
+  submissionId: string;
+  receiptId: string;
+  
+  // Additional analysis data
+  duplicateDetection: {
+    isDuplicate: boolean;
+    similarSubmissions: string[]; // Other submission IDs
+    similarityScore: number;
+  };
+  
+  // Risk factors
+  riskFactors: {
+    imageQuality: 'good' | 'poor' | 'excellent';
+    extractionConfidence: 'high' | 'medium' | 'low';
+    vendorVerification: 'verified' | 'unknown' | 'suspicious';
+    amountReasonableness: 'normal' | 'high' | 'suspicious';
+  };
 }
 
 // API Response types for ML server

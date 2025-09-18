@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { User, ProcessedReceipt } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
-import { getEmployeesForManager } from "@/lib/user-store";
+import { getEmployeesForManager } from "@/lib/firebase-user-store";
 import { getAllReceiptsForUser } from "@/lib/receipt-store";
 import {
   Accordion,
@@ -47,21 +47,37 @@ export function EmployeeView() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role === "manager") {
-      const teamMembers = getEmployeesForManager(user.id);
-      setEmployees(teamMembers);
+    const loadData = async () => {
+      if (user && user.role === "manager") {
+        const teamMembers = await getEmployeesForManager(user.id);
+        setEmployees(teamMembers);
 
-      const allReceipts: Record<string, ProcessedReceipt[]> = {};
-      teamMembers.forEach((employee) => {
-        if (employee.email) {
-          allReceipts[employee.id] = getAllReceiptsForUser(
-            employee.email
-          ).filter((r) => r.explanation !== "Pending user verification."); // Filter out unsubmitted receipts
-        }
-      });
-      setReceiptsByEmployee(allReceipts);
-      setIsLoading(false);
-    }
+        const allReceipts: Record<string, ProcessedReceipt[]> = {};
+        // Load receipts for each employee
+        const receiptPromises = teamMembers.map(async (employee) => {
+          if (employee.email) {
+            const receipts = await getAllReceiptsForUser(employee.email);
+            return {
+              employeeId: employee.id,
+              receipts: receipts
+            };
+          }
+          return null;
+        });
+        
+        const results = await Promise.all(receiptPromises);
+        
+        results.forEach(result => {
+          if (result) {
+            allReceipts[result.employeeId] = result.receipts;
+          }
+        });
+        setReceiptsByEmployee(allReceipts);
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
   }, [user]);
 
   const getStatusBadge = (receipt: ProcessedReceipt): JSX.Element => {
@@ -78,15 +94,15 @@ export function EmployeeView() {
     }
     if (receipt.status === "draft" || receipt.isDraft) {
       return (
-        <Badge variant="outline" className="border-orange-500 text-orange-600">
+        <Badge variant="outline" className={receipt.managerNotes?.includes('Request for more information') ? "border-orange-500 text-orange-600" : "border-gray-500 text-gray-600"}>
           <Edit3 className="w-3 h-3 mr-1" />
-          Needs Revision
+          {receipt.managerNotes?.includes('Request for more information') ? 'Needs Revision' : 'Draft'}
         </Badge>
       );
     }
     if (receipt.status === "pending_approval") {
       return (
-        <Badge variant="secondary">
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">
           <ShieldQuestion className="w-3 h-3 mr-1" />
           Pending Review
         </Badge>

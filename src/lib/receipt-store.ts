@@ -1,111 +1,79 @@
-
 'use client';
 
+// This file now serves as a compatibility layer for the old localStorage-based receipt store
+// All functions now delegate to the new Firebase-based receipt store
+import { 
+  addReceipt as addReceiptToFirestore,
+  updateReceipt as updateReceiptInFirestore,
+  deleteReceipt as deleteReceiptFromFirestore,
+  getReceipt as getReceiptFromFirestore,
+  getAllReceipts as getAllReceiptsFromFirestore,
+  getReceiptsByUser as getReceiptsByUserFromFirestore,
+  getReceiptsBySupervisor as getReceiptsBySupervisorFromFirestore,
+  getReceiptsByStatus
+} from './firebase-receipt-store';
 import type { ProcessedReceipt } from '@/types';
 
-const RECEIPTS_STORAGE_KEY = 'receiptShieldReceipts';
-
-function getStoredReceipts(): ProcessedReceipt[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-  try {
-    const storedReceipts = localStorage.getItem(RECEIPTS_STORAGE_KEY);
-    return storedReceipts ? JSON.parse(storedReceipts) : [];
-  } catch (error) {
-    console.error("Failed to parse receipts from localStorage", error);
-    localStorage.removeItem(RECEIPTS_STORAGE_KEY);
-    return [];
-  }
+// Legacy compatibility functions that delegate to Firebase
+export async function addReceipt(receipt: ProcessedReceipt): Promise<string> {
+  const { id, ...receiptData } = receipt;
+  return await addReceiptToFirestore(receiptData);
 }
 
-function setStoredReceipts(receipts: ProcessedReceipt[]): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  localStorage.setItem(RECEIPTS_STORAGE_KEY, JSON.stringify(receipts));
-  // Dispatch a storage event so other tabs/components can update
-  window.dispatchEvent(new Event('storage'));
+export async function updateReceipt(updatedReceipt: ProcessedReceipt): Promise<void> {
+  const { id, ...receiptData } = updatedReceipt;
+  return await updateReceiptInFirestore(id, receiptData);
 }
 
-export function addReceipt(receipt: ProcessedReceipt): void {
-  const receipts = getStoredReceipts();
-  setStoredReceipts([receipt, ...receipts]);
+export async function deleteReceipt(id: string): Promise<void> {
+  return await deleteReceiptFromFirestore(id);
 }
 
-export function updateReceipt(updatedReceipt: ProcessedReceipt): void {
-  let receipts = getStoredReceipts();
-  receipts = receipts.map(receipt =>
-    receipt.id === updatedReceipt.id ? updatedReceipt : receipt
-  );
-  setStoredReceipts(receipts);
+export async function getReceiptById(id: string): Promise<ProcessedReceipt | undefined> {
+  const receipt = await getReceiptFromFirestore(id);
+  return receipt || undefined;
 }
 
-export function deleteReceipt(id: string): void {
-  let receipts = getStoredReceipts();
-  receipts = receipts.filter(receipt => receipt.id !== id);
-  setStoredReceipts(receipts);
+export async function getAllReceipts(): Promise<ProcessedReceipt[]> {
+  return await getAllReceiptsFromFirestore();
 }
 
-export function getFlaggedReceiptsForManager(managerId: string): ProcessedReceipt[] {
-  const receipts = getStoredReceipts();
-  // Managers see receipts from their team that are flagged and pending approval.
-  return receipts.filter(receipt => receipt.supervisorId === managerId && receipt.isFraudulent && receipt.status === 'pending_approval')
-                 .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+export async function getAllReceiptsForUser(userEmail: string): Promise<ProcessedReceipt[]> {
+  return await getReceiptsByUserFromFirestore(userEmail);
 }
 
-export function approveReceipt(receiptId: string): void {
-  const receipts = getStoredReceipts();
-  const updatedReceipts = receipts.map(r => 
-    r.id === receiptId ? { ...r, status: 'approved', managerNotes: 'Approved by manager.' } : r
-  );
-  setStoredReceipts(updatedReceipts);
+export async function getReceiptsForManager(managerId: string): Promise<ProcessedReceipt[]> {
+  return await getReceiptsBySupervisorFromFirestore(managerId);
 }
 
-export function rejectReceipt(receiptId: string, notes?: string): void {
-  const receipts = getStoredReceipts();
-  const updatedReceipts = receipts.map(r => 
-    r.id === receiptId ? { 
-      ...r, 
-      status: 'draft', 
-      isDraft: true,
-      managerNotes: notes || 'Rejected by manager. Please review and resubmit.' 
-    } : r
-  );
-  setStoredReceipts(updatedReceipts);
+export async function getFlaggedReceiptsForManager(managerId: string): Promise<ProcessedReceipt[]> {
+  // Get receipts for the manager that are flagged and pending approval
+  const allReceipts = await getReceiptsBySupervisorFromFirestore(managerId);
+  return allReceipts
+    .filter(receipt => receipt.isFraudulent && receipt.status === 'pending_approval')
+    .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 }
 
-export function getReceiptsForManager(managerId: string): ProcessedReceipt[] {
-    const receipts = getStoredReceipts();
-    return receipts.filter(receipt => 
-        receipt.supervisorId === managerId &&
-        receipt.explanation !== "Pending user verification."
-    );
+export async function approveReceipt(receiptId: string): Promise<void> {
+  return await updateReceiptInFirestore(receiptId, {
+    status: 'approved',
+    managerNotes: 'Approved by manager.',
+    isDraft: false
+  });
 }
 
-export function getAllReceipts(): ProcessedReceipt[] {
-    return getStoredReceipts();
+export async function rejectReceipt(receiptId: string, notes?: string): Promise<void> {
+  return await updateReceiptInFirestore(receiptId, {
+    status: 'rejected',
+    isDraft: false,
+    managerNotes: notes || 'Rejected by manager.'
+  });
 }
 
-export function getAllReceiptsForUser(userEmail: string): ProcessedReceipt[] {
-    const receipts = getStoredReceipts();
-    return receipts.filter(receipt => receipt.uploadedBy === userEmail).sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
-}
-
-export function getReceiptById(id: string): ProcessedReceipt | undefined {
-  const receipts = getStoredReceipts();
-  return receipts.find(receipt => receipt.id === id);
-}
-
-export function resubmitDraftReceipt(receiptId: string): void {
-  const receipts = getStoredReceipts();
-  const updatedReceipts = receipts.map(r => 
-    r.id === receiptId ? { 
-      ...r, 
-      status: 'pending_approval', 
-      isDraft: false,
-      managerNotes: undefined // Clear previous manager notes
-    } : r
-  );
-  setStoredReceipts(updatedReceipts);
+export async function resubmitDraftReceipt(receiptId: string): Promise<void> {
+  return await updateReceiptInFirestore(receiptId, {
+    status: 'pending_approval',
+    isDraft: false,
+    managerNotes: undefined
+  });
 }

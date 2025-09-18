@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import type { User, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -212,6 +213,13 @@ export function LoginForm() {
               required
             />
           </div>
+          {!isCreateAccountMode && (
+            <div className="flex justify-end -mt-2">
+              <Button asChild variant="link" className="px-0 text-sm">
+                <Link href="/forgot-password">Forgot password?</Link>
+              </Button>
+            </div>
+          )}
           {isCreateAccountMode && (
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>

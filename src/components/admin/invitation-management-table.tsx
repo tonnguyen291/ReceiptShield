@@ -136,9 +136,9 @@ export function InvitationManagementTable() {
       case 'pending':
         return (
           <Badge 
-            variant={isExpired ? 'destructive' : 'default'} 
+            variant={isExpired ? 'destructive' : 'secondary'}
             className={cn(
-              isExpired ? 'bg-red-500/20 text-red-700' : 'bg-blue-500/20 text-blue-700'
+              isExpired ? '' : ''
             )}
           >
             {isExpired ? 'Expired' : 'Pending'}
@@ -146,19 +146,19 @@ export function InvitationManagementTable() {
         );
       case 'accepted':
         return (
-          <Badge variant="default" className="bg-green-500/20 text-green-700">
+          <Badge variant="default">
             Accepted
           </Badge>
         );
       case 'cancelled':
         return (
-          <Badge variant="outline" className="bg-gray-500/20 text-gray-700">
+          <Badge variant="outline">
             Cancelled
           </Badge>
         );
       case 'expired':
         return (
-          <Badge variant="destructive" className="bg-red-500/20 text-red-700">
+          <Badge variant="destructive">
             Expired
           </Badge>
         );
@@ -176,12 +176,12 @@ export function InvitationManagementTable() {
     
     switch (invitation.status) {
       case 'pending':
-        return isExpired ? <Clock className="h-4 w-4 text-red-500" /> : <Clock className="h-4 w-4 text-blue-500" />;
+        return isExpired ? <Clock className="h-4 w-4 text-destructive" /> : <Clock className="h-4 w-4 text-muted-foreground" />;
       case 'accepted':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-primary" />;
       case 'cancelled':
       case 'expired':
-        return <XCircle className="h-4 w-4 text-gray-500" />;
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Mail className="h-4 w-4 text-gray-500" />;
     }
@@ -206,10 +206,10 @@ export function InvitationManagementTable() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading invitations...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground font-medium">Loading invitations...</p>
         </div>
       </div>
     );
@@ -217,11 +217,13 @@ export function InvitationManagementTable() {
 
   if (invitations.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground mb-2">No Invitations</h3>
-        <p className="text-sm text-muted-foreground">
-          No invitations have been sent yet. Use the "Invite New User" button to send your first invitation.
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 bg-muted/20 rounded-full flex items-center justify-center mb-6">
+          <Mail className="h-12 w-12 text-muted-foreground" />
+        </div>
+        <h3 className="text-xl font-semibold text-muted-foreground mb-2">No Invitations Yet</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          No invitations have been sent yet. Use the "Invite New User" button above to send your first invitation.
         </p>
       </div>
     );
@@ -229,17 +231,18 @@ export function InvitationManagementTable() {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Sent</TableHead>
-            <TableHead>Expires</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="rounded-lg border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-semibold">Email</TableHead>
+              <TableHead className="font-semibold">Role</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Sent</TableHead>
+              <TableHead className="font-semibold">Expires</TableHead>
+              <TableHead className="text-right font-semibold">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
         <TableBody>
           {invitations.map((invitation) => {
             const daysUntilExpiry = getDaysUntilExpiry(invitation.expiresAt);
@@ -247,6 +250,7 @@ export function InvitationManagementTable() {
             
             return (
               <TableRow key={invitation.id} className={cn(
+                "hover:bg-muted/50 transition-colors",
                 invitation.status === 'cancelled' && 'opacity-50'
               )}>
                 <TableCell>
@@ -271,7 +275,7 @@ export function InvitationManagementTable() {
                 <TableCell>
                   <span className={cn(
                     "text-sm",
-                    isExpired ? "text-red-600" : daysUntilExpiry <= 2 ? "text-orange-600" : "text-muted-foreground"
+                    isExpired ? "text-destructive" : daysUntilExpiry <= 2 ? "text-amber-600" : "text-muted-foreground"
                   )}>
                     {isExpired ? 'Expired' : `${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''} left`}
                   </span>
@@ -310,7 +314,8 @@ export function InvitationManagementTable() {
             );
           })}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>

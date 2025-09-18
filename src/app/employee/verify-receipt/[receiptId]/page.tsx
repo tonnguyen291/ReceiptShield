@@ -12,8 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { flagFraudulentReceipt } from '@/ai/flows/flag-fraudulent-receipt';
-import { getPredictionFromML, calculateOverallRiskAssessment } from '@/lib/ml-fraud-service';
+import { performEnhancedFraudAnalysis } from '@/lib/enhanced-fraud-service';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 import type { FraudAnalysis } from '@/types';
@@ -29,14 +28,27 @@ export default function VerifyReceiptPage() {
   const receiptId = params.receiptId as string;
 
   useEffect(() => {
-    if (receiptId) {
-      const foundReceipt = getReceiptById(receiptId);
-      setReceipt(foundReceipt);
-      if (foundReceipt) {
-        setEditableItems(Array.isArray(foundReceipt.items) ? foundReceipt.items.map(item => ({ ...item })) : []);
+    const loadReceipt = async () => {
+      if (receiptId) {
+        try {
+          const foundReceipt = await getReceiptById(receiptId);
+          setReceipt(foundReceipt);
+          if (foundReceipt) {
+            setEditableItems(Array.isArray(foundReceipt.items) ? foundReceipt.items.map(item => ({ ...item })) : []);
+          }
+        } catch (error) {
+          console.error('Error loading receipt:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load receipt. Please try again.',
+            variant: 'destructive',
+          });
+        }
       }
-    }
-  }, [receiptId]);
+    };
+    
+    loadReceipt();
+  }, [receiptId, toast]);
 
   const handleItemChange = (id: string, newValue: string) => {
     setEditableItems(prevItems =>
@@ -45,12 +57,9 @@ export default function VerifyReceiptPage() {
   };
   
   const openPdfInNewTab = () => {
-    if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
-      const pdfWindow = window.open("");
-      if (pdfWindow) {
-        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${receipt.imageDataUri}'></iframe>`);
-        pdfWindow.document.title = receipt.fileName;
-      }
+    if (receipt && isPdf) {
+      const pdfUrl = receipt.imageUrl || receipt.imageDataUri;
+      window.open(pdfUrl, '_blank');
     }
   };
 
@@ -74,96 +83,42 @@ export default function VerifyReceiptPage() {
 
     setIsProcessing(true);
     try {
-      // Step 1: Get ML prediction first
+      // Check if we have submission ID for enhanced tracking
+      if (!receipt.submissionId) {
+        throw new Error('Receipt missing submission ID - cannot perform enhanced analysis');
+      }
+
       toast({
-        title: 'Starting Analysis',
-        description: 'Running ML fraud detection model...',
+        title: 'Starting Enhanced Analysis',
+        description: 'Running comprehensive fraud detection...',
       });
 
-      const mlPrediction = await getPredictionFromML(editableItems);
-      
-      // Step 2: Get AI fraud detection
-      toast({
-        title: 'Analysis in Progress',
-        description: 'Running AI fraud analysis...',
-      });
-
-      const receiptDataString = editableItems
-        .map(item => `${item.label}: ${item.value}`)
-        .join('\n');
-
-      const aiFraudResult = await flagFraudulentReceipt({
-        items: editableItems,
-        receiptImage: receipt.imageDataUri,
-      });
-
-      // Step 3: Check for missing critical information
-      const hasMissingCriticalInfo = editableItems.some(item =>
-        (item.label.toLowerCase().includes('date') || item.label.toLowerCase().includes('total') || item.label.toLowerCase().includes('amount')) &&
-        (item.value.trim() === '' || item.value.toLowerCase() === 'not found' || item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"))
+      // Perform enhanced fraud analysis
+      const fraudResult = await performEnhancedFraudAnalysis(
+        editableItems,
+        imageSource,
+        receipt.submissionId,
+        receipt.id
       );
-
-      // Step 4: Create comprehensive fraud analysis
-      const fraudAnalysis: FraudAnalysis = {
-        ml_prediction: mlPrediction || undefined,
-        ai_detection: {
-          fraudulent: aiFraudResult.fraudulent,
-          fraudProbability: aiFraudResult.fraudProbability,
-          explanation: aiFraudResult.explanation
-        },
-        overall_risk_assessment: calculateOverallRiskAssessment(
-          mlPrediction?.risk_level,
-          aiFraudResult.fraudProbability
-        ),
-        analysis_timestamp: new Date().toISOString()
-      };
-
-      // Step 5: Determine final fraud status and explanation
-      const mlSaysFraud = mlPrediction?.is_fraudulent || false;
-      const aiSaysFraud = aiFraudResult.fraudulent;
-      const isActuallyFraudulent = mlSaysFraud || aiSaysFraud || hasMissingCriticalInfo;
-
-      let finalExplanation = '';
-      if (hasMissingCriticalInfo) {
-        finalExplanation = `Flagged due to missing/problematic critical information (e.g., Date, Total). `;
-      }
-      
-      if (mlPrediction) {
-        finalExplanation += `ML Model: ${mlPrediction.risk_level} risk (${(mlPrediction.fraud_probability * 100).toFixed(1)}% fraud probability). `;
-      } else {
-        finalExplanation += `ML Model: Unavailable (server offline). `;
-      }
-      
-      finalExplanation += `AI Analysis: ${aiFraudResult.explanation}`;
-
-      // Step 6: Calculate final fraud probability (weighted average)
-      let finalFraudProbability = aiFraudResult.fraudProbability;
-      if (mlPrediction) {
-        // Average ML and AI probabilities, giving ML slightly more weight
-        finalFraudProbability = (mlPrediction.fraud_probability * 0.6) + (aiFraudResult.fraudProbability * 0.4);
-      }
-      if (hasMissingCriticalInfo) {
-        finalFraudProbability = Math.max(finalFraudProbability, 0.75); // Boost if missing info
-      }
       
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
         items: editableItems,
         // Legacy fields for backward compatibility
-        isFraudulent: isActuallyFraudulent,
-        fraudProbability: finalFraudProbability,
-        explanation: finalExplanation,
+        isFraudulent: fraudResult.isFraudulent,
+        fraudProbability: fraudResult.fraudProbability,
+        explanation: fraudResult.explanation,
         // New comprehensive analysis
-        fraud_analysis: fraudAnalysis,
-        status: isActuallyFraudulent ? 'pending_approval' : undefined,
+        fraud_analysis: fraudResult.analysis,
+        status: 'pending_approval', // Always set to pending_approval when employee submits
         isDraft: false, // Clear draft status when resubmitting
       };
 
-      updateReceipt(finalReceipt);
+      await updateReceipt(finalReceipt);
 
       toast({
         title: `Receipt ${user?.role === 'manager' ? 'Updated' : 'Verified'} & Analyzed!`,
-        description: `ML Risk: ${fraudAnalysis.ml_prediction?.risk_level || 'N/A'}, AI Risk: ${(aiFraudResult.fraudProbability * 100).toFixed(1)}%`,
+        description: `Risk Assessment: ${fraudResult.analysis.overall_risk_assessment || 'N/A'}, Confidence: ${(fraudResult.fraudProbability * 100).toFixed(1)}%, Quality: ${fraudResult.riskFactors.imageQuality}`,
       });
 
       if (user?.role === 'manager') {
@@ -223,7 +178,8 @@ export default function VerifyReceiptPage() {
   const isExtractionEssentiallyFailed = editableItems.length > 0 && editableItems.every(item => item.value.toLowerCase().includes("extraction failed") || item.value.toLowerCase().includes("not found - edit me"));
   const pageTitle = user?.role === 'manager' ? `Review & Edit Receipt: ${receipt.fileName}` : `Verify Receipt Data: ${receipt.fileName}`;
   const submitButtonText = user?.role === 'manager' ? 'Save Changes & Re-analyze' : 'Confirm & Analyze Fraud';
-  const isPdf = receipt.imageDataUri.startsWith('data:application/pdf');
+  const imageSource = receipt.imageUrl || receipt.imageDataUri;
+  const isPdf = imageSource.startsWith('data:application/pdf') || receipt.fileName.toLowerCase().endsWith('.pdf');
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -260,7 +216,7 @@ export default function VerifyReceiptPage() {
                 ) : (
                   <div className="relative border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full">
                     <Image
-                      src={receipt.imageDataUri}
+                      src={imageSource}
                       alt={`Receipt ${receipt.fileName}`}
                       fill
                       style={{objectFit: 'contain'}}

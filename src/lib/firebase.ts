@@ -7,13 +7,14 @@ import { getAuth } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "recieptshield.firebaseapp.com",
-  projectId: "recieptshield",
-  storageBucket: "recieptshield.appspot.com",
-  messagingSenderId: "74288524309",
-  appId: "1:74288524309:web:30e62b6af81e661119f21c",
-  measurementId: "G-D82M0MC28P"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBvOkBwvOkBwvOkBwvOkBwvOkBwvOkBwvOk",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "recieptshield.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "recieptshield",
+  // Use the correct Firebase Storage bucket format
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "recieptshield.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "74288524309",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:74288524309:web:30e62b6af81e661119f21c",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-D82M0MC28P"
 };
 
 // Initialize Firebase

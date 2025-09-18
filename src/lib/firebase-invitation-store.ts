@@ -34,7 +34,8 @@ export async function createInvitation(
     const existingUserSnapshot = await getDocs(existingUserQuery);
     
     if (!existingUserSnapshot.empty) {
-      throw new Error('A user with this email already exists');
+      const existingUser = existingUserSnapshot.docs[0].data();
+      throw new Error(`A user with email "${invitationData.email}" already exists in the system. Please use a different email address.`);
     }
 
     // Check if there's already a pending invitation for this email
@@ -46,7 +47,7 @@ export async function createInvitation(
     const existingInvitationSnapshot = await getDocs(existingInvitationQuery);
     
     if (!existingInvitationSnapshot.empty) {
-      throw new Error('A pending invitation already exists for this email');
+      throw new Error(`A pending invitation for "${invitationData.email}" already exists. Please wait for the user to respond or cancel the existing invitation first.`);
     }
 
     const now = new Date();

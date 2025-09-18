@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import type { User, ProcessedReceipt } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { getEmployeesForManager } from '@/lib/user-store';
+import { getEmployeesForManager } from '@/lib/firebase-user-store';
 import { getAllReceiptsForUser } from '@/lib/receipt-store';
 import {
   Accordion,
@@ -27,6 +27,7 @@ import { CheckCircle, XCircle, ShieldQuestion, Loader2, Users, FileText, Chevron
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ReceiptActions } from './receipt-actions';
 
 interface EmployeeViewProps {
     onGeneratePdf: (employeeEmail: string) => void;
@@ -42,32 +43,54 @@ export function EmployeeView({ onGeneratePdf, onGenerateCsv, isGenerating, repor
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
+  const loadData = async () => {
     if (user && user.role === 'manager') {
-      const teamMembers = getEmployeesForManager(user.id);
+      const teamMembers = await getEmployeesForManager(user.id);
       setEmployees(teamMembers);
 
       const allReceipts: Record<string, ProcessedReceipt[]> = {};
-      teamMembers.forEach(employee => {
+      
+      // Load receipts for each employee
+      const receiptPromises = teamMembers.map(async (employee) => {
         if (employee.email) {
-          allReceipts[employee.id] = getAllReceiptsForUser(employee.email)
-            .filter(r => r.explanation !== "Pending user verification.");
+          const receipts = await getAllReceiptsForUser(employee.email);
+          return {
+            employeeId: employee.id,
+            receipts: receipts
+          };
+        }
+        return null;
+      });
+      
+      const results = await Promise.all(receiptPromises);
+      
+      results.forEach(result => {
+        if (result) {
+          allReceipts[result.employeeId] = result.receipts;
         }
       });
+      
       setReceiptsByEmployee(allReceipts);
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadData();
   }, [user]);
 
   const getStatusBadge = (receipt: ProcessedReceipt): JSX.Element => {
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
+    if (receipt.status === 'rejected') {
+      return <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-white"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    }
     if (receipt.status === 'draft' || receipt.isDraft) {
-      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
+      return <Badge variant="outline" className={receipt.managerNotes?.includes('Request for more information') ? "border-orange-500 text-orange-600" : "border-gray-500 text-gray-600"}><Edit3 className="w-3 h-3 mr-1"/>{receipt.managerNotes?.includes('Request for more information') ? 'Needs Revision' : 'Draft'}</Badge>;
     }
     if (receipt.status === 'pending_approval') {
-      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
     }
     return <Badge variant={receipt.isFraudulent ? "destructive" : "default"}><CheckCircle className="w-3 h-3 mr-1"/>Clear</Badge>;
   };
@@ -152,15 +175,35 @@ export function EmployeeView({ onGeneratePdf, onGenerateCsv, isGenerating, repor
                             <TableHead>Date</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {receiptsByEmployee[employee.id].map(receipt => (
-                            <TableRow key={receipt.id} className="cursor-pointer hover:bg-muted" onClick={() => router.push(`/employee/receipt/${receipt.id}`)}>
+                            <TableRow key={receipt.id}>
                               <TableCell className="font-medium">{getItemValue(receipt.items, 'vendor')}</TableCell>
                               <TableCell>{getItemValue(receipt.items, 'date')}</TableCell>
                               <TableCell>{getItemValue(receipt.items, 'total amount')}</TableCell>
                               <TableCell>{getStatusBadge(receipt)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/employee/receipt/${receipt.id}`);
+                                    }}
+                                  >
+                                    View Details
+                                  </Button>
+                                  <ReceiptActions 
+                                    receipt={receipt} 
+                                    onActionComplete={loadData}
+                                    variant="inline"
+                                  />
+                                </div>
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>

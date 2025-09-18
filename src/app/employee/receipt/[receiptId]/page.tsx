@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, Brain, Bot, TrendingUp, FileType, Eye, Edit3 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, CheckCircle, XCircle, Brain, Bot, TrendingUp, FileType, Eye, Edit3, FileImage } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
@@ -22,11 +22,36 @@ export default function ReceiptDetailsPage() {
   const [receipt, setReceipt] = useState<ProcessedReceipt | null | undefined>(undefined); // undefined for loading state
   const receiptId = params.receiptId as string;
 
-  useEffect(() => {
-    if (receiptId) {
-      const foundReceipt = getReceiptById(receiptId);
-      setReceipt(foundReceipt);
+  // Helper function to safely format dates
+  const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return 'Unknown date';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
     }
+  };
+
+  useEffect(() => {
+    const loadReceipt = async () => {
+      if (receiptId) {
+        try {
+          const foundReceipt = await getReceiptById(receiptId);
+          console.log('Loaded receipt data:', foundReceipt);
+          setReceipt(foundReceipt || null);
+        } catch (error) {
+          console.error('Error loading receipt:', error);
+          setReceipt(null);
+        }
+      }
+    };
+    
+    loadReceipt();
   }, [receiptId]);
   
   const handleBackToDashboard = () => {
@@ -38,10 +63,12 @@ export default function ReceiptDetailsPage() {
   };
   
   const openPdfInNewTab = () => {
-    if (receipt && receipt.imageDataUri.startsWith('data:application/pdf')) {
+    const imageSource = receipt?.imageUrl || receipt?.imageDataUri;
+    const hasValidImageSource = imageSource && imageSource.trim() !== '';
+    if (receipt && hasValidImageSource && (imageSource.startsWith('data:application/pdf') || receipt.fileName?.toLowerCase().endsWith('.pdf'))) {
       const pdfWindow = window.open("");
       if (pdfWindow) {
-        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${receipt.imageDataUri}'></iframe>`);
+        pdfWindow.document.write(`<iframe width='100%' height='100%' title='${receipt.fileName}' src='${imageSource}'></iframe>`);
         pdfWindow.document.title = receipt.fileName;
       }
     }
@@ -76,7 +103,11 @@ export default function ReceiptDetailsPage() {
   }
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
-  const isPdf = receipt.imageDataUri.startsWith('data:application/pdf');
+  
+  // Determine image source and check if it's a PDF
+  const imageSource = receipt.imageUrl || receipt.imageDataUri;
+  const hasValidImageSource = imageSource && imageSource.trim() !== '';
+  const isPdf = hasValidImageSource && (imageSource.startsWith('data:application/pdf') || receipt.fileName?.toLowerCase().endsWith('.pdf'));
 
   const getStatusBadge = () => {
     if (receipt.status === 'approved') {
@@ -100,7 +131,7 @@ export default function ReceiptDetailsPage() {
             <div>
                 <CardTitle className="text-3xl font-headline mb-1">{receipt.fileName}</CardTitle>
                 <CardDescription>
-                Uploaded by: {receipt.uploadedBy} on {new Date(receipt.uploadedAt).toLocaleDateString()}
+                Uploaded by: {receipt.uploadedBy || 'Unknown user'} on {formatDate(receipt.uploadedAt)}
                 </CardDescription>
             </div>
             <Button onClick={handleBackToDashboard} variant="outline" size="sm">
@@ -123,16 +154,36 @@ export default function ReceiptDetailsPage() {
                     <Eye className="mr-2 h-4 w-4" /> View Full PDF
                   </Button>
                 </div>
-              ) : (
+              ) : hasValidImageSource ? (
                 <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted h-[calc(80vh-150px)] min-h-[400px]">
                   <Image
-                    src={receipt.imageDataUri}
+                    src={imageSource}
                     alt={`Receipt ${receipt.fileName}`}
                     fill
                     style={{objectFit: 'contain'}}
                     className="p-2"
                     data-ai-hint="receipt full"
                   />
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden shadow-md relative bg-muted h-[calc(80vh-150px)] min-h-[400px] flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <div className="w-16 h-16 bg-muted-foreground/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileImage className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Image Not Available</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      The receipt image could not be loaded. This might be due to:
+                    </p>
+                    <ul className="text-sm text-muted-foreground text-left space-y-1 mb-4">
+                      <li>• Image file was not properly uploaded</li>
+                      <li>• Image URL is invalid or expired</li>
+                      <li>• Network connectivity issues</li>
+                    </ul>
+                    <p className="text-xs text-muted-foreground">
+                      File: {receipt.fileName || 'Unknown file'}
+                    </p>
+                  </div>
                 </div>
               )}
           </div>

@@ -46,25 +46,30 @@ export function SubmissionHistoryTable() {
   const [receiptToResubmit, setReceiptToResubmit] = useState<ProcessedReceipt | null>(null);
 
   useEffect(() => {
-    if (user?.email) {
-      setIsLoading(true);
-      const userReceipts = getAllReceiptsForUser(user.email);
-      setReceipts(userReceipts);
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-      setReceipts([]);
-    }
-     const handleStorageChange = () => {
-        if (user?.email) {
-            const updatedReceipts = getAllReceiptsForUser(user.email);
-            setReceipts(updatedReceipts);
+    const loadReceipts = async () => {
+      if (user?.email) {
+        setIsLoading(true);
+        try {
+          const userReceipts = await getAllReceiptsForUser(user.email);
+          setReceipts(userReceipts);
+        } catch (error) {
+          console.error('Error loading receipts:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load receipts. Please try again.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoading(false);
         }
-     };
-     window.addEventListener('storage', handleStorageChange);
-     return () => window.removeEventListener('storage', handleStorageChange);
+      } else {
+        setIsLoading(false);
+        setReceipts([]);
+      }
+    };
 
-  }, [user?.email]);
+    loadReceipts();
+  }, [user?.email, toast]);
 
   const handleViewDetails = (receiptId: string) => {
     router.push(`/employee/receipt/${receiptId}`);
@@ -78,15 +83,25 @@ export function SubmissionHistoryTable() {
     setReceiptToDelete(receipt);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (receiptToDelete) {
-      deleteReceipt(receiptToDelete.id);
-      setReceipts(prevReceipts => prevReceipts.filter(r => r.id !== receiptToDelete.id));
-      toast({
-        title: "Receipt Deleted",
-        description: `Receipt "${receiptToDelete.fileName}" has been successfully deleted.`,
-      });
-      setReceiptToDelete(null);
+      try {
+        await deleteReceipt(receiptToDelete.id);
+        setReceipts(prevReceipts => prevReceipts.filter(r => r.id !== receiptToDelete.id));
+        toast({
+          title: "Receipt Deleted",
+          description: `Receipt "${receiptToDelete.fileName}" has been successfully deleted.`,
+        });
+      } catch (error) {
+        console.error('Error deleting receipt:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete receipt. Please try again.",
+          variant: 'destructive',
+        });
+      } finally {
+        setReceiptToDelete(null);
+      }
     }
   };
 
@@ -94,21 +109,31 @@ export function SubmissionHistoryTable() {
     setReceiptToResubmit(receipt);
   };
 
-  const confirmResubmit = () => {
+  const confirmResubmit = async () => {
     if (receiptToResubmit) {
-      resubmitDraftReceipt(receiptToResubmit.id);
-      setReceipts(prevReceipts => 
-        prevReceipts.map(r => 
-          r.id === receiptToResubmit.id 
-            ? { ...r, status: 'pending_approval', isDraft: false, managerNotes: undefined }
-            : r
-        )
-      );
-      toast({
-        title: "Receipt Resubmitted",
-        description: `Receipt "${receiptToResubmit.fileName}" has been resubmitted for manager review.`,
-      });
-      setReceiptToResubmit(null);
+      try {
+        await resubmitDraftReceipt(receiptToResubmit.id);
+        setReceipts(prevReceipts => 
+          prevReceipts.map(r => 
+            r.id === receiptToResubmit.id 
+              ? { ...r, status: 'pending_approval', isDraft: false, managerNotes: undefined }
+              : r
+          )
+        );
+        toast({
+          title: "Receipt Resubmitted",
+          description: `Receipt "${receiptToResubmit.fileName}" has been resubmitted for manager review.`,
+        });
+      } catch (error) {
+        console.error('Error resubmitting receipt:', error);
+        toast({
+          title: "Error",
+          description: "Failed to resubmit receipt. Please try again.",
+          variant: 'destructive',
+        });
+      } finally {
+        setReceiptToResubmit(null);
+      }
     }
   };
 
@@ -116,14 +141,14 @@ export function SubmissionHistoryTable() {
     if (receipt.status === 'approved') {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
+    if (receipt.status === 'rejected') {
+      return <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-white"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    }
     if (receipt.status === 'draft' || receipt.isDraft) {
-      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
+      return <Badge variant="outline" className={receipt.managerNotes?.includes('Request for more information') ? "border-orange-500 text-orange-600" : "border-gray-500 text-gray-600"}><Edit3 className="w-3 h-3 mr-1"/>{receipt.managerNotes?.includes('Request for more information') ? 'Needs Revision' : 'Draft'}</Badge>;
     }
     if (receipt.status === 'pending_approval') {
-      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
-    }
-    if (receipt.explanation === "Pending user verification.") {
-      return <Badge variant="secondary"><ClipboardCheck className="w-3 h-3 mr-1"/>Pending Verification</Badge>;
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
     }
     if (receipt.isFraudulent) {
       return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1"/>Flagged</Badge>;
@@ -170,7 +195,7 @@ export function SubmissionHistoryTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>File Name</TableHead>
+              <TableHead>Receipt ID</TableHead>
               <TableHead className="hidden sm:table-cell">Upload Date</TableHead>
               <TableHead className="hidden md:table-cell">Summary</TableHead>
               <TableHead>Status</TableHead>
@@ -185,7 +210,7 @@ export function SubmissionHistoryTable() {
 
               return (
                 <TableRow key={receipt.id}>
-                  <TableCell className="font-medium max-w-[150px] sm:max-w-xs truncate">{receipt.fileName}</TableCell>
+                  <TableCell className="font-medium max-w-[150px] sm:max-w-xs truncate font-mono text-sm">{receipt.id}</TableCell>
                   <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-sm truncate text-muted-foreground">
                     {getSummarySnippet(receipt)}

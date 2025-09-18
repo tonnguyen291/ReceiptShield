@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserManagementTable } from '@/components/admin/user-management-table';
 import { GlobalAnalyticsCards } from '@/components/admin/global-analytics-cards';
@@ -13,8 +14,18 @@ import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminDashboardPage() {
-  const { logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const router = useRouter();
+
+  console.log('🔍 AdminDashboard rendered:', { user: !!user, isInviteDialogOpen, isLoading });
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      console.log('❌ No user found, redirecting to login');
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
 
   const handleInvitationSent = () => {
     // Refresh invitation list by triggering a re-render
@@ -22,12 +33,35 @@ export default function AdminDashboardPage() {
     window.dispatchEvent(new Event('invitation-sent'));
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-lg border bg-card">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Global overview and management of the entire organization.</p>
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">Global overview and management of the entire organization.</p>
         </div>
         <div className="flex items-center gap-2">
             <Button 

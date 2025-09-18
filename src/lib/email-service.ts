@@ -18,9 +18,39 @@ export interface EmailServiceConfig {
 
 // Default configuration - you should set these in your environment variables
 const defaultConfig: EmailServiceConfig = {
-  fromEmail: process.env.NEXT_PUBLIC_EMAIL_FROM || 'noreply@receiptshield.com',
-  fromName: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME || 'ReceiptShield',
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  fromEmail: process.env.EMAIL_FROM || 'noreply@receiptshield.com',
+  fromName: process.env.EMAIL_FROM_NAME || 'ReceiptShield',
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9003',
+};
+
+// SMTP configuration
+const smtpConfig = {
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+  },
+};
+
+// Create nodemailer transporter
+const createTransporter = () => {
+  // If no SMTP credentials are provided, use a test account
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log('⚠️  No SMTP credentials found. Using test account (emails will not be sent)');
+    return nodemailer.createTransporter({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'ethereal.user@ethereal.email',
+        pass: 'ethereal.pass',
+      },
+    });
+  }
+  
+  return nodemailer.createTransporter(smtpConfig);
 };
 
 // Generate invitation email template
@@ -148,48 +178,49 @@ export async function sendInvitationEmail(
   config: EmailServiceConfig = defaultConfig
 ): Promise<void> {
   try {
-    const emailTemplate = generateInvitationEmail(invitation, customMessage, config);
-    
-    // TODO: Replace this with your actual email service integration
-    // Examples for different services:
-    
-    // For SendGrid:
-    // await sendGridSend({
-    //   to: invitation.email,
-    //   from: config.fromEmail,
-    //   subject: emailTemplate.subject,
-    //   html: emailTemplate.html,
-    //   text: emailTemplate.text,
-    // });
-    
-    // For AWS SES:
-    // await sesSend({
-    //   Destination: { ToAddresses: [invitation.email] },
-    //   Message: {
-    //     Subject: { Data: emailTemplate.subject },
-    //     Body: {
-    //       Html: { Data: emailTemplate.html },
-    //       Text: { Data: emailTemplate.text },
-    //     },
-    //   },
-    //   Source: config.fromEmail,
-    // });
-    
-    // For now, we'll just log the email (in development)
-    console.log('📧 Invitation Email Generated:');
+    console.log('📧 Sending invitation email...');
     console.log('To:', invitation.email);
-    console.log('Subject:', emailTemplate.subject);
     console.log('Invitation URL:', `${config.baseUrl}/accept-invitation?token=${invitation.token}`);
     
-    // In production, you would actually send the email here
-    // For development/testing, you might want to use a service like Mailtrap or similar
+    const response = await fetch('/api/send-invitation-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        invitation,
+        customMessage,
+      }),
+    });
     
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to send invitation email');
+    }
     
+    const result = await response.json();
     console.log('✅ Invitation email sent successfully');
+    console.log('Message ID:', result.messageId);
+    
+    if (result.previewUrl) {
+      console.log('🔗 Preview URL:', result.previewUrl);
+    }
+    
   } catch (error) {
     console.error('❌ Error sending invitation email:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error: Unable to connect to email service. Please check your internet connection and try again.');
+      } else if (error.message.includes('400')) {
+        throw new Error('Invalid request: Please check the invitation data and try again.');
+      } else if (error.message.includes('500')) {
+        throw new Error('Server error: The email service is temporarily unavailable. Please try again later.');
+      } else {
+        throw new Error(`Email service error: ${error.message}`);
+      }
+    }
+    
     throw new Error('Failed to send invitation email');
   }
 }
@@ -249,14 +280,13 @@ export async function sendWelcomeEmail(
       </html>
     `;
     
-    // TODO: Implement actual email sending
-    console.log('📧 Welcome Email Generated for:', userEmail);
+    console.log('📧 Sending welcome email...');
+    console.log('To:', userEmail);
     console.log('Subject:', subject);
     
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('✅ Welcome email sent successfully');
+    // For now, just log the welcome email (you can create a separate API route if needed)
+    console.log('✅ Welcome email generated successfully');
+    console.log('Note: Welcome email API route not implemented yet');
   } catch (error) {
     console.error('❌ Error sending welcome email:', error);
     throw new Error('Failed to send welcome email');

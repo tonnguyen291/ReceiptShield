@@ -6,7 +6,10 @@ import {
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
-  updateProfile
+  updateProfile,
+  updateEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { 
   doc, 
@@ -25,6 +28,7 @@ import type { User, UserRole } from '@/types';
 function firebaseUserToUser(firebaseUser: FirebaseUser, userData?: any): User {
   return {
     id: firebaseUser.uid,
+    uid: firebaseUser.uid,
     name: userData?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Unknown',
     email: firebaseUser.email || '',
     role: userData?.role || 'employee',
@@ -35,11 +39,37 @@ function firebaseUserToUser(firebaseUser: FirebaseUser, userData?: any): User {
   };
 }
 
+// Helper function to create user profile if it doesn't exist
+async function ensureUserProfile(firebaseUser: FirebaseUser): Promise<User> {
+  let userData = await getUserData(firebaseUser.uid);
+  
+  if (!userData) {
+    console.log('User profile not found, creating new profile for:', firebaseUser.email);
+    const newUserData = {
+      name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Unknown User',
+      email: firebaseUser.email?.toLowerCase() || '',
+      role: 'employee' as UserRole,
+      status: 'active' as const,
+      supervisorId: undefined,
+    };
+    
+    await createUserProfile(firebaseUser.uid, newUserData);
+    userData = await getUserData(firebaseUser.uid);
+    
+    if (!userData) {
+      throw new Error('Failed to create user profile');
+    }
+  }
+  
+  return userData;
+}
+
 // Create user profile in Firestore
 async function createUserProfile(userId: string, userData: Partial<User>): Promise<void> {
   try {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, {
+      uid: userId,
       name: userData.name,
       email: userData.email?.toLowerCase(),
       role: userData.role,
@@ -65,6 +95,7 @@ async function getUserData(userId: string): Promise<User | null> {
       const data = userSnap.data();
       return {
         id: userId,
+        uid: data.uid || userId,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -124,11 +155,8 @@ export async function signInWithEmail(email: string, password: string): Promise<
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
-    // Get user data from Firestore
-    const userData = await getUserData(firebaseUser.uid);
-    if (!userData) {
-      throw new Error('User profile not found');
-    }
+    // Get user data from Firestore, create profile if it doesn't exist
+    const userData = await ensureUserProfile(firebaseUser);
 
     if (userData.status === 'inactive') {
       await signOut(auth);
@@ -160,7 +188,7 @@ export async function getCurrentUser(): Promise<User | null> {
       return null;
     }
 
-    const userData = await getUserData(firebaseUser.uid);
+    const userData = await ensureUserProfile(firebaseUser);
     return userData;
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -173,7 +201,7 @@ export function onAuthStateChange(callback: (user: User | null) => void): () => 
   return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
       try {
-        const userData = await getUserData(firebaseUser.uid);
+        const userData = await ensureUserProfile(firebaseUser);
         callback(userData);
       } catch (error) {
         console.error('Error getting user data on auth state change:', error);
@@ -195,6 +223,7 @@ export async function getAllUsers(): Promise<User[]> {
       const data = doc.data();
       users.push({
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -227,6 +256,7 @@ export async function getManagers(): Promise<User[]> {
       const data = doc.data();
       managers.push({
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -254,6 +284,35 @@ export async function updateUserProfile(userId: string, updates: Partial<User>):
     }, { merge: true });
   } catch (error) {
     console.error('Error updating user profile:', error);
+    throw error;
+  }
+}
+
+// Update user email (syncs with Firebase Auth)
+export async function updateUserEmail(userId: string, newEmail: string, currentPassword: string): Promise<void> {
+  try {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      throw new Error('No authenticated user');
+    }
+
+    if (firebaseUser.uid !== userId) {
+      throw new Error('User ID mismatch');
+    }
+
+    // Re-authenticate user before updating email
+    const credential = EmailAuthProvider.credential(firebaseUser.email!, currentPassword);
+    await reauthenticateWithCredential(firebaseUser, credential);
+
+    // Update email in Firebase Auth
+    await updateEmail(firebaseUser, newEmail);
+
+    // Update email in Firestore
+    await updateUserProfile(userId, { email: newEmail.toLowerCase() });
+
+    console.log('Email updated successfully');
+  } catch (error) {
+    console.error('Error updating email:', error);
     throw error;
   }
 }

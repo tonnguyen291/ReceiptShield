@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { ReceiptDataItem, MLFraudPrediction } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -70,7 +71,19 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
     console.log('📁 Script path:', scriptPath);
     console.log('📊 Input data length:', inputData.length);
     
-    const pythonProcess = spawn('python', [scriptPath], {
+    const pythonPath = path.join(process.cwd(), 'ml', 'venv', 'bin', 'python3');
+    console.log('🐍 Using Python path:', pythonPath);
+    
+    // Check if Python executable exists
+    if (!fs.existsSync(pythonPath)) {
+      console.error('❌ Python executable not found at:', pythonPath);
+      return NextResponse.json({
+        success: false,
+        error: 'Python environment not properly set up'
+      }, { status: 500 });
+    }
+    
+    const pythonProcess = spawn(pythonPath, [scriptPath], {
       cwd: path.join(process.cwd(), 'ml'),
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -80,18 +93,27 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
 
     pythonProcess.stdout.on('data', (data) => {
       outputData += data.toString();
-      console.log('🐍 Python stdout:', data.toString());
+      // Only log if there's actual content (not just warnings)
+      const output = data.toString();
+      if (output.trim() && !output.includes('UserWarning')) {
+        console.log('🐍 Python stdout:', output);
+      }
     });
 
     pythonProcess.stderr.on('data', (data) => {
       errorData += data.toString();
-      console.log('🐍 Python stderr:', data.toString());
+      // Only log actual errors, not warnings
+      const error = data.toString();
+      if (error.trim() && !error.includes('UserWarning')) {
+        console.log('🐍 Python stderr:', error);
+      }
     });
 
     pythonProcess.on('close', (code) => {
       console.log('🐍 Python process closed with code:', code);
-      console.log('📤 Python output data:', outputData);
-      console.log('❌ Python error data:', errorData);
+      if (code !== 0) {
+        console.log('❌ Python error data:', errorData);
+      }
       
       if (code === 0 && outputData) {
         try {

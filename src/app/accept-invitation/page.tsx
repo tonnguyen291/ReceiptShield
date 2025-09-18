@@ -97,7 +97,7 @@ function AcceptInvitationContent() {
 
     setIsSigningUp(true);
     try {
-      // Call the API to create the user account
+      // First, validate the invitation
       const response = await fetch('/api/accept-invitation', {
         method: 'POST',
         headers: {
@@ -113,16 +113,49 @@ function AcceptInvitationContent() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create account');
+        throw new Error(result.error || 'Failed to validate invitation');
       }
+
+      // Now create the Firebase Auth user
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const { getAuth } = await import('firebase/auth');
+      const { addUser } = await import('@/lib/firebase-user-store');
+      const { updateInvitationStatus } = await import('@/lib/firebase-invitation-store');
+
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, invitation.email, data.password);
+      
+      // Update the user's display name
+      await updateProfile(userCredential.user, {
+        displayName: data.name,
+      });
+
+      // Create the user record in Firestore
+      const userId = await addUser({
+        name: data.name,
+        email: invitation.email,
+        role: invitation.role,
+        supervisorId: invitation.supervisorId,
+        status: 'active',
+        uid: userCredential.user.uid,
+      });
+
+      // Update invitation status
+      await updateInvitationStatus(invitation.id, 'accepted', userId);
 
       toast({
         title: 'Account Created Successfully!',
-        description: 'Welcome to ReceiptShield. You can now log in with your credentials.',
+        description: 'Welcome to ReceiptShield. You are now logged in.',
       });
 
-      // Redirect to login page
-      router.push('/login?message=account-created');
+      // Redirect to appropriate dashboard based on role
+      if (invitation.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else if (invitation.role === 'manager') {
+        router.push('/manager/dashboard');
+      } else {
+        router.push('/employee/dashboard');
+      }
     } catch (error) {
       console.error('Error creating account:', error);
       toast({

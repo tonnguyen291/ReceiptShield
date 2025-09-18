@@ -16,14 +16,16 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '../ui/separator';
 import { Info, CheckCircle, XCircle, ShieldQuestion, FileType, Eye, Edit3 } from 'lucide-react';
+import { ReceiptActions } from './receipt-actions';
 
 interface ReceiptDetailsDialogProps {
   receipt: ProcessedReceipt | null;
   isOpen: boolean;
   onClose: () => void;
+  onActionComplete?: () => void;
 }
 
-export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetailsDialogProps) {
+export function ReceiptDetailsDialog({ receipt, isOpen, onClose, onActionComplete }: ReceiptDetailsDialogProps) {
   if (!receipt) return null;
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
@@ -44,10 +46,10 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
     if (receipt.status === 'draft' || receipt.isDraft) {
-      return <Badge variant="outline" className="border-orange-500 text-orange-600"><Edit3 className="w-3 h-3 mr-1"/>Needs Revision</Badge>;
+      return <Badge variant="outline" className={receipt.managerNotes?.includes('Request for more information') ? "border-orange-500 text-orange-600" : "border-gray-500 text-gray-600"}><Edit3 className="w-3 h-3 mr-1"/>{receipt.managerNotes?.includes('Request for more information') ? 'Needs Revision' : 'Draft'}</Badge>;
     }
     if (receipt.status === 'pending_approval') {
-      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
     }
     // Fallback for older receipts or other states
     return <Badge variant={receipt.isFraudulent ? 'destructive' : 'default'}>
@@ -143,7 +145,19 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose }: ReceiptDetail
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="mt-2">
+        <DialogFooter className="mt-2 flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            {receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+              <ReceiptActions 
+                receipt={receipt} 
+                onActionComplete={() => {
+                  onActionComplete?.();
+                  onClose();
+                }}
+                variant="dialog"
+              />
+            )}
+          </div>
           <Button onClick={onClose} variant="outline">Close</Button>
         </DialogFooter>
       </DialogContent>

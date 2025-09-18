@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getInvitationByToken, updateInvitationStatus, isInvitationExpired } from '@/lib/firebase-invitation-store';
-import { addUser } from '@/lib/firebase-user-store';
 import { sendWelcomeEmail } from '@/lib/email-service';
 
 export async function POST(request: NextRequest) {
@@ -41,30 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the user
-    const userId = await addUser({
-      name: name.trim(),
-      email: invitation.email,
-      role: invitation.role,
-      supervisorId: invitation.supervisorId,
-      status: 'active',
-    });
-
-    // Update invitation status
-    await updateInvitationStatus(invitation.id, 'accepted', userId);
-
-    // Send welcome email
-    try {
-      await sendWelcomeEmail(invitation.email, name);
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Don't fail the request if email fails
-    }
-
+    // Validate invitation and return success
+    // The actual user creation will happen on the client side
     return NextResponse.json({
       success: true,
-      message: 'Account created successfully',
-      userId,
+      message: 'Invitation is valid',
+      invitation: {
+        email: invitation.email,
+        role: invitation.role,
+        supervisorId: invitation.supervisorId,
+        invitedBy: invitation.invitedBy,
+      },
     });
 
   } catch (error) {

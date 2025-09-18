@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import type { User, ProcessedReceipt } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { getEmployeesForManager } from '@/lib/user-store';
+import { getEmployeesForManager } from '@/lib/firebase-user-store';
 import { getAllReceiptsForUser } from '@/lib/receipt-store';
 import {
   Table,
@@ -33,15 +33,23 @@ export function TeamActivityTable() {
     const [teamStats, setTeamStats] = useState<TeamMemberStats[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const loadData = () => {
+    const loadData = async () => {
         if (!user || user.role !== 'manager') {
             setIsLoading(false);
             return;
         }
 
-        const teamMembers = getEmployeesForManager(user.id);
-        const stats: TeamMemberStats[] = teamMembers.map(employee => {
-            const receipts = getAllReceiptsForUser(employee.email || '');
+        const teamMembers = await getEmployeesForManager(user.id);
+        
+        // Load receipts for all team members
+        const receiptPromises = teamMembers.map(async (employee) => {
+            const receipts = await getAllReceiptsForUser(employee.email || '');
+            return { employee, receipts };
+        });
+        
+        const employeeReceipts = await Promise.all(receiptPromises);
+        
+        const stats: TeamMemberStats[] = employeeReceipts.map(({ employee, receipts }) => {
             const totalAmount = receipts.reduce((acc, r) => {
                 const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
                 const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g,"") || "0");
@@ -66,9 +74,15 @@ export function TeamActivityTable() {
         setIsLoading(false);
     };
 
+
     useEffect(() => {
-        setIsLoading(true);
-        loadData();
+        const initializeData = async () => {
+            setIsLoading(true);
+            await loadData();
+        };
+        
+        initializeData();
+        
         const handleStorageChange = () => loadData();
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
@@ -107,7 +121,10 @@ export function TeamActivityTable() {
                 </TableHeader>
                 <TableBody>
                     {teamStats.map((employeeStat) => (
-                    <TableRow key={employeeStat.user.id}>
+                    <TableRow 
+                        key={employeeStat.user.id}
+                        className="hover:bg-muted/30 transition-colors"
+                    >
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>
