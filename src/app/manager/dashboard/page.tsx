@@ -17,8 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
-import { getReceiptsForManager, getAllReceiptsForUser } from '@/lib/receipt-store';
-import { getAllReceipts } from '@/lib/firebase-receipt-store';
+import { getReceiptsForManager, getAllReceiptsForUser, getAllSubmittedReceipts } from '@/lib/receipt-store';
 import { Separator } from '@/components/ui/separator';
 import { EmployeeView } from '@/components/manager/employee-view';
 import type { User, ProcessedReceipt } from '@/types';
@@ -106,7 +105,7 @@ export default function ManagerDashboardPage() {
       
       // Debug: Let's also check what receipts exist in total
       if (!employeeEmail) {
-        const allReceipts = await getAllReceipts();
+        const allReceipts = await getAllSubmittedReceipts();
         console.log('Total receipts in database:', allReceipts.length);
         console.log('Sample receipts:', allReceipts.slice(0, 3).map(r => ({
           id: r.id,
@@ -273,7 +272,7 @@ export default function ManagerDashboardPage() {
         
         // Debug: Let's also check what receipts exist in total
         if (!employeeEmail) {
-          const allReceipts = await getAllReceipts();
+          const allReceipts = await getAllSubmittedReceipts();
           console.log('Total receipts in database for PDF:', allReceipts.length);
           console.log('Sample receipts for PDF:', allReceipts.slice(0, 3).map(r => ({
             id: r.id,

@@ -8,6 +8,7 @@ import {
   deleteReceipt as deleteReceiptFromFirestore,
   getReceipt as getReceiptFromFirestore,
   getAllReceipts as getAllReceiptsFromFirestore,
+  getAllSubmittedReceipts as getAllSubmittedReceiptsFromFirestore,
   getReceiptsByUser as getReceiptsByUserFromFirestore,
   getReceiptsBySupervisor as getReceiptsBySupervisorFromFirestore,
   getReceiptsByStatus
@@ -36,6 +37,10 @@ export async function getReceiptById(id: string): Promise<ProcessedReceipt | und
 
 export async function getAllReceipts(): Promise<ProcessedReceipt[]> {
   return await getAllReceiptsFromFirestore();
+}
+
+export async function getAllSubmittedReceipts(): Promise<ProcessedReceipt[]> {
+  return await getAllSubmittedReceiptsFromFirestore();
 }
 
 export async function getAllReceiptsForUser(userEmail: string): Promise<ProcessedReceipt[]> {

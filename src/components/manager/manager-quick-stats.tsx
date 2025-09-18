@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getFlaggedReceiptsForManager, getReceiptsForManager, getAllReceipts } from '@/lib/receipt-store';
+import { getFlaggedReceiptsForManager, getReceiptsForManager, getAllSubmittedReceipts } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/firebase-user-store';
 import { AlertTriangle, CheckCircle, Clock, FileText, TrendingUp, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
@@ -44,8 +44,8 @@ export function ManagerQuickStats() {
         const teamMembers = await getEmployeesForManager(user.id);
         console.log('Team members:', teamMembers.length, teamMembers.map(m => ({ name: m.name, email: m.email })));
         
-        // Get all receipts and filter by team members
-        const allReceiptsData = await getAllReceipts();
+        // Get all submitted receipts and filter by team members
+        const allReceiptsData = await getAllSubmittedReceipts();
         console.log('All receipts in system:', allReceiptsData.length);
         
         // Filter receipts by team member emails

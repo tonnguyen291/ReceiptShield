@@ -194,6 +194,7 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
     const q = query(
       collection(db, RECEIPTS_COLLECTION),
       where('supervisorId', '==', supervisorId),
+      where('status', '!=', 'draft'), // Exclude draft receipts
       orderBy('uploadedAt', 'desc')
     );
     
@@ -219,7 +220,7 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
       } as ProcessedReceipt);
     });
     
-    console.log('getReceiptsBySupervisor returning:', receipts.length, 'receipts');
+    console.log('getReceiptsBySupervisor returning:', receipts.length, 'receipts (excluding drafts)');
     return receipts;
   } catch (error) {
     console.error('Error getting receipts by supervisor from Firestore:', error);
@@ -228,7 +229,73 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
 }
 
 /**
- * Get all receipts (admin function)
+ * Get all receipts excluding drafts (for managers and non-admin users)
+ * @param limitCount - Optional limit on number of receipts to return
+ * @returns Promise with array of receipts
+ */
+export async function getAllSubmittedReceipts(limitCount?: number): Promise<ProcessedReceipt[]> {
+  try {
+    console.log('getAllSubmittedReceipts called with limitCount:', limitCount);
+    
+    let q = query(
+      collection(db, RECEIPTS_COLLECTION),
+      where('status', '!=', 'draft'), // Exclude draft receipts
+      orderBy('uploadedAt', 'desc')
+    );
+    
+    if (limitCount) {
+      q = query(q, limit(limitCount));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    console.log('getAllSubmittedReceipts query snapshot size:', querySnapshot.size);
+    
+    const receipts: ProcessedReceipt[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const receipt = {
+        id: doc.id,
+        ...data,
+        uploadedAt: data.uploadedAt instanceof Timestamp
+          ? data.uploadedAt.toDate().toISOString()
+          : data.uploadedAt,
+        createdAt: data.createdAt instanceof Timestamp
+          ? data.createdAt.toDate().toISOString()
+          : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp
+          ? data.updatedAt.toDate().toISOString()
+          : data.updatedAt,
+      } as ProcessedReceipt;
+      
+      // Debug: Check for receipts without IDs
+      if (!receipt.id) {
+        console.error('Found receipt without ID in getAllSubmittedReceipts:', {
+          docId: doc.id,
+          data: data,
+          receipt: receipt
+        });
+      }
+      
+      receipts.push(receipt);
+    });
+    
+    // Debug: Log supervisorId values
+    console.log('getAllSubmittedReceipts - supervisorId values:', receipts.map(r => ({
+      id: r.id,
+      supervisorId: r.supervisorId,
+      uploadedBy: r.uploadedBy
+    })));
+    
+    return receipts;
+  } catch (error) {
+    console.error('Error getting all submitted receipts from Firestore:', error);
+    throw new Error(`Failed to get receipts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get all receipts (admin function - includes drafts)
  * @param limitCount - Optional limit on number of receipts to return
  * @returns Promise with array of receipts
  */

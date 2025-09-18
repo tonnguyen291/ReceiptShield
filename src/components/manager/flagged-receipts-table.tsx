@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ProcessedReceipt, User } from '@/types';
-import { getFlaggedReceiptsForManager, getAllReceipts } from '@/lib/receipt-store';
+import { getFlaggedReceiptsForManager, getAllSubmittedReceipts } from '@/lib/receipt-store';
 import { getEmployeesForManager } from '@/lib/firebase-user-store';
 import {
   Table,
@@ -45,7 +45,7 @@ export function FlaggedReceiptsTable({ teamMembers }: FlaggedReceiptsTableProps)
         // Get all receipts for the manager's team, not just flagged ones
         const teamMembers = await getEmployeesForManager(user.id);
         const teamEmails = teamMembers.map(member => member.email);
-        const allReceiptsData = await getAllReceipts();
+        const allReceiptsData = await getAllSubmittedReceipts();
         
         // Filter receipts by team members and show all receipts (including approved/rejected for status visibility)
         const teamReceipts = allReceiptsData.filter(receipt => 
