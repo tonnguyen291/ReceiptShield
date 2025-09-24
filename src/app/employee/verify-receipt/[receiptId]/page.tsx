@@ -241,8 +241,8 @@ export default function VerifyReceiptPage() {
                     </div>
                  )}
 
-                {editableItems.filter(item => item.label !== "Note").map((item) => (
-                  <div key={item.id} className="mb-3">
+                {editableItems.filter(item => item.label !== "Note").map((item, index) => (
+                  <div key={`${item.id}-${item.label}-${index}`} className="mb-3">
                     <Label htmlFor={item.id} className="text-sm font-medium text-foreground/90">
                       {item.label}
                     </Label>

@@ -273,7 +273,7 @@ export function SubmissionHistoryTable() {
                         </Tooltip>
                       )}
 
-                      {receipt.status !== 'approved' && (
+                      {receipt.status !== 'approved' && receipt.status !== 'rejected' && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)}>

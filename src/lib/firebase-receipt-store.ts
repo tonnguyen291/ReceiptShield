@@ -15,6 +15,7 @@ import {
 import { db } from './firebase';
 import type { ProcessedReceipt } from '@/types';
 import { cleanFirestoreData } from './firestore-utils';
+import { deleteReceiptImage } from './firebase-storage';
 
 const RECEIPTS_COLLECTION = 'receipts';
 
@@ -94,16 +95,38 @@ export async function updateReceipt(
 }
 
 /**
- * Delete a receipt from Firestore
+ * Delete a receipt from Firestore and its associated image from Storage
  * @param receiptId - The ID of the receipt to delete
  */
 export async function deleteReceipt(receiptId: string): Promise<void> {
   try {
+    // First, get the receipt to access the storage path
     const receiptRef = doc(db, RECEIPTS_COLLECTION, receiptId);
+    const receiptSnap = await getDoc(receiptRef);
+    
+    if (!receiptSnap.exists()) {
+      console.warn('Receipt not found:', receiptId);
+      return;
+    }
+    
+    const receiptData = receiptSnap.data();
+    
+    // Delete the associated image from Firebase Storage if it exists
+    if (receiptData.imageStoragePath) {
+      try {
+        await deleteReceiptImage(receiptData.imageStoragePath);
+        console.log('Receipt image deleted from Storage:', receiptData.imageStoragePath);
+      } catch (storageError) {
+        console.warn('Failed to delete receipt image from Storage:', storageError);
+        // Continue with Firestore deletion even if storage deletion fails
+      }
+    }
+    
+    // Delete the receipt document from Firestore
     await deleteDoc(receiptRef);
     console.log('Receipt deleted from Firestore:', receiptId);
   } catch (error) {
-    console.error('Error deleting receipt from Firestore:', error);
+    console.error('Error deleting receipt:', error);
     throw new Error(`Failed to delete receipt: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
