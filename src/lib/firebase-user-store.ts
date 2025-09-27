@@ -40,47 +40,57 @@ export async function initializeDefaultUsers(): Promise<void> {
     // Only initialize if no users exist
     if (usersSnapshot.empty) {
       const now = new Date();
-      const defaultUsers = [
+      
+      // Create admin first
+      const adminRef = await addDoc(collection(db, USERS_COLLECTION), {
+        uid: 'admin-001',
+        name: 'Alex Admin',
+        email: 'admin@corp.com',
+        role: 'admin',
+        status: 'active',
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // Create manager and get their document ID
+      const managerRef = await addDoc(collection(db, USERS_COLLECTION), {
+        uid: 'manager-001',
+        name: 'Bob Manager',
+        email: 'manager@example.com',
+        role: 'manager',
+        status: 'active',
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // Create employees with the actual manager document ID
+      const employees = [
         {
-          name: 'Alex Admin',
-          email: 'admin@corp.com',
-          role: 'admin',
-          status: 'active',
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          name: 'Bob Manager',
-          email: 'manager@example.com',
-          role: 'manager',
-          status: 'active',
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
+          uid: 'employee-001',
           name: 'Charlie Employee',
           email: 'employee@example.com',
           role: 'employee',
-          supervisorId: 'manager-001',
+          supervisorId: managerRef.id, // Use actual document ID
           status: 'active',
           createdAt: now,
           updatedAt: now,
         },
         {
+          uid: 'employee-002',
           name: 'Dana Employee',
           email: 'employee2@example.com',
           role: 'employee',
-          supervisorId: 'manager-001',
+          supervisorId: managerRef.id, // Use actual document ID
           status: 'active',
           createdAt: now,
           updatedAt: now,
         }
       ];
 
-      for (const user of defaultUsers) {
-        await addDoc(collection(db, USERS_COLLECTION), user);
+      for (const employee of employees) {
+        await addDoc(collection(db, USERS_COLLECTION), employee);
       }
-      console.log('Default users initialized in Firestore');
+      console.log('Default users initialized in Firestore with proper relationships');
     }
   } catch (error) {
     console.error('Error initializing default users:', error);
@@ -96,6 +106,7 @@ export async function getUsers(): Promise<User[]> {
       const data = doc.data();
       users.push({
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -126,6 +137,7 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
       const data = doc.data();
       return {
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -152,6 +164,7 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
     // Clean and validate the data
     const now = new Date();
     const userData = {
+      uid: user.uid || '', // Will be set when user is created via Firebase Auth
       name: user.name.trim(),
       email: user.email.toLowerCase().trim(),
       role: user.role,
@@ -206,6 +219,7 @@ export async function getManagers(): Promise<User[]> {
       const data = doc.data();
       managers.push({
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,
@@ -238,6 +252,7 @@ export async function getEmployeesForManager(managerId: string): Promise<User[]>
       const data = doc.data();
       employees.push({
         id: doc.id,
+        uid: data.uid || doc.id,
         name: data.name,
         email: data.email,
         role: data.role,

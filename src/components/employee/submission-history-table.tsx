@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ProcessedReceipt } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { getAllReceiptsForUser, deleteReceipt } from '@/lib/receipt-store';
+import { getAllReceiptsForUser, deleteReceipt, resubmitDraftReceipt } from '@/lib/receipt-store';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle, ShieldQuestion, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, FileText, Loader2, Pencil, Trash2, ClipboardCheck, AlertTriangle, ShieldQuestion, CheckCircle, XCircle, Edit3, Send } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,27 +43,33 @@ export function SubmissionHistoryTable() {
   const [receipts, setReceipts] = useState<ProcessedReceipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [receiptToDelete, setReceiptToDelete] = useState<ProcessedReceipt | null>(null);
+  const [receiptToResubmit, setReceiptToResubmit] = useState<ProcessedReceipt | null>(null);
 
   useEffect(() => {
-    if (user?.email) {
-      setIsLoading(true);
-      const userReceipts = getAllReceiptsForUser(user.email);
-      setReceipts(userReceipts);
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-      setReceipts([]);
-    }
-     const handleStorageChange = () => {
-        if (user?.email) {
-            const updatedReceipts = getAllReceiptsForUser(user.email);
-            setReceipts(updatedReceipts);
+    const loadReceipts = async () => {
+      if (user?.email) {
+        setIsLoading(true);
+        try {
+          const userReceipts = await getAllReceiptsForUser(user.email);
+          setReceipts(userReceipts);
+        } catch (error) {
+          console.error('Error loading receipts:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load receipts. Please try again.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoading(false);
         }
-     };
-     window.addEventListener('storage', handleStorageChange);
-     return () => window.removeEventListener('storage', handleStorageChange);
+      } else {
+        setIsLoading(false);
+        setReceipts([]);
+      }
+    };
 
-  }, [user?.email]);
+    loadReceipts();
+  }, [user?.email, toast]);
 
   const handleViewDetails = (receiptId: string) => {
     router.push(`/employee/receipt/${receiptId}`);
@@ -77,15 +83,57 @@ export function SubmissionHistoryTable() {
     setReceiptToDelete(receipt);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (receiptToDelete) {
-      deleteReceipt(receiptToDelete.id);
-      setReceipts(prevReceipts => prevReceipts.filter(r => r.id !== receiptToDelete.id));
-      toast({
-        title: "Receipt Deleted",
-        description: `Receipt "${receiptToDelete.fileName}" has been successfully deleted.`,
-      });
-      setReceiptToDelete(null);
+      try {
+        await deleteReceipt(receiptToDelete.id);
+        setReceipts(prevReceipts => prevReceipts.filter(r => r.id !== receiptToDelete.id));
+        toast({
+          title: "Receipt Deleted",
+          description: `Receipt "${receiptToDelete.fileName}" has been successfully deleted.`,
+        });
+      } catch (error) {
+        console.error('Error deleting receipt:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete receipt. Please try again.",
+          variant: 'destructive',
+        });
+      } finally {
+        setReceiptToDelete(null);
+      }
+    }
+  };
+
+  const handleResubmitClick = (receipt: ProcessedReceipt) => {
+    setReceiptToResubmit(receipt);
+  };
+
+  const confirmResubmit = async () => {
+    if (receiptToResubmit) {
+      try {
+        await resubmitDraftReceipt(receiptToResubmit.id);
+        setReceipts(prevReceipts => 
+          prevReceipts.map(r => 
+            r.id === receiptToResubmit.id 
+              ? { ...r, status: 'pending_approval', isDraft: false, managerNotes: undefined }
+              : r
+          )
+        );
+        toast({
+          title: "Receipt Resubmitted",
+          description: `Receipt "${receiptToResubmit.fileName}" has been resubmitted for manager review.`,
+        });
+      } catch (error) {
+        console.error('Error resubmitting receipt:', error);
+        toast({
+          title: "Error",
+          description: "Failed to resubmit receipt. Please try again.",
+          variant: 'destructive',
+        });
+      } finally {
+        setReceiptToResubmit(null);
+      }
     }
   };
 
@@ -94,13 +142,13 @@ export function SubmissionHistoryTable() {
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1"/>Approved</Badge>;
     }
     if (receipt.status === 'rejected') {
-      return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+      return <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-white"><XCircle className="w-3 h-3 mr-1"/>Rejected</Badge>;
+    }
+    if (receipt.status === 'draft' || receipt.isDraft) {
+      return <Badge variant="outline" className={receipt.managerNotes?.includes('Request for more information') ? "border-orange-500 text-orange-600" : "border-gray-500 text-gray-600"}><Edit3 className="w-3 h-3 mr-1"/>{receipt.managerNotes?.includes('Request for more information') ? 'Needs Revision' : 'Draft'}</Badge>;
     }
     if (receipt.status === 'pending_approval') {
-      return <Badge variant="secondary"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
-    }
-    if (receipt.explanation === "Pending user verification.") {
-      return <Badge variant="secondary"><ClipboardCheck className="w-3 h-3 mr-1"/>Pending Verification</Badge>;
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200"><ShieldQuestion className="w-3 h-3 mr-1"/>Pending Review</Badge>;
     }
     if (receipt.isFraudulent) {
       return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1"/>Flagged</Badge>;
@@ -147,7 +195,7 @@ export function SubmissionHistoryTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>File Name</TableHead>
+              <TableHead>Receipt ID</TableHead>
               <TableHead className="hidden sm:table-cell">Upload Date</TableHead>
               <TableHead className="hidden md:table-cell">Summary</TableHead>
               <TableHead>Status</TableHead>
@@ -157,11 +205,12 @@ export function SubmissionHistoryTable() {
           <TableBody>
             {receipts.map((receipt) => {
               const isPendingEmployeeVerification = receipt.explanation === "Pending user verification.";
-              const isActionableByEmployee = isPendingEmployeeVerification || (!receipt.status || receipt.status === 'pending_approval');
+              const isDraftReceipt = receipt.status === 'draft' || receipt.isDraft;
+              const isActionableByEmployee = isPendingEmployeeVerification || isDraftReceipt || (!receipt.status || receipt.status === 'pending_approval');
 
               return (
                 <TableRow key={receipt.id}>
-                  <TableCell className="font-medium max-w-[150px] sm:max-w-xs truncate">{receipt.fileName}</TableCell>
+                  <TableCell className="font-medium max-w-[150px] sm:max-w-xs truncate font-mono text-sm">{receipt.id}</TableCell>
                   <TableCell className="hidden sm:table-cell">{new Date(receipt.uploadedAt).toLocaleDateString()}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-sm truncate text-muted-foreground">
                     {getSummarySnippet(receipt)}
@@ -191,7 +240,7 @@ export function SubmissionHistoryTable() {
                         </Tooltip>
                       )}
                       
-                      {isActionableByEmployee && !isPendingEmployeeVerification && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+                      {isDraftReceipt && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
@@ -202,7 +251,29 @@ export function SubmissionHistoryTable() {
                         </Tooltip>
                       )}
 
-                      {receipt.status !== 'approved' && (
+                      {isDraftReceipt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="default" size="sm" onClick={() => handleResubmitClick(receipt)}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Resubmit for Review</p></TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {isActionableByEmployee && !isPendingEmployeeVerification && !isDraftReceipt && receipt.status !== 'approved' && receipt.status !== 'rejected' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleEditOrVerify(receipt.id)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Edit Receipt</p></TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {receipt.status !== 'approved' && receipt.status !== 'rejected' && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(receipt)}>
@@ -240,6 +311,37 @@ export function SubmissionHistoryTable() {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!receiptToResubmit} onOpenChange={(open) => !open && setReceiptToResubmit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+                <Send className="w-6 h-6 mr-2 text-green-600" />
+                Resubmit Receipt
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you ready to resubmit this receipt for manager review? <br />
+              <strong>{receiptToResubmit?.fileName}</strong>
+              {receiptToResubmit?.managerNotes && (
+                <>
+                  <br /><br />
+                  <strong>Manager's feedback:</strong><br />
+                  <em className="text-sm text-muted-foreground">{receiptToResubmit.managerNotes}</em>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setReceiptToResubmit(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmResubmit}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Resubmit
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

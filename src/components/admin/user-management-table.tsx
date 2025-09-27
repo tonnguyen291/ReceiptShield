@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from '@/types';
-import { getUsers, getManagers, updateUser } from '@/lib/user-store';
+import { getUsers, getManagers, updateUser, initializeDefaultUsers } from '@/lib/firebase-user-store';
 import {
   Table,
   TableBody,
@@ -48,17 +48,44 @@ export function UserManagementTable() {
     const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeactivateConfirmOpen, setIsDeactivateConfirmOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
-    const loadData = () => {
-        const allUsers = getUsers();
-        const allManagers = getManagers();
-        setUsers(allUsers);
-        setManagers(allManagers);
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            console.log('🔄 Loading users from Firestore...');
+            const allUsers = await getUsers();
+            const allManagers = await getManagers();
+            console.log('📊 Users loaded:', allUsers.length, 'users,', allManagers.length, 'managers');
+            setUsers(allUsers);
+            setManagers(allManagers);
+            setLoading(false);
+        } catch (error) {
+            console.error('❌ Error loading users:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to load users. Please refresh the page and try again.',
+                variant: 'destructive',
+            });
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        loadData();
+        const initializeAndLoadData = async () => {
+            try {
+                // Initialize default users if needed
+                await initializeDefaultUsers();
+                // Load data from Firestore
+                await loadData();
+            } catch (error) {
+                console.error('Error initializing and loading data:', error);
+            }
+        };
+
+        initializeAndLoadData();
+        
         // Add event listeners to ensure data is fresh
         window.addEventListener('storage', loadData);
         window.addEventListener('focus', loadData);
@@ -86,31 +113,40 @@ export function UserManagementTable() {
         setIsDeactivateConfirmOpen(true);
     };
 
-    const handleToggleUserStatus = (user: User) => {
-        const newStatus = user.status === 'active' ? 'inactive' : 'active';
-        updateUser({ ...user, status: newStatus });
-        loadData();
-        toast({
-            title: `User ${newStatus === 'active' ? 'Reactivated' : 'Deactivated'}`,
-            description: `${user.name} has been ${newStatus === 'active' ? 'reactivated' : 'deactivated'}.`
-        });
-        if (isDeactivateConfirmOpen) {
-            setIsDeactivateConfirmOpen(false);
-            setSelectedUser(null);
+    const handleToggleUserStatus = async (user: User) => {
+        try {
+            const newStatus = user.status === 'active' ? 'inactive' : 'active';
+            await updateUser(user.id, { status: newStatus });
+            await loadData();
+            toast({
+                title: `User ${newStatus === 'active' ? 'Reactivated' : 'Deactivated'}`,
+                description: `${user.name} has been ${newStatus === 'active' ? 'reactivated' : 'deactivated'}.`
+            });
+            if (isDeactivateConfirmOpen) {
+                setIsDeactivateConfirmOpen(false);
+                setSelectedUser(null);
+            }
+        } catch (error) {
+            console.error('Error updating user status:', error);
+            toast({
+                title: "Error",
+                description: "Failed to update user status. Please try again.",
+                variant: "destructive"
+            });
         }
     }
 
 
-    const handleSupervisorReassigned = () => {
-        loadData(); // Re-fetch users to reflect the change
+    const handleSupervisorReassigned = async () => {
+        await loadData(); // Re-fetch users to reflect the change
         toast({
             title: "Supervisor Reassigned",
             description: "The user's supervisor has been successfully updated."
         });
     };
 
-    const handleUserUpdated = () => {
-        loadData();
+    const handleUserUpdated = async () => {
+        await loadData();
     };
 
     const getSupervisorName = (supervisorId?: string) => {
@@ -118,6 +154,17 @@ export function UserManagementTable() {
         const supervisor = managers.find(m => m.id === supervisorId);
         return supervisor?.name || 'Unknown';
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading users...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -132,7 +179,14 @@ export function UserManagementTable() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {users.map((user) => (
+                {users.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No users found
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                    users.map((user) => (
                     <TableRow key={user.id} className={cn(user.status === 'inactive' && 'opacity-50')}>
                         <TableCell>
                             <div className="flex items-center gap-3">
@@ -206,7 +260,8 @@ export function UserManagementTable() {
                             </DropdownMenu>
                         </TableCell>
                     </TableRow>
-                ))}
+                    ))
+                )}
             </TableBody>
         </Table>
         {selectedUser && (

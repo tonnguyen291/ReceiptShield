@@ -13,8 +13,11 @@ import { Loader2, UploadCloud, FileType } from 'lucide-react';
 import { summarizeReceipt } from '@/ai/flows/summarize-receipt';
 import type { ProcessedReceipt, ReceiptDataItem } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { addReceipt } from '@/lib/receipt-store';
-import { fileToDataUri } from '@/lib/utils';
+import { addReceipt } from '@/lib/firebase-receipt-store';
+import { uploadReceiptImage, fileToDataUri } from '@/lib/firebase-storage';
+import { generateSubmissionId, generateReceiptId, getProcessingVersion } from '@/lib/submission-utils';
+import { createSubmission } from '@/lib/firebase-submission-store';
+import { performHybridOCRAnalysis } from '@/lib/hybrid-ocr-service';
 
 export function ReceiptUploadForm() {
   const [file, setFile] = useState<File | null>(null);
@@ -56,7 +59,7 @@ export function ReceiptUploadForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !user || !user.email) {
+    if (!file || !user || !user.email || !user.uid) {
       toast({
         title: 'Error',
         description: 'Please select a file and ensure you are logged in with a valid user account.',
@@ -67,32 +70,63 @@ export function ReceiptUploadForm() {
 
     setIsProcessing(true);
     try {
+      // Generate unique IDs
+      const submissionId = generateSubmissionId(user.uid);
+      const receiptId = generateReceiptId();
+      const processingVersion = getProcessingVersion();
+      
+      // Upload image to Firebase Storage
+      const uploadResult = await uploadReceiptImage(file, user.uid, receiptId);
+      
+      // Create data URI for AI processing (keep for backward compatibility)
       const imageDataUri = await fileToDataUri(file);
 
-      const summaryResult = await summarizeReceipt({ photoDataUri: imageDataUri });
-      if (!summaryResult || !summaryResult.items) {
-        throw new Error('Failed to summarize receipt. The AI did not return structured items.');
-      }
-      
-      const processedItems: ReceiptDataItem[] = summaryResult.items.map((item, index) => ({
-        ...item,
-        id: `item-${Date.now()}-${index}`,
-      }));
-
-      const initialReceipt: ProcessedReceipt = {
-        id: Date.now().toString(),
+      // Create submission record first
+      const submissionData = {
+        receiptId,
+        userUid: user.uid,
+        userEmail: user.email,
+        supervisorId: user.supervisorId,
+        submittedAt: new Date().toISOString(),
+        status: 'uploaded' as const,
         fileName: file.name,
-        imageDataUri,
-        items: processedItems,
-        isFraudulent: false,
-        fraudProbability: 0,
-        explanation: "Pending user verification.",
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: user.email,
-        supervisorId: user.supervisorId, // Add supervisorId to receipt
+        fileSize: file.size,
+        fileType: file.type,
+        imageStoragePath: uploadResult.path,
+        imageUrl: uploadResult.url,
+        processingVersion,
       };
 
-      addReceipt(initialReceipt);
+      const actualSubmissionId = await createSubmission(submissionData);
+
+      // Perform hybrid OCR analysis (Tesseract + Google AI with fallback)
+      const ocrResult = await performHybridOCRAnalysis(imageDataUri, actualSubmissionId, receiptId, 'auto');
+      
+      if (ocrResult.errorLog.length > 0) {
+        console.warn('OCR analysis completed with warnings:', ocrResult.errorLog);
+      }
+
+      // Create receipt data for Firestore
+      const receiptData: Omit<ProcessedReceipt, 'id'> = {
+        submissionId: actualSubmissionId, // Link to actual submission document ID
+        fileName: file.name,
+        imageDataUri, // Keep for backward compatibility
+        imageUrl: uploadResult.url,
+        imageStoragePath: uploadResult.path,
+        items: ocrResult.items, // Use hybrid OCR results
+        userUid: user.uid, // Add UID tracking
+        isFraudulent: false,
+        fraudProbability: 0,
+        explanation: `OCR Confidence: ${(ocrResult.confidence * 100).toFixed(1)}% (${ocrResult.method.toUpperCase()}). Processing Time: ${ocrResult.processingTime}ms. Draft created - please verify and submit.`,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: user.email,
+        supervisorId: user.supervisorId,
+        status: 'draft', // Start as draft for user verification
+        isDraft: true,
+      };
+
+      // Save to Firestore
+      const savedReceiptId = await addReceipt(receiptData);
 
       toast({
         title: 'Receipt Items Extracted!',
@@ -105,7 +139,7 @@ export function ReceiptUploadForm() {
       const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
-      router.push(`/employee/verify-receipt/${initialReceipt.id}`);
+      router.push(`/employee/verify-receipt/${savedReceiptId}`);
 
     } catch (error: any) {
       console.error('Error processing receipt:', error);

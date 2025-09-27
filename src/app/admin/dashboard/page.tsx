@@ -1,25 +1,74 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserManagementTable } from '@/components/admin/user-management-table';
 import { GlobalAnalyticsCards } from '@/components/admin/global-analytics-cards';
+import { InviteUserDialog } from '@/components/admin/invite-user-dialog';
+import { InvitationManagementTable } from '@/components/admin/invitation-management-table';
 import { Button } from '@/components/ui/button';
 import { LogOut, UserPlus } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminDashboardPage() {
-  const { logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const router = useRouter();
+
+  console.log('🔍 AdminDashboard rendered:', { user: !!user, isInviteDialogOpen, isLoading });
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      console.log('❌ No user found, redirecting to login');
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  const handleInvitationSent = () => {
+    // Refresh invitation list by triggering a re-render
+    // The InvitationManagementTable will automatically refresh when the dialog closes
+    window.dispatchEvent(new Event('invitation-sent'));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-lg border bg-card">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Global overview and management of the entire organization.</p>
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">Global overview and management of the entire organization.</p>
         </div>
         <div className="flex items-center gap-2">
-            <Button size="lg" className="shadow-sm w-full sm:w-auto" disabled>
+            <Button 
+              size="lg" 
+              className="shadow-sm w-full sm:w-auto"
+              onClick={() => setIsInviteDialogOpen(true)}
+            >
                 <UserPlus className="mr-2 h-5 w-5" />
                 Invite New User
             </Button>
@@ -35,6 +84,16 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <UserManagementTable />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Invitation Management</CardTitle>
+          <CardDescription>View and manage pending invitations sent to new users.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <InvitationManagementTable />
         </CardContent>
       </Card>
       
@@ -63,6 +122,11 @@ export default function AdminDashboardPage() {
         </Button>
       </div>
 
+      <InviteUserDialog
+        isOpen={isInviteDialogOpen}
+        onClose={() => setIsInviteDialogOpen(false)}
+        onInvitationSent={handleInvitationSent}
+      />
     </div>
   );
 }

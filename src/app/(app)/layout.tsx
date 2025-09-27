@@ -258,14 +258,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <Bot className="h-8 w-8"/>
           <span className="sr-only">Open AI Assistant</span>
       </Button>
-      <Button 
-          onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 left-6 h-16 w-16 rounded-full shadow-2xl z-50"
-          size="icon"
-      >
-          <Bot className="h-8 w-8"/>
-          <span className="sr-only">Open AI Assistant</span>
-      </Button>
     </SidebarProvider>
   );
 }

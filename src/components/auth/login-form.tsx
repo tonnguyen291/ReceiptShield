@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import type { User, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -212,6 +213,13 @@ export function LoginForm() {
               required
             />
           </div>
+          {!isCreateAccountMode && (
+            <div className="flex justify-end -mt-2">
+              <Button asChild variant="link" className="px-0 text-sm">
+                <Link href="/forgot-password">Forgot password?</Link>
+              </Button>
+            </div>
+          )}
           {isCreateAccountMode && (
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -225,19 +233,21 @@ export function LoginForm() {
               />
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="employee">Employee</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isCreateAccountMode && (
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {isCreateAccountMode && role === 'employee' && (
             <div className="space-y-2">
               <Label htmlFor="supervisor">Supervisor</Label>

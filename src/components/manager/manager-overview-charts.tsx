@@ -25,17 +25,18 @@ export function ManagerOverviewCharts() {
   const [monthlyData, setMonthlyData] = useState<MonthlyTotal[]>([]);
 
   useEffect(() => {
-    if (user?.id) {
-      const allReceipts = getReceiptsForManager(user.id);
+    const loadData = async () => {
+      if (user?.id) {
+        const allReceipts = await getReceiptsForManager(user.id);
 
-      const totalExpenses = allReceipts.reduce((acc, r) => {
-        const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
-        const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
-        return acc + (isNaN(amountValue) ? 0 : amountValue);
-      }, 0);
+        const totalExpenses = allReceipts.reduce((acc, r) => {
+          const amountItem = r.items.find(i => i.label.toLowerCase().includes('total amount'));
+          const amountValue = parseFloat(amountItem?.value.replace(/[^0-9.-]+/g, "") || "0");
+          return acc + (isNaN(amountValue) ? 0 : amountValue);
+        }, 0);
 
-      const fraudAlerts = allReceipts.filter(r => r.isFraudulent).length;
-      const pendingApprovals = allReceipts.filter(r => r.status === 'pending_approval').length;
+        const fraudAlerts = allReceipts.filter(r => r.isFraudulent).length;
+        const pendingApprovals = allReceipts.filter(r => r.status === 'pending_approval').length;
       
       setStats({
         totalExpenses,
@@ -67,7 +68,10 @@ export function ManagerOverviewCharts() {
         sixMonthsData.push({ name: monthName, total: monthTotal });
       }
       setMonthlyData(sixMonthsData);
-    }
+      }
+    };
+    
+    loadData();
   }, [user]);
 
   return (

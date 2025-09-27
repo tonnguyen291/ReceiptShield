@@ -71,11 +71,11 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
       let relevantReceipts: ProcessedReceipt[];
 
       if (user.role === 'admin') {
-        relevantReceipts = getAllReceipts();
+        relevantReceipts = await getAllReceipts();
       } else if (user.role === 'manager') {
-        relevantReceipts = getReceiptsForManager(user.id);
+        relevantReceipts = await getReceiptsForManager(user.id);
       } else {
-        relevantReceipts = getAllReceiptsForUser(user.email);
+        relevantReceipts = await getAllReceiptsForUser(user.email);
       }
 
       const receiptHistoryString = JSON.stringify(
