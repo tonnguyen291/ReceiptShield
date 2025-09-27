@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { SubmissionHistoryTable } from '@/components/employee/submission-history-table';
 import { ExpenseSummaryChart } from '@/components/employee/expense-summary-chart';
+import { MonthlySpendOverview } from '@/components/employee/monthly-spend-overview';
+import { CategoryBreakdown } from '@/components/employee/category-breakdown';
+import { StatusBreakdown } from '@/components/employee/status-breakdown';
+import { UserVsAverage } from '@/components/employee/user-vs-average';
 import { 
   PlusCircle, 
   DollarSign, 
@@ -120,14 +124,51 @@ export default function EmployeeDashboardPage() {
 
           // Optimize data processing with early returns
           const getAmountFromReceipt = (receipt: ProcessedReceipt) => {
-            const amountItem = receipt.items?.find(i => 
-              i.label.toLowerCase().includes('total amount') || 
-              i.label.toLowerCase().includes('amount') ||
-              i.label.toLowerCase().includes('total')
+            if (!receipt.items) return 0;
+            
+            // Priority order: look for final totals first, then fallback to any total
+            const finalTotalPatterns = [
+              'balance due', 'final total', 'grand total', 'amount due', 'total due'
+            ];
+            
+            // First, try to find final total amounts
+            for (const pattern of finalTotalPatterns) {
+              const finalTotalItem = receipt.items.find(i => 
+                i.label.toLowerCase().includes(pattern)
+              );
+              if (finalTotalItem) {
+                const amountValue = parseFloat(finalTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+                if (!isNaN(amountValue) && amountValue > 0) {
+                  return amountValue;
+                }
+              }
+            }
+            
+            // Fallback: look for any "total amount" (but prefer the last one found)
+            const totalAmountItems = receipt.items.filter(i => 
+              i.label.toLowerCase().includes('total amount')
             );
-            if (!amountItem) return 0;
-            const amountValue = parseFloat(amountItem.value.replace(/[^0-9.-]+/g, "") || "0");
-            return isNaN(amountValue) ? 0 : amountValue;
+            
+            if (totalAmountItems.length > 0) {
+              // Get the last total amount found (likely the final one)
+              const lastTotalItem = totalAmountItems[totalAmountItems.length - 1];
+              const amountValue = parseFloat(lastTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+              if (!isNaN(amountValue) && amountValue > 0) {
+                return amountValue;
+              }
+            }
+            
+            // Final fallback: any item with "total" in the label
+            const anyTotalItem = receipt.items.find(i => 
+              i.label.toLowerCase().includes('total') && 
+              !i.label.toLowerCase().includes('subtotal')
+            );
+            if (anyTotalItem) {
+              const amountValue = parseFloat(anyTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+              return isNaN(amountValue) ? 0 : amountValue;
+            }
+            
+            return 0;
           };
 
           // Process data in batches to avoid blocking
@@ -668,6 +709,33 @@ export default function EmployeeDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+        {/* Analytics Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
+            <h2 className="text-2xl font-semibold text-foreground">Analytics & Insights</h2>
+          </div>
+          
+          {/* Analytics Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Monthly Spend Overview */}
+            <div className="lg:col-span-2">
+              <MonthlySpendOverview />
+            </div>
+            
+            {/* Category Breakdown */}
+            <CategoryBreakdown />
+            
+            {/* Status Breakdown */}
+            <StatusBreakdown />
+            
+            {/* User vs Average */}
+            <div className="lg:col-span-2">
+              <UserVsAverage />
+            </div>
+          </div>
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Submission History */}
