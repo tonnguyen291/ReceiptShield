@@ -61,7 +61,7 @@ export async function performEnhancedOCRAnalysis(
       if (summaryResult && summaryResult.items) {
         extractedItems = summaryResult.items.map((item, index) => ({
           ...item,
-          id: `item-${Date.now()}-${index}`,
+          id: item.id || `item-${Date.now()}-${index}`,
         }));
         
         // Calculate extraction confidence based on successful extractions
@@ -91,10 +91,10 @@ export async function performEnhancedOCRAnalysis(
       
       // Create fallback items
       extractedItems = [
-        { id: 'vendor', label: 'Vendor', value: 'Extraction Failed - Edit me' },
-        { id: 'date', label: 'Date', value: 'Extraction Failed - Edit me' },
-        { id: 'total-amount', label: 'Total Amount', value: 'Extraction Failed - Edit me' },
-        { id: 'note', label: 'Note', value: 'AI extraction failed. Please review and edit manually.' }
+        { id: 'vendor-fallback', label: 'Vendor', value: 'Extraction Failed - Edit me' },
+        { id: 'date-fallback', label: 'Date', value: 'Extraction Failed - Edit me' },
+        { id: 'total-amount-fallback', label: 'Total Amount', value: 'Extraction Failed - Edit me' },
+        { id: 'note-fallback', label: 'Note', value: 'AI extraction failed. Please review and edit manually.' }
       ];
     }
 

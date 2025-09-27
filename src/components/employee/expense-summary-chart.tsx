@@ -40,16 +40,53 @@ export function ExpenseSummaryChart() {
             isWithinInterval(new Date(r.uploadedAt), { start: startOfCurrentMonth, end: endOfCurrentMonth })
           );
 
-          // Optimized amount calculation
+          // Optimized amount calculation - prioritize final totals
           const getAmountFromReceipt = (receipt: ProcessedReceipt) => {
-            const amountItem = receipt.items?.find(i => 
-              i.label.toLowerCase().includes('total amount') || 
-              i.label.toLowerCase().includes('amount') ||
-              i.label.toLowerCase().includes('total')
+            if (!receipt.items) return 0;
+            
+            // Priority order: look for final totals first, then fallback to any total
+            const finalTotalPatterns = [
+              'balance due', 'final total', 'grand total', 'amount due', 'total due'
+            ];
+            
+            // First, try to find final total amounts
+            for (const pattern of finalTotalPatterns) {
+              const finalTotalItem = receipt.items.find(i => 
+                i.label.toLowerCase().includes(pattern)
+              );
+              if (finalTotalItem) {
+                const amountValue = parseFloat(finalTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+                if (!isNaN(amountValue) && amountValue > 0) {
+                  return amountValue;
+                }
+              }
+            }
+            
+            // Fallback: look for any "total amount" (but prefer the last one found)
+            const totalAmountItems = receipt.items.filter(i => 
+              i.label.toLowerCase().includes('total amount')
             );
-            if (!amountItem) return 0;
-            const amountValue = parseFloat(amountItem.value.replace(/[^0-9.-]+/g, "") || "0");
-            return isNaN(amountValue) ? 0 : amountValue;
+            
+            if (totalAmountItems.length > 0) {
+              // Get the last total amount found (likely the final one)
+              const lastTotalItem = totalAmountItems[totalAmountItems.length - 1];
+              const amountValue = parseFloat(lastTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+              if (!isNaN(amountValue) && amountValue > 0) {
+                return amountValue;
+              }
+            }
+            
+            // Final fallback: any item with "total" in the label
+            const anyTotalItem = receipt.items.find(i => 
+              i.label.toLowerCase().includes('total') && 
+              !i.label.toLowerCase().includes('subtotal')
+            );
+            if (anyTotalItem) {
+              const amountValue = parseFloat(anyTotalItem.value.replace(/[^0-9.-]+/g, "") || "0");
+              return isNaN(amountValue) ? 0 : amountValue;
+            }
+            
+            return 0;
           };
 
           // Process categories in batches to avoid blocking

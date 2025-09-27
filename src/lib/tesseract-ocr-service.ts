@@ -95,6 +95,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     // Extract vendor/store name (usually at the top)
     if (isVendorLine(line)) {
       items.push({
+        id: `vendor-${items.length}`,
         label: 'Vendor',
         value: line
       });
@@ -105,6 +106,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const dateMatch = extractDate(line);
     if (dateMatch) {
       items.push({
+        id: `date-${items.length}`,
         label: 'Date',
         value: dateMatch
       });
@@ -115,6 +117,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const totalMatch = extractTotalAmount(line);
     if (totalMatch) {
       items.push({
+        id: `total-${items.length}`,
         label: 'Total Amount',
         value: totalMatch
       });
@@ -125,6 +128,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const tipMatch = extractTip(line);
     if (tipMatch) {
       items.push({
+        id: `tip-${items.length}`,
         label: 'Tip',
         value: tipMatch
       });
@@ -135,6 +139,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const paymentMatch = extractPaymentMethod(line);
     if (paymentMatch) {
       items.push({
+        id: `payment-${items.length}`,
         label: 'Payment Method',
         value: paymentMatch
       });
@@ -145,6 +150,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const itemMatch = extractItem(line);
     if (itemMatch) {
       items.push({
+        id: `item-${items.length}`,
         label: 'Item',
         value: `${itemMatch.name} - $${itemMatch.price}`
       });
@@ -154,6 +160,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     // If no specific pattern matches, treat as general text
     if (line.length > 5 && !isLikelyNoise(line)) {
       items.push({
+        id: `text-${items.length}`,
         label: 'Text',
         value: line
       });
@@ -209,17 +216,42 @@ function extractDate(line: string): string | null {
 }
 
 /**
- * Extract total amount from text
+ * Extract total amount from text - only match actual totals, not individual prices
  */
 function extractTotalAmount(line: string): string | null {
-  // Look for total, amount, or price patterns
+  // Skip lines that look like individual items (contain product names)
+  const itemKeywords = ['burrito', 'meal', 'drink', 'beer', 'chicken', 'kids', 'large', 'domestic'];
+  const hasItemKeywords = itemKeywords.some(keyword => 
+    line.toLowerCase().includes(keyword)
+  );
+  
+  if (hasItemKeywords) {
+    return null; // This is likely an individual item, not a total
+  }
+  
+  // Priority patterns for final totals (most important first)
+  const finalTotalPatterns = [
+    /balance[:\s]*due[:\s]*\$?(\d+\.?\d*)/i,
+    /amount[:\s]*due[:\s]*\$?(\d+\.?\d*)/i,
+    /grand[:\s]*total[:\s]*\$?(\d+\.?\d*)/i,
+    /final[:\s]*total[:\s]*\$?(\d+\.?\d*)/i,
+    /total[:\s]*due[:\s]*\$?(\d+\.?\d*)/i
+  ];
+  
+  // Check for final totals first
+  for (const pattern of finalTotalPatterns) {
+    const match = line.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  // Fallback patterns for any total
   const totalPatterns = [
     /total[:\s]*\$?(\d+\.?\d*)/i,
-    /amount[:\s]*\$?(\d+\.?\d*)/i,
-    /price[:\s]*\$?(\d+\.?\d*)/i,
-    /sum[:\s]*\$?(\d+\.?\d*)/i,
-    /\$(\d+\.?\d*)\s*$/,
-    /(\d+\.?\d*)\s*\$/
+    /subtotal[:\s]*\$?(\d+\.?\d*)/i,
+    /^total[:\s]*\$?(\d+\.?\d*)$/i,
+    /^subtotal[:\s]*\$?(\d+\.?\d*)$/i
   ];
   
   for (const pattern of totalPatterns) {
@@ -271,17 +303,30 @@ function extractPaymentMethod(line: string): string | null {
  * Extract individual item with price
  */
 function extractItem(line: string): { name: string; price: string } | null {
-  // Pattern for item name followed by price
-  const itemPattern = /^(.+?)\s+\$?(\d+\.?\d*)$/;
-  const match = line.match(itemPattern);
+  // More flexible patterns for items with prices
+  const itemPatterns = [
+    /^(.+?)\s+\$(\d+\.?\d*)$/, // "ITEM NAME $8.79"
+    /^(.+?)\s+(\d+\.?\d*)\s*$/, // "ITEM NAME 8.79"
+    /^(.+?)\s+\$(\d+\.?\d*)\s*$/ // "ITEM NAME $8.79 "
+  ];
   
-  if (match) {
-    const name = match[1].trim();
-    const price = match[2];
-    
-    // Filter out obvious non-items
-    if (name.length > 2 && name.length < 50 && !isLikelyNoise(name)) {
-      return { name, price };
+  for (const pattern of itemPatterns) {
+    const match = line.match(pattern);
+    if (match) {
+      const name = match[1].trim();
+      const price = match[2];
+      
+      // Filter out obvious non-items and totals
+      const isNotTotal = !name.toLowerCase().includes('total') && 
+                        !name.toLowerCase().includes('subtotal') &&
+                        !name.toLowerCase().includes('tax') &&
+                        !name.toLowerCase().includes('balance');
+      
+      const isNotNoise = name.length > 2 && name.length < 50 && !isLikelyNoise(name);
+      
+      if (isNotTotal && isNotNoise) {
+        return { name, price };
+      }
     }
   }
   
