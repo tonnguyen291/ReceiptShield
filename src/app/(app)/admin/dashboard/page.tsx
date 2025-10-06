@@ -55,13 +55,13 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-lg border bg-card">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-4 bg-[var(--color-bg)] text-[var(--color-text)]">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-[var(--color-text)]">
             Admin Dashboard
           </h1>
-          <p className="text-muted-foreground mt-2">Global overview and management of the entire organization.</p>
+          <p className="text-[var(--color-text-secondary)] mt-2">Global overview and management of the entire organization.</p>
         </div>
         <div className="flex items-center gap-2">
             <Button 
@@ -77,33 +77,33 @@ export default function AdminDashboardPage() {
 
       <GlobalAnalyticsCards />
 
-      <Card className="shadow-md">
+      <Card className="shadow-md bg-[var(--color-card)] border-[var(--color-border)]">
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>View, edit, and manage all users in the system.</CardDescription>
+          <CardTitle className="text-[var(--color-text)]">User Management</CardTitle>
+          <CardDescription className="text-[var(--color-text-secondary)]">View, edit, and manage all users in the system.</CardDescription>
         </CardHeader>
         <CardContent>
           <UserManagementTable />
         </CardContent>
       </Card>
 
-      <Card className="shadow-md">
+      <Card className="shadow-md bg-[var(--color-card)] border-[var(--color-border)]">
         <CardHeader>
-          <CardTitle>Invitation Management</CardTitle>
-          <CardDescription>View and manage pending invitations sent to new users.</CardDescription>
+          <CardTitle className="text-[var(--color-text)]">Invitation Management</CardTitle>
+          <CardDescription className="text-[var(--color-text-secondary)]">View and manage pending invitations sent to new users.</CardDescription>
         </CardHeader>
         <CardContent>
           <InvitationManagementTable />
         </CardContent>
       </Card>
       
-       <Card className="shadow-md">
+       <Card className="shadow-md bg-[var(--color-card)] border-[var(--color-border)]">
         <CardHeader>
-          <CardTitle>Security & Access</CardTitle>
-          <CardDescription>Placeholder for security logs and access control settings.</CardDescription>
+          <CardTitle className="text-[var(--color-text)]">Security & Access</CardTitle>
+          <CardDescription className="text-[var(--color-text-secondary)]">Placeholder for security logs and access control settings.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-40 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-md">
+          <div className="h-40 flex items-center justify-center text-[var(--color-text-secondary)] border-2 border-dashed border-[var(--color-border)] rounded-md">
             <p>Access Logs & Security Panel (Coming Soon)</p>
           </div>
         </CardContent>

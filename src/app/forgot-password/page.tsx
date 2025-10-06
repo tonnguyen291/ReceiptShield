@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { getUserByEmail } from "@/lib/firebase-user-store";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -51,6 +52,9 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          <div className="flex justify-end mb-4">
+            <ThemeToggle />
+          </div>
           <div className="bg-card rounded-lg shadow-lg border border-border p-6 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,6 +78,9 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-4">
+          <ThemeToggle />
+        </div>
         <div className="bg-card rounded-lg shadow-lg border border-border p-6">
           <h1 className="text-2xl font-bold mb-4 text-foreground">Reset Your Password</h1>
           <p className="text-muted-foreground mb-6">Enter your email address and we'll send you a reset link.</p>

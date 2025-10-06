@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 export default function TestStoragePage() {
   const [isTesting, setIsTesting] = useState(false);
@@ -31,6 +32,9 @@ export default function TestStoragePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5 p-8">
       <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex justify-end mb-4">
+          <ThemeToggle />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Firebase Storage Diagnostic</CardTitle>

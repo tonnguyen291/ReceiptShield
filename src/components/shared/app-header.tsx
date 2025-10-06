@@ -15,6 +15,7 @@ import {
 import { UserCircle, Shield, UserCog, KeyRound, ChevronDown, Bell, Bot, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 export default function AppHeader({ onChatbotClick }: { onChatbotClick?: () => void }) {
   const { user, logout } = useAuth();
@@ -32,6 +33,7 @@ export default function AppHeader({ onChatbotClick }: { onChatbotClick?: () => v
         
         {user && (
           <div className="flex items-center gap-2 sm:gap-4">
+            <ThemeToggle />
             <Button variant="ghost" size="icon" className="rounded-full" onClick={onChatbotClick}>
               <Bot className="h-5 w-5" />
               <span className="sr-only">AI Assistant</span>
