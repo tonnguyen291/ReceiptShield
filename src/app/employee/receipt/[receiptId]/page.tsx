@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 
+
 export default function ReceiptDetailsPage() {
   const params = useParams();
   const router = useRouter();

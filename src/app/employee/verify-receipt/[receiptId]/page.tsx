@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 import type { FraudAnalysis } from '@/types';
 
+
 export default function VerifyReceiptPage() {
   const params = useParams();
   const router = useRouter();

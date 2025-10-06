@@ -8,19 +8,12 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "hosting": {
-    "public": "out",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
+  "apphosting": {
+    "backend": {
+      "runConfig": {
+        "maxInstances": 1
       }
-    ]
+    }
   },
   "emulators": {
     "auth": {
