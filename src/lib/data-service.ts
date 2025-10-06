@@ -183,14 +183,20 @@ export async function getUserSpendingAnalytics(userEmail: string): Promise<Spend
     const receipts = await getUserReceipts(userEmail);
     
     const totalSpent = receipts.reduce((sum, receipt) => {
-      return sum + receipt.items.reduce((itemSum, item) => itemSum + (item.price || 0), 0);
+      return sum + receipt.items.reduce((itemSum, item) => {
+        // Extract price from item value if it contains a price
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        return itemSum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+      }, 0);
     }, 0);
     
     const spendingByCategory: { [category: string]: number } = {};
     receipts.forEach(receipt => {
       receipt.items.forEach(item => {
-        const category = item.category || 'Other';
-        spendingByCategory[category] = (spendingByCategory[category] || 0) + (item.price || 0);
+        const category = 'Other'; // Default category since ReceiptDataItem doesn't have category
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        spendingByCategory[category] = (spendingByCategory[category] || 0) + price;
       });
     });
     
@@ -223,14 +229,20 @@ export async function getTeamSpendingAnalytics(teamEmails: string[]): Promise<Sp
     const receipts = await getTeamReceipts(teamEmails);
     
     const totalSpent = receipts.reduce((sum, receipt) => {
-      return sum + receipt.items.reduce((itemSum, item) => itemSum + (item.price || 0), 0);
+      return sum + receipt.items.reduce((itemSum, item) => {
+        // Extract price from item value if it contains a price
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        return itemSum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+      }, 0);
     }, 0);
     
     const spendingByCategory: { [category: string]: number } = {};
     receipts.forEach(receipt => {
       receipt.items.forEach(item => {
-        const category = item.category || 'Other';
-        spendingByCategory[category] = (spendingByCategory[category] || 0) + (item.price || 0);
+        const category = 'Other'; // Default category since ReceiptDataItem doesn't have category
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        spendingByCategory[category] = (spendingByCategory[category] || 0) + price;
       });
     });
     
@@ -262,14 +274,20 @@ export async function getOrganizationAnalytics(): Promise<SpendingAnalytics> {
     const receipts = await getAllReceipts();
     
     const totalSpent = receipts.reduce((sum, receipt) => {
-      return sum + receipt.items.reduce((itemSum, item) => itemSum + (item.price || 0), 0);
+      return sum + receipt.items.reduce((itemSum, item) => {
+        // Extract price from item value if it contains a price
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        return itemSum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+      }, 0);
     }, 0);
     
     const spendingByCategory: { [category: string]: number } = {};
     receipts.forEach(receipt => {
       receipt.items.forEach(item => {
-        const category = item.category || 'Other';
-        spendingByCategory[category] = (spendingByCategory[category] || 0) + (item.price || 0);
+        const category = 'Other'; // Default category since ReceiptDataItem doesn't have category
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        spendingByCategory[category] = (spendingByCategory[category] || 0) + price;
       });
     });
     
@@ -305,7 +323,10 @@ function generateMonthlyTrends(receipts: ProcessedReceipt[]): { month: string; a
     const date = new Date(receipt.uploadedAt);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     
-    const receiptTotal = receipt.items.reduce((sum, item) => sum + (item.price || 0), 0);
+    const receiptTotal = receipt.items.reduce((sum, item) => {
+      const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+      return sum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+    }, 0);
     monthlyData[monthKey] = (monthlyData[monthKey] || 0) + receiptTotal;
   });
   

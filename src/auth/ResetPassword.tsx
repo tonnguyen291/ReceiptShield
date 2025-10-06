@@ -120,7 +120,7 @@ const ResetPassword: React.FC = () => {
             {message && (
               <div className={cn(
                 "p-3 rounded-md text-sm",
-                status === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                (status as string) === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
               )}>
                 {message}
               </div>

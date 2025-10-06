@@ -56,7 +56,7 @@ export async function createInvitation(
     const invitation: Omit<Invitation, 'id'> = {
       email: invitationData.email.toLowerCase().trim(),
       role: invitationData.role,
-      supervisorId: invitationData.supervisorId || null,
+      supervisorId: invitationData.supervisorId || undefined,
       invitedBy,
       status: 'pending',
       token: generateInvitationToken(),

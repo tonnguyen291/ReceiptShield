@@ -38,7 +38,7 @@ import { createInvitation, getInvitationByToken } from '@/lib/firebase-invitatio
 import { getUsers } from '@/lib/firebase-user-store';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { sendInvitationEmail } from '@/lib/email-service';
+// Email service is now handled via API route
 import type { User, UserRole, InvitationRequest } from '@/types';
 
 const inviteUserSchema = z.object({
@@ -213,11 +213,26 @@ export function InviteUserDialog({
         message: data.message || undefined,
       };
 
-      // Create the invitation in the database
-      const invitation = await createInvitation(invitationData, currentUser.email);
+      // Send invitation via API route (handles both database creation and email sending)
+      const response = await fetch('/api/send-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...invitationData,
+          message: data.message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send invitation');
+      }
+
+      const result = await response.json();
       
-      // Send the invitation email
-      await sendInvitationEmail(invitation, data.message);
+      // Get the invitation details for display
+      const invitation = await getInvitationByToken(result.token);
       
       setSentInvitation({ email: invitation.email, token: invitation.token, role: invitation.role });
       setCopied(false);

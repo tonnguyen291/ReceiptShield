@@ -136,10 +136,10 @@ export async function performEnhancedFraudAnalysis(
 
     // Step 10: Create enhanced fraud analysis
     const enhancedAnalysis: Omit<EnhancedFraudAnalysis, 'submissionId' | 'receiptId'> = {
-      ml_prediction: fraudAnalysis.ml_prediction || null,
-      ai_detection: fraudAnalysis.ai_detection || null,
-      overall_risk_assessment: fraudAnalysis.overall_risk_assessment || null,
-      analysis_timestamp: fraudAnalysis.analysis_timestamp || null,
+      ml_prediction: fraudAnalysis.ml_prediction || undefined,
+      ai_detection: fraudAnalysis.ai_detection || undefined,
+      overall_risk_assessment: fraudAnalysis.overall_risk_assessment || undefined,
+      analysis_timestamp: fraudAnalysis.analysis_timestamp || undefined,
       duplicateDetection,
       riskFactors,
     };

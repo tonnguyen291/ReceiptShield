@@ -255,9 +255,9 @@ export async function compareOCRMethods(imageDataUri: string): Promise<{
   
   // Compare results
   const comparison = {
-    faster: tesseractResult.processingTime < (googleAIResult?.processingTime || Infinity) ? 'tesseract' : 'google-ai',
-    moreAccurate: tesseractResult.confidence > (googleAIResult?.ocrConfidence || 0) ? 'tesseract' : 'google-ai',
-    moreItems: tesseractResult.items.length > (googleAIResult?.extractedItems?.length || 0) ? 'tesseract' : 'google-ai'
+    faster: (tesseractResult.processingTime < (googleAIResult?.processingTime || Infinity) ? 'tesseract' : 'google-ai') as 'tesseract' | 'google-ai',
+    moreAccurate: (tesseractResult.confidence > (googleAIResult?.ocrConfidence || 0) ? 'tesseract' : 'google-ai') as 'tesseract' | 'google-ai',
+    moreItems: (tesseractResult.items.length > (googleAIResult?.extractedItems?.length || 0) ? 'tesseract' : 'google-ai') as 'tesseract' | 'google-ai'
   };
   
   console.log('📊 OCR Comparison Results:');

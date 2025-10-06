@@ -59,7 +59,12 @@ export function OriginEmployeeDashboard() {
           const monthReceipts = userReceipts.filter(receipt => 
             isWithinInterval(new Date(receipt.uploadedAt), { start: monthStart, end: monthEnd })
           );
-          const totalAmount = monthReceipts.reduce((sum, receipt) => sum + (receipt.totalAmount || 0), 0);
+          const totalAmount = monthReceipts.reduce((sum, receipt) => {
+            return sum + receipt.items.reduce((itemSum, item) => {
+              const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+              return itemSum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+            }, 0);
+          }, 0);
           monthlyAmounts.push(totalAmount);
         }
         setMonthlyData(monthlyAmounts);
@@ -97,7 +102,12 @@ export function OriginEmployeeDashboard() {
     isWithinInterval(new Date(receipt.uploadedAt), { start: monthStart, end: monthEnd })
   );
   
-  const totalAmount = currentMonthReceipts.reduce((sum, receipt) => sum + (receipt.totalAmount || 0), 0);
+  const totalAmount = currentMonthReceipts.reduce((sum, receipt) => {
+    return sum + receipt.items.reduce((itemSum, item) => {
+      const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+      return itemSum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+    }, 0);
+  }, 0);
   const pendingReceipts = receipts.filter(r => r.status === 'pending_approval').length;
   const approvedReceipts = receipts.filter(r => r.status === 'approved').length;
   const flaggedReceipts = receipts.filter(r => r.isFraudulent).length;
@@ -241,7 +251,10 @@ export function OriginEmployeeDashboard() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-foreground">
-                  ${receipt.totalAmount?.toFixed(2)}
+                  ${receipt.items.reduce((sum, item) => {
+                    const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+                    return sum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+                  }, 0).toFixed(2)}
                 </p>
                 <Badge 
                   variant={receipt.status === 'approved' ? 'default' : 'secondary'}

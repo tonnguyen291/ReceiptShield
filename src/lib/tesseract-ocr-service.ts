@@ -95,6 +95,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     // Extract vendor/store name (usually at the top)
     if (isVendorLine(line)) {
       items.push({
+        id: `vendor-${Date.now()}`,
         label: 'Vendor',
         value: line
       });
@@ -105,6 +106,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const dateMatch = extractDate(line);
     if (dateMatch) {
       items.push({
+        id: `date-${Date.now()}`,
         label: 'Date',
         value: dateMatch
       });
@@ -115,6 +117,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const totalMatch = extractTotalAmount(line);
     if (totalMatch) {
       items.push({
+        id: `total-${Date.now()}`,
         label: 'Total Amount',
         value: totalMatch
       });
@@ -125,6 +128,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const tipMatch = extractTip(line);
     if (tipMatch) {
       items.push({
+        id: `tip-${Date.now()}`,
         label: 'Tip',
         value: tipMatch
       });
@@ -135,6 +139,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const paymentMatch = extractPaymentMethod(line);
     if (paymentMatch) {
       items.push({
+        id: `payment-${Date.now()}`,
         label: 'Payment Method',
         value: paymentMatch
       });
@@ -145,6 +150,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     const itemMatch = extractItem(line);
     if (itemMatch) {
       items.push({
+        id: `item-${Date.now()}`,
         label: 'Item',
         value: `${itemMatch.name} - $${itemMatch.price}`
       });
@@ -154,6 +160,7 @@ function parseReceiptText(text: string): ReceiptDataItem[] {
     // If no specific pattern matches, treat as general text
     if (line.length > 5 && !isLikelyNoise(line)) {
       items.push({
+        id: `text-${Date.now()}`,
         label: 'Text',
         value: line
       });

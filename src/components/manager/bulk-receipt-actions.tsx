@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ProcessedReceipt } from '@/types';
-import { approveReceipt, rejectReceipt, updateReceipt } from '@/lib/receipt-store';
+import { approveReceipt, rejectReceipt, updateReceipt, getReceiptById } from '@/lib/receipt-store';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -132,12 +132,16 @@ export function BulkReceiptActions({ receipts, onActionComplete }: BulkReceiptAc
 
     setIsLoading(true);
     try {
-      const promises = Array.from(selectedReceipts).map(receiptId => 
-        updateReceipt(receiptId, {
-          status: 'pending_approval',
-          managerNotes: `Request for more information: ${bulkRequestMessage}`,
-        })
-      );
+      const promises = Array.from(selectedReceipts).map(async receiptId => {
+        const receipt = await getReceiptById(receiptId);
+        if (receipt) {
+          return updateReceipt({
+            ...receipt,
+            status: 'pending_approval',
+            managerNotes: `Request for more information: ${bulkRequestMessage}`,
+          });
+        }
+      });
       
       await Promise.all(promises);
       

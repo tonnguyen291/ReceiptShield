@@ -12,6 +12,7 @@ function getOrInitializeUsersDB(): User[] {
   const defaultUsers: User[] = [
       {
         id: 'admin-001',
+        uid: 'admin-001',
         name: 'Alex Admin',
         email: 'admin@corp.com',
         role: 'admin',
@@ -19,6 +20,7 @@ function getOrInitializeUsersDB(): User[] {
       },
       {
         id: 'manager-001',
+        uid: 'manager-001',
         name: 'Bob Manager',
         email: 'manager@example.com',
         role: 'manager',
@@ -26,6 +28,7 @@ function getOrInitializeUsersDB(): User[] {
       },
       {
         id: 'employee-001',
+        uid: 'employee-001',
         name: 'Charlie Employee',
         email: 'employee@example.com',
         role: 'employee',
@@ -34,6 +37,7 @@ function getOrInitializeUsersDB(): User[] {
       },
       {
         id: 'employee-002',
+        uid: 'employee-002',
         name: 'Dana Employee',
         email: 'employee2@example.com',
         role: 'employee',

@@ -96,7 +96,7 @@ export default function VerifyReceiptPage() {
       // Perform enhanced fraud analysis
       const fraudResult = await performEnhancedFraudAnalysis(
         editableItems,
-        imageSource,
+        imageSource || '',
         receipt.submissionId,
         receipt.id
       );
@@ -179,7 +179,7 @@ export default function VerifyReceiptPage() {
   const pageTitle = user?.role === 'manager' ? `Review & Edit Receipt: ${receipt.fileName}` : `Verify Receipt Data: ${receipt.fileName}`;
   const submitButtonText = user?.role === 'manager' ? 'Save Changes & Re-analyze' : 'Confirm & Analyze Fraud';
   const imageSource = receipt.imageUrl || receipt.imageDataUri;
-  const isPdf = imageSource.startsWith('data:application/pdf') || receipt.fileName.toLowerCase().endsWith('.pdf');
+  const isPdf = imageSource?.startsWith('data:application/pdf') || receipt.fileName.toLowerCase().endsWith('.pdf');
 
   return (
     <Card className="max-w-4xl mx-auto my-8 shadow-xl">
@@ -216,7 +216,7 @@ export default function VerifyReceiptPage() {
                 ) : (
                   <div className="relative border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full">
                     <Image
-                      src={imageSource}
+                      src={imageSource || ''}
                       alt={`Receipt ${receipt.fileName}`}
                       fill
                       style={{objectFit: 'contain'}}

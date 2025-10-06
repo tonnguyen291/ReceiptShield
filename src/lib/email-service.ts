@@ -1,4 +1,5 @@
 import type { Invitation } from '@/types';
+import nodemailer from 'nodemailer';
 
 // Email service for sending invitation emails
 // This is a placeholder implementation that would integrate with your email service provider
@@ -39,7 +40,7 @@ const createTransporter = () => {
   // If no SMTP credentials are provided, use a test account
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log('⚠️  No SMTP credentials found. Using test account (emails will not be sent)');
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
       secure: false,
@@ -50,7 +51,7 @@ const createTransporter = () => {
     });
   }
   
-  return nodemailer.createTransporter(smtpConfig);
+  return nodemailer.createTransport(smtpConfig);
 };
 
 // Generate invitation email template
