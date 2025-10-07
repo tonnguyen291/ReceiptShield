@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { RealtimeCharts } from '@/components/monitoring/realtime-charts';
+import { AlertSystem } from '@/components/monitoring/alert-system';
+import { BusinessAnalytics } from '@/components/monitoring/business-analytics';
+import { PerformanceOptimization } from '@/components/monitoring/performance-optimization';
 
 interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
@@ -271,6 +275,18 @@ export default function MonitoringPage() {
             </div>
           </div>
         )}
+
+        {/* Alert System */}
+        <AlertSystem />
+
+        {/* Business Analytics */}
+        <BusinessAnalytics />
+
+        {/* Performance Optimization */}
+        <PerformanceOptimization />
+
+        {/* Real-time Charts */}
+        <RealtimeCharts refreshInterval={30000} />
 
         {/* System Information */}
         <div className="bg-white rounded-lg shadow p-6">

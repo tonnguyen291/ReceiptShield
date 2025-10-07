@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
+import { requireMonitoringAuth, logMonitoringAccess } from '@/lib/monitoring-auth';
 
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication for monitoring access
+    const user = requireMonitoringAuth(request);
+    logMonitoringAccess(user, '/api/monitoring/health', 'GET');
     const startTime = Date.now();
     
     // Calculate real uptime based on health checks in last 24 hours
@@ -55,6 +59,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Health check failed:', error);
+    
+    // Check if it's an auth error
+    if (error instanceof Error && error.message.includes('Unauthorized')) {
+      return NextResponse.json({
+        error: 'Unauthorized: Monitoring access required'
+      }, { status: 401 });
+    }
+    
     return NextResponse.json({
       status: 'unhealthy',
       error: 'Health check failed',
