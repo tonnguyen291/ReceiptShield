@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<null | "success" | "error">(null);
+  const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -120,7 +120,7 @@ const ForgotPassword: React.FC = () => {
             {message && (
               <div className={cn(
                 "p-3 rounded-md text-sm",
-                status === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                (status as string) === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
               )}>
                 {message}
               </div>
@@ -145,4 +145,4 @@ const ForgotPassword: React.FC = () => {
   );
 };
 
-export default ResetPassword;
+export default ForgotPassword;

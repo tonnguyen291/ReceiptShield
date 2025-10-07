@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import type { ProcessedReceipt } from '@/types';
-import { approveReceipt, rejectReceipt, updateReceipt } from '@/lib/receipt-store';
+import { approveReceipt, rejectReceipt } from '@/lib/receipt-store';
+import { updateReceipt } from '@/lib/firebase-receipt-store';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';

@@ -29,7 +29,7 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose, onActionComplet
   if (!receipt) return null;
 
   const fraudProbabilityPercent = Math.round(receipt.fraudProbability * 100);
-  const isPdf = receipt.imageDataUri.startsWith('data:application/pdf');
+  const isPdf = receipt.imageDataUri?.startsWith('data:application/pdf') || false;
   
   const openPdfInNewTab = () => {
     if (receipt && isPdf) {
@@ -81,7 +81,7 @@ export function ReceiptDetailsDialog({ receipt, isOpen, onClose, onActionComplet
               ) : (
                 <div className="border rounded-md overflow-hidden shadow-md relative min-h-[300px] md:min-h-[400px]">
                   <Image
-                    src={receipt.imageDataUri}
+                    src={receipt.imageDataUri || '/placeholder-receipt.jpg'}
                     alt={`Receipt ${receipt.fileName}`}
                     fill
                     style={{objectFit: 'contain'}}
