@@ -1,5 +1,12 @@
 
-'use client';
+// Required for static export
+export async function generateStaticParams() {
+  return [
+    { receiptId: '1' },
+    { receiptId: '2' },
+    { receiptId: '3' }
+  ];
+}
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';

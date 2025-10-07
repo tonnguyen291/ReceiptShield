@@ -1,4 +1,19 @@
 {
+  "hosting": {
+    "public": ".next",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "**/ml/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "firestore": {
     "database": "(default)",
     "location": "nam5",
@@ -7,15 +22,6 @@
   },
   "storage": {
     "rules": "storage.rules"
-  },
-  "apphosting": {
-    "backendId": "receiptshield-backend",
-    "rootDir": ".",
-    "ignore": [
-      "**/node_modules/**",
-      "**/.next/**",
-      "**/ml/**"
-    ]
   },
   "emulators": {
     "auth": {
