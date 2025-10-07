@@ -28,12 +28,17 @@ export async function GET(request: NextRequest) {
     const events = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Array<{
+      id: string;
+      userId?: string;
+      eventName?: string;
+      [key: string]: any;
+    }>;
     
     // Calculate statistics
     const uniqueUsers = new Set(events.map(event => event.userId || 'anonymous')).size;
     const totalEvents = events.length;
-    const eventTypes = [...new Set(events.map(event => event.eventName))];
+    const eventTypes = [...new Set(events.map(event => event.eventName).filter(Boolean))];
     
     const statistics = {
       uniqueUsers,
