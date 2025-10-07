@@ -12,19 +12,22 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "recieptshield",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "recieptshield.firebasestorage.app",
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "74288524309",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:74288524309:web:30e62b6af81e661119f21c",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-D82M0MC28P"
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:74288524309:web:51054e09d910415a19f21c",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-LTKF1K1NFL"
 };
 
 // Debug: Log configuration (remove in production)
 if (typeof window !== 'undefined') {
-  console.log('Firebase Config:', {
-    apiKey: firebaseConfig.apiKey ? 'Set' : 'Missing',
+  console.log('Firebase Config Debug:', {
+    apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'Missing',
     authDomain: firebaseConfig.authDomain,
     projectId: firebaseConfig.projectId,
-    storageBucket: firebaseConfig.storageBucket,
-    messagingSenderId: firebaseConfig.messagingSenderId,
-    appId: firebaseConfig.appId ? 'Set' : 'Missing'
+    appId: firebaseConfig.appId ? `${firebaseConfig.appId.substring(0, 10)}...` : 'Missing',
+    hasEnvVars: {
+      apiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: !!process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    }
   });
 }
 
