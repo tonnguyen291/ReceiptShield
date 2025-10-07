@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<null | "success" | "error">(null);
+  const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();

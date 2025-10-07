@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, CheckCircle, AlertTriangle, Info, X, Mail, DollarSign, Receipt, Loader2 } from "lucide-react";
+import { Bell, CheckCircle, AlertTriangle, Info, X, Mail, DollarSign, Receipt, Loader2, Clock } from "lucide-react";
 import { getAllReceipts } from "@/lib/receipt-store";
 import { getAllUsers } from "@/lib/firebase-auth";
 import type { ProcessedReceipt } from "@/types";

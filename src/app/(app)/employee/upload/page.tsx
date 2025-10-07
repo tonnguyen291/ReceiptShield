@@ -2,7 +2,7 @@
 
 'use client';
 
-import { ReceiptUploadForm } from '@/components/employee/receipt-upload-form';
+import ReceiptUploadForm from '@/components/employee/receipt-upload-form';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

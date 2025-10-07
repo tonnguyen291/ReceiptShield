@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import { ArrowLeft, AlertTriangle, Info, MessageSquareText, ShieldQuestion, Chec
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
+
 
 export default function ReceiptDetailsPage() {
   const params = useParams();

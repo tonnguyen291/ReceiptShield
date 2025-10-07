@@ -234,7 +234,9 @@ export function InviteUserDialog({
       // Get the invitation details for display
       const invitation = await getInvitationByToken(result.token);
       
-      setSentInvitation({ email: invitation.email, token: invitation.token, role: invitation.role });
+      if (invitation) {
+        setSentInvitation({ email: invitation.email, token: invitation.token, role: invitation.role });
+      }
       setCopied(false);
       onInvitationSent();
     } catch (error) {

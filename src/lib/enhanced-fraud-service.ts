@@ -56,10 +56,13 @@ export async function performEnhancedFraudAnalysis(
     // Step 2: Get AI fraud detection
     let aiFraudResult = null;
     try {
-      aiFraudResult = await flagFraudulentReceipt({
-        items,
-        receiptImage: imageSource,
-      });
+      // AI fraud detection is temporarily disabled
+      // if (flagFraudulentReceipt && typeof flagFraudulentReceipt === 'function') {
+      //   aiFraudResult = await flagFraudulentReceipt({
+      //     items,
+      //     receiptImage: imageSource,
+      //   });
+      // }
     } catch (aiError) {
       console.warn('AI fraud detection failed:', aiError);
       // Create fallback result
@@ -96,8 +99,8 @@ export async function performEnhancedFraudAnalysis(
         explanation: aiFraudResult.explanation
       } : undefined,
       overall_risk_assessment: calculateOverallRiskAssessment(
-        mlPrediction?.risk_level,
-        aiFraudResult?.fraudProbability
+        mlPrediction,
+        aiFraudResult
       ),
       analysis_timestamp: new Date().toISOString()
     };
