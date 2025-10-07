@@ -27,10 +27,20 @@ export function BusinessAnalytics() {
     try {
       setIsLoading(true);
       
-      // Fetch analytics data
+      // Fetch analytics data with authentication
       const [analyticsResponse, performanceResponse] = await Promise.all([
-        fetch(`/api/monitoring/analytics?timeRange=${timeRange}`),
-        fetch('/api/monitoring/performance')
+        fetch(`/api/monitoring/analytics?timeRange=${timeRange}`, {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/performance', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        })
       ]);
 
       const [analyticsData, performanceData] = await Promise.all([

@@ -38,16 +38,31 @@ export default function MonitoringPage() {
 
   const fetchSystemHealth = async () => {
     try {
-      // Fetch from your health endpoint
-      const response = await fetch('/api/monitoring/health');
+      // Fetch from your health endpoint with authentication
+      const response = await fetch('/api/monitoring/health', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       
       // Fetch performance metrics for additional data
-      const perfResponse = await fetch('/api/monitoring/performance');
+      const perfResponse = await fetch('/api/monitoring/performance', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const perfData = await perfResponse.json();
       
       // Fetch analytics for active users (last 5 minutes for real-time)
-      const analyticsResponse = await fetch('/api/monitoring/analytics?timeRange=5m');
+      const analyticsResponse = await fetch('/api/monitoring/analytics?timeRange=5m', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const analyticsData = await analyticsResponse.json();
       
       // Calculate uptime based on health checks in last 24 hours
@@ -87,7 +102,12 @@ export default function MonitoringPage() {
 
   const handleCheckUptime = async () => {
     try {
-      const response = await fetch('/api/monitoring/health');
+      const response = await fetch('/api/monitoring/health', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setActionResults(prev => ({ ...prev, uptime: data }));
     } catch (error) {
@@ -97,7 +117,12 @@ export default function MonitoringPage() {
 
   const handleDatabaseStatus = async () => {
     try {
-      const response = await fetch('/api/monitoring/analytics?timeRange=5m');
+      const response = await fetch('/api/monitoring/analytics?timeRange=5m', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setActionResults(prev => ({ ...prev, database: data }));
     } catch (error) {
@@ -107,7 +132,12 @@ export default function MonitoringPage() {
 
   const handlePerformanceReport = async () => {
     try {
-      const response = await fetch('/api/monitoring/performance');
+      const response = await fetch('/api/monitoring/performance', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setActionResults(prev => ({ ...prev, performance: data }));
     } catch (error) {
@@ -117,7 +147,12 @@ export default function MonitoringPage() {
 
   const handleSystemLogs = async () => {
     try {
-      const response = await fetch('/api/monitoring/errors');
+      const response = await fetch('/api/monitoring/errors', {
+        headers: {
+          'Authorization': 'Bearer monitoring-token',
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       setActionResults(prev => ({ ...prev, logs: data }));
     } catch (error) {

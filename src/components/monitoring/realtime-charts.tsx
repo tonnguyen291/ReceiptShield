@@ -22,11 +22,26 @@ export function RealtimeCharts({ refreshInterval = 30000 }: RealtimeChartsProps)
 
   const fetchChartData = async () => {
     try {
-      // Fetch multiple data points for the last hour
+      // Fetch multiple data points for the last hour with authentication
       const [healthResponse, analyticsResponse, performanceResponse] = await Promise.all([
-        fetch('/api/monitoring/health'),
-        fetch('/api/monitoring/analytics?timeRange=1h'),
-        fetch('/api/monitoring/performance')
+        fetch('/api/monitoring/health', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/analytics?timeRange=1h', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/performance', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        })
       ]);
 
       const [healthData, analyticsData, performanceData] = await Promise.all([

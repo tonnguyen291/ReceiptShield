@@ -64,9 +64,24 @@ export function AlertSystem() {
   const checkAlerts = async () => {
     try {
       const [healthResponse, analyticsResponse, performanceResponse] = await Promise.all([
-        fetch('/api/monitoring/health'),
-        fetch('/api/monitoring/analytics?timeRange=5m'),
-        fetch('/api/monitoring/performance')
+        fetch('/api/monitoring/health', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/analytics?timeRange=5m', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/performance', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        })
       ]);
 
       const [healthData, analyticsData, performanceData] = await Promise.all([

@@ -29,10 +29,20 @@ export function PerformanceOptimization() {
     try {
       setIsLoading(true);
       
-      // Fetch performance data
+      // Fetch performance data with authentication
       const [performanceResponse, healthResponse] = await Promise.all([
-        fetch('/api/monitoring/performance'),
-        fetch('/api/monitoring/health')
+        fetch('/api/monitoring/performance', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch('/api/monitoring/health', {
+          headers: {
+            'Authorization': 'Bearer monitoring-token',
+            'Content-Type': 'application/json'
+          }
+        })
       ]);
 
       const [performanceData, healthData] = await Promise.all([
