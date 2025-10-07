@@ -1,6 +1,9 @@
 import type { Invitation } from '@/types';
 import nodemailer from 'nodemailer';
 
+// Type declaration for nodemailer (optional dependency)
+declare const nodemailer: any;
+
 // Email service for sending invitation emails
 // This is a placeholder implementation that would integrate with your email service provider
 // You can replace this with your preferred email service (SendGrid, AWS SES, etc.)

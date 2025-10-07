@@ -7,6 +7,7 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
+    "build:production": "next build && next export",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -14,7 +15,11 @@
     "firebase:emulators": "firebase emulators:start",
     "firebase:deploy": "firebase deploy",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules,storage",
-    "firebase:deploy:hosting": "firebase deploy --only hosting"
+    "firebase:deploy:apphosting": "firebase deploy --only apphosting",
+    "deploy:production": "npm run build && firebase deploy --only apphosting",
+    "deploy:all": "npm run build && firebase deploy",
+    "analyze": "ANALYZE=true npm run build",
+    "build:analyze": "cross-env ANALYZE=true npm run build"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
@@ -69,7 +74,7 @@
     "@types/node": "^20",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "firebase-tools": "^14.17.0",
+    "firebase-tools": "^14.18.0",
     "genkit-cli": "^1.8.0",
     "postcss": "^8",
     "sharp": "^0.34.3",
