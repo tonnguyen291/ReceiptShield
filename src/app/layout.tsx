@@ -6,14 +6,20 @@ import { Toaster } from '@/components/ui/toaster';
 import { Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Chatbot } from '@/components/shared/chatbot';
+import { initializeMonitoring } from '@/lib/monitoring';
 import './globals.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isChatbotOpen, setChatbotOpen] = useState(false);
   const pathname = usePathname();
+
+  // Initialize monitoring on app load - temporarily disabled
+  // useEffect(() => {
+  //   initializeMonitoring();
+  // }, []);
 
   // Pages where chatbot should NOT be displayed
   const hideChatbotRoutes = ['/login', '/auth', '/register'];

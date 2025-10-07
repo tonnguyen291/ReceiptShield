@@ -1,4 +1,4 @@
-name: Deploy to Firebase App Hosting
+name: Deploy ReceiptShield
 
 on:
   push:
@@ -32,22 +32,32 @@ jobs:
     - name: Build application
       run: npm run build
       env:
-        NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
-        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-        NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
         GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
-        NEXT_PUBLIC_EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        NEXT_PUBLIC_EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
-        NEXT_PUBLIC_APP_URL: ${{ secrets.APP_URL }}
+        NEXT_PUBLIC_EMAIL_FROM: ${{ secrets.NEXT_PUBLIC_EMAIL_FROM }}
+        NEXT_PUBLIC_EMAIL_FROM_NAME: ${{ secrets.NEXT_PUBLIC_EMAIL_FROM_NAME }}
+        NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+        NODE_ENV: production
         
     - name: Deploy to Firebase App Hosting
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      uses: FirebaseExtended/action-hosting-deploy@v0
+      run: |
+        npm install -g firebase-tools
+        firebase deploy --only apphosting --token ${{ secrets.FIREBASE_TOKEN }}
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        
+    - name: Deploy to Vercel (Alternative)
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: amondnet/vercel-action@v25
       with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-        channelId: live
-        projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.ORG_ID }}
+        vercel-project-id: ${{ secrets.PROJECT_ID }}
+        working-directory: ./
+        vercel-args: '--prod'

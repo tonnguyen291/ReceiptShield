@@ -8,13 +8,33 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "apphosting": {
-    "backend": {
+  "apphosting": [
+    {
+      "backendId": "receiptshield-backend",
+      "primaryRegion": "us-central1",
       "runConfig": {
         "maxInstances": 1
-      }
+      },
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/out/**",
+        "**/ml/**",
+        "**/docs/**",
+        "**/scripts/**",
+        "**/.github/**",
+        "**/*.md",
+        "**/deploy.sh",
+        "**/env.*",
+        "**/venv/**",
+        "**/receipts/**",
+        "**/*.log",
+        "**/firebase-debug.log"
+      ]
     }
-  },
+  ],
   "emulators": {
     "auth": {
       "port": 9099
