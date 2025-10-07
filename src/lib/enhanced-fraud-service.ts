@@ -56,7 +56,7 @@ export async function performEnhancedFraudAnalysis(
     // Step 2: Get AI fraud detection
     let aiFraudResult = null;
     try {
-      if (flagFraudulentReceipt) {
+      if (flagFraudulentReceipt && typeof flagFraudulentReceipt === 'function') {
         aiFraudResult = await flagFraudulentReceipt({
           items,
           receiptImage: imageSource,
@@ -98,8 +98,8 @@ export async function performEnhancedFraudAnalysis(
         explanation: aiFraudResult.explanation
       } : undefined,
       overall_risk_assessment: calculateOverallRiskAssessment(
-        mlPrediction?.risk_level,
-        aiFraudResult?.fraudProbability
+        mlPrediction,
+        aiFraudResult
       ),
       analysis_timestamp: new Date().toISOString()
     };

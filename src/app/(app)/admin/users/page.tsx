@@ -17,6 +17,7 @@ interface UserWithSpending extends User {
   receipts: number;
   lastLogin: string;
   department: string;
+  avatar?: string;
 }
 
 export default function AdminUsersPage() {

@@ -32,7 +32,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Initialize Firebase
-let app;
+let app: any;
 try {
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 } catch (error) {

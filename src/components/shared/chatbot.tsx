@@ -87,12 +87,7 @@ export function Chatbot({ isOpen, onClose }: ChatbotProps) {
         }))
       );
 
-      const result = await runAssistant({
-        query: input,
-        userEmail: user.email,
-        userRole: user.role,
-        receiptHistory: receiptHistoryString,
-      });
+      const result = await runAssistant(input);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

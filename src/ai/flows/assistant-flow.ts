@@ -5,6 +5,7 @@ export const assistantFlow = null;
 export const runAssistant = async (message: string) => {
   return {
     response: "AI Assistant is temporarily disabled. Please try again later.",
-    error: null
+    error: null,
+    suggestUpload: false
   };
 };
