@@ -1,23 +1,10 @@
 // Performance optimization utilities and configuration
 import { lazy, Suspense, type ComponentType } from 'react';
 
-// Lazy loading configuration
+// Lazy loading configuration (simplified)
 export const lazyComponents = {
-  // Admin components
-  AdminDashboard: lazy(() => import('@/components/admin/user-management-table')),
-  InviteUserDialog: lazy(() => import('@/components/admin/invite-user-dialog')),
-  EditUserDialog: lazy(() => import('@/components/admin/edit-user-dialog')),
-  
-  // Manager components
-  ManagerDashboard: lazy(() => import('@/components/manager/manager-dashboard')),
-  EmployeeView: lazy(() => import('@/components/manager/employee-view')),
-  
-  // Employee components
-  EmployeeDashboard: lazy(() => import('@/components/employee/employee-dashboard')),
-  ReceiptUpload: lazy(() => import('@/components/employee/receipt-upload')),
-  
-  // Shared components
-  LoadingSpinner: lazy(() => import('@/components/ui/loading-spinner')),
+  // Note: Lazy loading components should be implemented in individual pages
+  // This is a placeholder for future implementation
 };
 
 // Performance monitoring utilities
@@ -163,24 +150,8 @@ export const cachingUtils = {
 };
 
 // Loading states and error boundaries
-export const LoadingFallback = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
-);
-
-export const ErrorFallback = ({ error, resetError }: { error: Error; resetError: () => void }) => (
-  <div className="flex flex-col items-center justify-center p-8 text-center">
-    <h2 className="text-lg font-semibold text-destructive mb-2">Something went wrong</h2>
-    <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
-    <button
-      onClick={resetError}
-      className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-    >
-      Try again
-    </button>
-  </div>
-);
+// Re-export components from their proper location
+export { LoadingFallback, ErrorFallback } from '@/components/ui/loading-fallback';
 
 // Performance monitoring hooks
 export const usePerformanceMonitoring = () => {

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getPerformance, trace, getAnalytics, logEvent } from 'firebase/analytics';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { alerting } from './alerting';
 
@@ -23,11 +23,8 @@ export const monitoring = {
         // Initialize Firebase Analytics
         const analytics = getAnalytics(app);
         
-        // Initialize Firebase Performance
-        const perf = getPerformance(app);
-        
         console.log('📊 Monitoring initialized successfully');
-        return { analytics, perf };
+        return { analytics };
       } catch (error) {
         console.error('Failed to initialize monitoring:', error);
         return null;
@@ -113,12 +110,15 @@ export const monitoring = {
     }
   },
 
-  // Create performance trace
+  // Create performance trace (simplified version)
   createTrace: (traceName: string) => {
     if (typeof window !== 'undefined') {
       try {
-        const perf = getPerformance();
-        return trace(perf, traceName);
+        console.log(`[Performance] Starting trace: ${traceName}`);
+        return {
+          start: () => console.log(`[Performance] Trace ${traceName} started`),
+          stop: () => console.log(`[Performance] Trace ${traceName} stopped`)
+        };
       } catch (error) {
         console.error('Failed to create trace:', error);
         return null;

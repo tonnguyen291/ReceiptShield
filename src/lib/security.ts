@@ -198,6 +198,6 @@ export const securityUtils = {
   // Validate session token
   validateSession: (token: string): boolean => {
     // Implement proper JWT validation in production
-    return token && token.length > 0;
+    return Boolean(token && token.length > 0);
   },
 };

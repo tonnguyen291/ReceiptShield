@@ -29,7 +29,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { Chatbot } from "@/components/shared/chatbot";
+import Chatbot from "@/components/shared/chatbot";
 import { Button } from "@/components/ui/button";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
