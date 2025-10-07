@@ -1,6 +1,6 @@
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, analytics } from './firebase';
+import { db, analytics, app } from './firebase';
 import { alerting } from './alerting';
 
 export const monitoring = {

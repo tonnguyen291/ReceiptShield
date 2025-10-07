@@ -56,10 +56,12 @@ export async function performEnhancedFraudAnalysis(
     // Step 2: Get AI fraud detection
     let aiFraudResult = null;
     try {
-      aiFraudResult = await flagFraudulentReceipt({
-        items,
-        receiptImage: imageSource,
-      });
+      if (flagFraudulentReceipt) {
+        aiFraudResult = await flagFraudulentReceipt({
+          items,
+          receiptImage: imageSource,
+        });
+      }
     } catch (aiError) {
       console.warn('AI fraud detection failed:', aiError);
       // Create fallback result

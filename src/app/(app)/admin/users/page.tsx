@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
               <div key={user.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors bg-[var(--color-card)]">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={user.avatar || ''} alt={user.name} />
                     <AvatarFallback>
                       {user.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>

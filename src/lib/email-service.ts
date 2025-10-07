@@ -1,5 +1,4 @@
 import type { Invitation } from '@/types';
-import nodemailer from 'nodemailer';
 
 // Type declaration for nodemailer (optional dependency)
 declare const nodemailer: any;
