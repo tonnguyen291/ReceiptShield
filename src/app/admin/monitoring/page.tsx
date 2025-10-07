@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 import { RealtimeCharts } from '@/components/monitoring/realtime-charts';
 import { AlertSystem } from '@/components/monitoring/alert-system';
 import { BusinessAnalytics } from '@/components/monitoring/business-analytics';
 import { PerformanceOptimization } from '@/components/monitoring/performance-optimization';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Shield, AlertTriangle } from 'lucide-react';
 
 interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
@@ -16,6 +20,8 @@ interface SystemHealth {
 }
 
 export default function MonitoringPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionResults, setActionResults] = useState<{
@@ -25,16 +31,34 @@ export default function MonitoringPage() {
     logs?: any;
   }>({});
 
+  // Authentication check
   useEffect(() => {
-    fetchSystemHealth();
+    if (authLoading) return; // Wait for auth to load
     
-    // Refresh data every 30 seconds
-    const interval = setInterval(() => {
-      fetchSystemHealth();
-    }, 30000);
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    
+    if (user.role !== 'admin') {
+      router.replace(`/${user.role}/dashboard`);
+      return;
+    }
+  }, [user, authLoading, router]);
 
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => {
+    // Only fetch data if user is authenticated and is admin
+    if (user && user.role === 'admin') {
+      fetchSystemHealth();
+      
+      // Refresh data every 30 seconds
+      const interval = setInterval(() => {
+        fetchSystemHealth();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const fetchSystemHealth = async () => {
     try {
@@ -160,6 +184,42 @@ export default function MonitoringPage() {
     }
   };
 
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show unauthorized access message
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="bg-red-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <AlertTriangle className="h-8 w-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-6">
+            You need administrator privileges to access the monitoring dashboard.
+          </p>
+          <Button 
+            onClick={() => router.push('/admin/dashboard')}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Admin Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -172,13 +232,32 @@ export default function MonitoringPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">System Monitoring</h1>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => router.push('/admin/dashboard')}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Admin Dashboard</span>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">System Monitoring</h1>
+              <p className="text-gray-600 mt-1">Real-time system health and performance metrics</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Shield className="h-4 w-4 text-green-600" />
+              <span>Admin Access</span>
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* System Health Overview */}
