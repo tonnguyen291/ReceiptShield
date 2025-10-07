@@ -75,11 +75,28 @@ export function ReceiptUploadForm() {
       const receiptId = generateReceiptId();
       const processingVersion = getProcessingVersion();
       
-      // Upload image to Firebase Storage
-      const uploadResult = await uploadReceiptImage(file, user.uid, receiptId);
-      
-      // Create data URI for AI processing (keep for backward compatibility)
+      // Create data URI for AI processing (needed for fallback and processing)
       const imageDataUri = await fileToDataUri(file);
+      
+      // TEMPORARY: Skip Firebase Storage upload for testing
+      console.log('🚀 SKIPPING Firebase Storage upload for testing enhanced ML model');
+      const uploadResult = {
+        url: imageDataUri,
+        path: `receipts/${user.uid}/receipt-${receiptId}-test.${file.name.split('.').pop() || 'jpg'}`
+      };
+      
+      // Upload image to Firebase Storage with fallback (DISABLED FOR TESTING)
+      // let uploadResult;
+      // try {
+      //   uploadResult = await uploadReceiptImage(file, user.uid, receiptId);
+      // } catch (uploadError) {
+      //   console.warn('Firebase Storage upload failed, using data URI fallback:', uploadError);
+      //   // Create a fallback upload result using data URI
+      //   uploadResult = {
+      //     url: imageDataUri, // Use data URI as fallback
+      //     path: `receipts/${user.uid}/receipt-${receiptId}-fallback.${file.name.split('.').pop() || 'jpg'}`
+      //   };
+      // }
 
       // Create submission record first
       const submissionData = {
@@ -100,7 +117,13 @@ export function ReceiptUploadForm() {
       const actualSubmissionId = await createSubmission(submissionData);
 
       // Perform hybrid OCR analysis (Tesseract + Google AI with fallback)
+      console.log('🔍 Starting OCR analysis...');
       const ocrResult = await performHybridOCRAnalysis(imageDataUri, actualSubmissionId, receiptId, 'auto');
+      console.log('✅ OCR analysis completed:', { 
+        method: ocrResult.method, 
+        confidence: ocrResult.confidence, 
+        itemsCount: ocrResult.items.length 
+      });
       
       if (ocrResult.errorLog.length > 0) {
         console.warn('OCR analysis completed with warnings:', ocrResult.errorLog);
@@ -126,7 +149,9 @@ export function ReceiptUploadForm() {
       };
 
       // Save to Firestore
+      console.log('💾 Saving receipt to Firestore...');
       const savedReceiptId = await addReceipt(receiptData);
+      console.log('✅ Receipt saved with ID:', savedReceiptId);
 
       toast({
         title: 'Receipt Items Extracted!',

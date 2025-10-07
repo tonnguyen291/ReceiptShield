@@ -25,7 +25,10 @@ export interface MLFraudPrediction {
   is_fraudulent: boolean;
   fraud_probability: number; // 0-1 probability
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  confidence: number; // Confidence in the prediction
+  confidence?: number; // Confidence in the prediction (optional for backward compatibility)
+  model_type?: string; // Type of model used (e.g., 'Enhanced ML Model')
+  features_used?: number; // Number of features used in the model
+  analysis_timestamp?: string; // When the analysis was performed
 }
 
 // AI Fraud detection results  

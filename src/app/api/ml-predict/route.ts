@@ -61,37 +61,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction | null> {
+function handlePythonProcess(pythonProcess: any, inputData: string): Promise<MLFraudPrediction | null> {
   return new Promise((resolve) => {
-    console.log('🐍 Starting Python ML model process...');
-    
-    const scriptPath = path.join(process.cwd(), 'ml', 'predict_single.py');
-    const inputData = JSON.stringify({ items });
-    
-    console.log('📁 Script path:', scriptPath);
-    console.log('📊 Input data length:', inputData.length);
-    
-    const pythonPath = path.join(process.cwd(), 'ml', 'venv', 'bin', 'python3');
-    console.log('🐍 Using Python path:', pythonPath);
-    
-    // Check if Python executable exists
-    if (!fs.existsSync(pythonPath)) {
-      console.error('❌ Python executable not found at:', pythonPath);
-      return NextResponse.json({
-        success: false,
-        error: 'Python environment not properly set up'
-      }, { status: 500 });
-    }
-    
-    const pythonProcess = spawn(pythonPath, [scriptPath], {
-      cwd: path.join(process.cwd(), 'ml'),
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
     let outputData = '';
     let errorData = '';
 
-    pythonProcess.stdout.on('data', (data) => {
+    pythonProcess.stdout.on('data', (data: any) => {
       outputData += data.toString();
       // Only log if there's actual content (not just warnings)
       const output = data.toString();
@@ -100,7 +75,7 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
       }
     });
 
-    pythonProcess.stderr.on('data', (data) => {
+    pythonProcess.stderr.on('data', (data: any) => {
       errorData += data.toString();
       // Only log actual errors, not warnings
       const error = data.toString();
@@ -109,7 +84,7 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
       }
     });
 
-    pythonProcess.on('close', (code) => {
+    pythonProcess.on('close', (code: number) => {
       console.log('🐍 Python process closed with code:', code);
       if (code !== 0) {
         console.log('❌ Python error data:', errorData);
@@ -132,7 +107,7 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
       }
     });
 
-    pythonProcess.on('error', (error) => {
+    pythonProcess.on('error', (error: any) => {
       console.error('❌ Python process error:', error);
       resolve(null);
     });
@@ -153,5 +128,99 @@ function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction 
       pythonProcess.kill();
       resolve(null);
     }, 30000);
+  });
+}
+
+function callPythonMLModel(items: ReceiptDataItem[]): Promise<MLFraudPrediction | null> {
+  return new Promise((resolve) => {
+    console.log('🐍 Starting Enhanced Python ML model process...');
+    
+    // Try enhanced model first, fallback to original if not available
+    const enhancedScriptPath = path.join(process.cwd(), 'ml', 'predict_enhanced.py');
+    const originalScriptPath = path.join(process.cwd(), 'ml', 'predict_single.py');
+    
+    let scriptPath = enhancedScriptPath;
+    let useEnhanced = false;
+    
+    // Check if enhanced model files exist
+    const enhancedModelPath = path.join(process.cwd(), 'ml', 'enhanced_fraud_detection_model.pkl');
+    if (fs.existsSync(enhancedModelPath)) {
+      scriptPath = enhancedScriptPath;
+      useEnhanced = true;
+      console.log('🚀 Using Enhanced ML Model');
+    } else {
+      scriptPath = originalScriptPath;
+      useEnhanced = false;
+      console.log('📊 Using Original ML Model (enhanced not available)');
+    }
+    
+    const inputData = JSON.stringify({ items });
+    
+    console.log('📁 Script path:', scriptPath);
+    console.log('📊 Input data length:', inputData.length);
+    
+    // Determine Python path based on platform
+    const isWindows = process.platform === 'win32';
+    const pythonPath = isWindows 
+      ? path.join(process.cwd(), 'ml', 'venv', 'Scripts', 'python.exe')
+      : path.join(process.cwd(), 'ml', 'venv', 'bin', 'python3');
+    
+    console.log('🐍 Using Python path:', pythonPath);
+    console.log('🖥️ Platform:', process.platform);
+    
+    // Check if Python executable exists
+    if (!fs.existsSync(pythonPath)) {
+      console.error('❌ Python executable not found at:', pythonPath);
+      
+      // Try alternative paths
+      const altPaths = isWindows 
+        ? [
+            path.join(process.cwd(), 'ml', 'venv', 'Scripts', 'python.exe'),
+            path.join(process.cwd(), 'ml', 'venv', 'Scripts', 'python'),
+            'python', // Try system python
+            'python3'
+          ]
+        : [
+            path.join(process.cwd(), 'ml', 'venv', 'bin', 'python3'),
+            path.join(process.cwd(), 'ml', 'venv', 'bin', 'python'),
+            'python3',
+            'python'
+          ];
+      
+      console.log('🔍 Trying alternative Python paths...');
+      let foundPythonPath = null;
+      
+      for (const altPath of altPaths) {
+        console.log('  Checking:', altPath);
+        if (fs.existsSync(altPath) || altPath === 'python' || altPath === 'python3') {
+          console.log('✅ Found Python at:', altPath);
+          foundPythonPath = altPath;
+          break;
+        }
+      }
+      
+      if (!foundPythonPath) {
+        console.error('❌ No Python executable found');
+        resolve(null);
+        return;
+      }
+      
+      // Use the found Python path
+      const pythonProcess = spawn(foundPythonPath, [scriptPath], {
+        cwd: path.join(process.cwd(), 'ml'),
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      handlePythonProcess(pythonProcess, inputData).then(resolve);
+      return;
+    }
+    
+    // Use the original Python path
+    const pythonProcess = spawn(pythonPath, [scriptPath], {
+      cwd: path.join(process.cwd(), 'ml'),
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    
+    handlePythonProcess(pythonProcess, inputData).then(resolve);
   });
 } 

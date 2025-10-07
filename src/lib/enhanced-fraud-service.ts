@@ -107,10 +107,19 @@ export async function performEnhancedFraudAnalysis(
     const aiSaysFraud = aiFraudResult?.fraudulent || false;
     const isActuallyFraudulent = mlSaysFraud || aiSaysFraud || hasMissingCriticalInfo || duplicateDetection.isDuplicate;
 
-    // Step 8: Calculate final fraud probability
+    // Step 8: Calculate final fraud probability with enhanced ML model
     let finalFraudProbability = aiFraudResult?.fraudProbability || 0;
     if (mlPrediction) {
-      finalFraudProbability = (mlPrediction.fraud_probability * 0.6) + ((aiFraudResult?.fraudProbability || 0) * 0.4);
+      // Enhanced ML model gets higher weight due to better accuracy
+      const mlWeight = 0.7; // Increased weight for enhanced model
+      const aiWeight = 0.3;
+      finalFraudProbability = (mlPrediction.fraud_probability * mlWeight) + ((aiFraudResult?.fraudProbability || 0) * aiWeight);
+      
+      // If enhanced ML model is being used, trust its risk assessment more
+      if (mlPrediction.model_type === 'Enhanced ML Model') {
+        // Enhanced model gets even higher weight
+        finalFraudProbability = (mlPrediction.fraud_probability * 0.8) + ((aiFraudResult?.fraudProbability || 0) * 0.2);
+      }
     }
     if (hasMissingCriticalInfo) {
       finalFraudProbability = Math.max(finalFraudProbability, 0.75);
@@ -119,7 +128,7 @@ export async function performEnhancedFraudAnalysis(
       finalFraudProbability = Math.max(finalFraudProbability, 0.8);
     }
 
-    // Step 9: Generate explanation
+    // Step 9: Generate explanation with enhanced ML model details
     let explanation = '';
     if (hasMissingCriticalInfo) {
       explanation += `Flagged due to missing/problematic critical information. `;
@@ -128,7 +137,14 @@ export async function performEnhancedFraudAnalysis(
       explanation += `Potential duplicate receipt detected. `;
     }
     if (mlPrediction) {
-      explanation += `ML Model: ${mlPrediction.risk_level} risk (${(mlPrediction.fraud_probability * 100).toFixed(1)}% fraud probability). `;
+      const modelType = mlPrediction.model_type || 'ML Model';
+      explanation += `${modelType}: ${mlPrediction.risk_level} risk (${(mlPrediction.fraud_probability * 100).toFixed(1)}% fraud probability)`;
+      
+      // Add enhanced model specific details
+      if (mlPrediction.model_type === 'Enhanced ML Model') {
+        explanation += ` - Enhanced analysis with ${mlPrediction.features_used || 'advanced'} features`;
+      }
+      explanation += '. ';
     }
     if (aiFraudResult) {
       explanation += `AI Analysis: ${aiFraudResult.explanation}`;

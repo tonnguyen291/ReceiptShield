@@ -41,10 +41,12 @@ export async function uploadReceiptImage(
       // Create a reference to the file location
       const storageRef = ref(storage, storagePath);
       
-      // Upload the file with timeout
+      // Upload the file with increased timeout and better error handling
+      console.log('Starting upload...', { fileSize: file.size, fileName: file.name });
+      
       const uploadPromise = uploadBytes(storageRef, file);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Upload timeout after 30 seconds')), 30000)
+        setTimeout(() => reject(new Error('Upload timeout after 60 seconds')), 60000)
       );
       
       const snapshot = await Promise.race([uploadPromise, timeoutPromise]) as any;
@@ -66,6 +68,15 @@ export async function uploadReceiptImage(
     } catch (error) {
       lastError = error as Error;
       console.error(`Upload attempt ${attempt} failed:`, error);
+      
+      // Provide more specific error messages
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.error('Upload timeout - this could be due to:');
+        console.error('1. Slow network connection');
+        console.error('2. Large file size');
+        console.error('3. Firebase Storage service issues');
+        console.error('4. Authentication problems');
+      }
       
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // Exponential backoff

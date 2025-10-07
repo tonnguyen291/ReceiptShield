@@ -1,0 +1,1713 @@
+[
+  {
+    "fraud_scenario": "inflated_prices",
+    "vendor": "Gonzalez LLC",
+    "total_amount": 85.58,
+    "subtotal": 77.97,
+    "tax": 7.61,
+    "tip": 0,
+    "date": "2025-07-28T05:25:10",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        45.99
+      ],
+      [
+        "Coffee",
+        12.99
+      ],
+      [
+        "Sandwich",
+        18.99
+      ]
+    ],
+    "receipt_number": "#9812",
+    "fraud_indicators": [
+      "price_inflation",
+      "unrealistic_pricing",
+      "month_end_rush"
+    ],
+    "filename": "6bd00b4f-de8c-4e02-a3dd-40b1273bed45.png",
+    "receipt_id": "6bd00b4f-de8c-4e02-a3dd-40b1273bed45"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Corporate Services Inc",
+    "total_amount": 414.46,
+    "subtotal": 275.0,
+    "tax": 21.04,
+    "tip": 118.42,
+    "date": "2025-09-28T22:28:12.503036",
+    "payment_method": "Employee Discount",
+    "item_count": 2,
+    "items": [
+      [
+        "Handling Fee",
+        75.0
+      ],
+      [
+        "Service Charge",
+        200.0
+      ]
+    ],
+    "receipt_number": "#1987",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "00e0016b-547a-495e-9263-3affe3092709.png",
+    "receipt_id": "00e0016b-547a-495e-9263-3affe3092709"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Gilbert, Williams and Patrick",
+    "total_amount": 300.0,
+    "subtotal": 277.44,
+    "tax": 22.56,
+    "tip": 0,
+    "date": "2025-10-04T13:45:12.512052",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#3296",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "round_total",
+      "weekend_business"
+    ],
+    "filename": "25fd30e9-3a57-4591-b9ef-496d891d9f27.png",
+    "receipt_id": "25fd30e9-3a57-4591-b9ef-496d891d9f27"
+  },
+  {
+    "fraud_scenario": "inflated_prices",
+    "vendor": "Anderson, Murray and Johnson",
+    "total_amount": 130.34,
+    "subtotal": 119.97,
+    "tax": 10.37,
+    "tip": 0,
+    "date": "2025-09-26T23:53:12.519075",
+    "payment_method": "Cash",
+    "item_count": 4,
+    "items": [
+      [
+        "Coffee",
+        12.99
+      ],
+      [
+        "Printing",
+        35.99
+      ],
+      [
+        "Office Supplies",
+        45.99
+      ],
+      [
+        "Parking",
+        25.0
+      ]
+    ],
+    "receipt_number": "#9138",
+    "fraud_indicators": [
+      "price_inflation",
+      "unrealistic_pricing"
+    ],
+    "filename": "f5a5c890-467e-4fba-9377-f8f305d9ceb0.png",
+    "receipt_id": "f5a5c890-467e-4fba-9377-f8f305d9ceb0"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Corporate Reimbursement",
+    "total_amount": 557.22,
+    "subtotal": 350.0,
+    "tax": 21.48,
+    "tip": 185.74,
+    "date": "2025-09-25T23:59:12.527191",
+    "payment_method": "CASH",
+    "item_count": 2,
+    "items": [
+      [
+        "Processing Fee",
+        150.0
+      ],
+      [
+        "Service Charge",
+        200.0
+      ]
+    ],
+    "receipt_number": "#7840",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment"
+    ],
+    "filename": "be44f48b-4fda-4443-98ca-cb7db44930c4.png",
+    "receipt_id": "be44f48b-4fda-4443-98ca-cb7db44930c4"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Mendez LLC",
+    "total_amount": 273.27,
+    "subtotal": 242.65,
+    "tax": 30.62,
+    "tip": 0,
+    "date": "2025-07-03T10:18:54",
+    "payment_method": "Debit Card",
+    "item_count": 5,
+    "items": [
+      [
+        "Business Lunch",
+        50.43859400648219
+      ],
+      [
+        "Printing",
+        27.54297410665283
+      ],
+      [
+        "Meeting Snacks",
+        41.09019792006133
+      ],
+      [
+        "Office Supplies",
+        71.53311590146791
+      ],
+      [
+        "Travel Expense",
+        52.042800129600195
+      ]
+    ],
+    "receipt_number": "#3647",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts"
+    ],
+    "filename": "797b1abc-99ba-490c-9f1f-d160dd8c93e6.png",
+    "receipt_id": "797b1abc-99ba-490c-9f1f-d160dd8c93e6"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Jimenez-Murray",
+    "total_amount": 200.0,
+    "subtotal": 183.98,
+    "tax": 16.02,
+    "tip": 0,
+    "date": "2025-10-04T13:45:12.542720",
+    "payment_method": "Mobile Payment",
+    "item_count": 4,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ],
+      [
+        "Office Supplies",
+        25.99
+      ]
+    ],
+    "receipt_number": "#5031",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "round_total",
+      "weekend_business"
+    ],
+    "filename": "72044fdd-13b7-4c63-9f18-125b6026f3d7.png",
+    "receipt_id": "72044fdd-13b7-4c63-9f18-125b6026f3d7"
+  },
+  {
+    "fraud_scenario": "personal_as_business",
+    "vendor": "Subway",
+    "total_amount": 486.05,
+    "subtotal": 450.0,
+    "tax": 36.05,
+    "tip": 0,
+    "date": "2025-10-31T13:45:12.549731",
+    "payment_method": "Mobile Payment",
+    "item_count": 2,
+    "items": [
+      [
+        "Professional Development",
+        300.0
+      ],
+      [
+        "Travel Expense",
+        150.0
+      ]
+    ],
+    "receipt_number": "#5915",
+    "fraud_indicators": [
+      "personal_items_disguised",
+      "suspicious_vendor",
+      "month_end_rush"
+    ],
+    "filename": "b013b0ba-bb1c-49dc-bae5-dc5ed64fbf4b.png",
+    "receipt_id": "b013b0ba-bb1c-49dc-bae5-dc5ed64fbf4b"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Staples",
+    "total_amount": 441.47,
+    "subtotal": 409.87,
+    "tax": 31.6,
+    "tip": 0,
+    "date": "2025-09-29T13:45:12.556244",
+    "payment_method": "Debit Card",
+    "item_count": 5,
+    "items": [
+      [
+        "Office Supplies",
+        79.07587231822608
+      ],
+      [
+        "Printing",
+        20.422671834193174
+      ],
+      [
+        "Business Lunch",
+        118.84360345723434
+      ],
+      [
+        "Meeting Snacks",
+        11.632151201195331
+      ],
+      [
+        "Travel Expense",
+        179.89452129546368
+      ]
+    ],
+    "receipt_number": "#1695",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type",
+      "month_end_rush"
+    ],
+    "filename": "eb1b8927-9d41-47fd-bf29-e72965a299e1.png",
+    "receipt_id": "eb1b8927-9d41-47fd-bf29-e72965a299e1"
+  },
+  {
+    "fraud_scenario": "inflated_prices",
+    "vendor": "Kirk-Gray",
+    "total_amount": 101.22,
+    "subtotal": 92.97,
+    "tax": 8.25,
+    "tip": 0,
+    "date": "2025-10-04T13:45:12.564084",
+    "payment_method": "Credit Card",
+    "item_count": 4,
+    "items": [
+      [
+        "Coffee",
+        12.99
+      ],
+      [
+        "Sandwich",
+        18.99
+      ],
+      [
+        "Printing",
+        35.99
+      ],
+      [
+        "Parking",
+        25.0
+      ]
+    ],
+    "receipt_number": "#6126",
+    "fraud_indicators": [
+      "price_inflation",
+      "unrealistic_pricing",
+      "weekend_business"
+    ],
+    "filename": "c7be6c38-e392-4ec3-8da5-0fd5ff7a7fac.png",
+    "receipt_id": "c7be6c38-e392-4ec3-8da5-0fd5ff7a7fac"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Blake, Martin and Woodard",
+    "total_amount": 750.0,
+    "subtotal": 699.31,
+    "tax": 50.69,
+    "tip": 0,
+    "date": "2025-01-16T05:42:13",
+    "payment_method": "",
+    "item_count": 3,
+    "items": [
+      [
+        "Printing",
+        24.71646538764472
+      ],
+      [
+        "Business Lunch",
+        93.46639205722626
+      ],
+      [
+        "Office Supplies",
+        36.03551025350208
+      ]
+    ],
+    "receipt_number": "#4819",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total"
+    ],
+    "filename": "0d30e152-2b04-4a22-88a2-09ec011a59d6.png",
+    "receipt_id": "0d30e152-2b04-4a22-88a2-09ec011a59d6"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Home Depot",
+    "total_amount": 299.72,
+    "subtotal": 276.32,
+    "tax": 23.4,
+    "tip": 0,
+    "date": "2025-05-16T06:02:30",
+    "payment_method": "Debit Card",
+    "item_count": 5,
+    "items": [
+      [
+        "Travel Expense",
+        174.0417581207205
+      ],
+      [
+        "Meeting Snacks",
+        30.81987795020023
+      ],
+      [
+        "Printing",
+        10.810051406568848
+      ],
+      [
+        "Business Lunch",
+        32.578318691969635
+      ],
+      [
+        "Office Supplies",
+        28.070588582570906
+      ]
+    ],
+    "receipt_number": "#4849",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type"
+    ],
+    "filename": "cf6b5fcf-1c74-4829-95c2-64b0ac957ed4.png",
+    "receipt_id": "cf6b5fcf-1c74-4829-95c2-64b0ac957ed4"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Perez Inc",
+    "total_amount": 200.0,
+    "subtotal": 188.16,
+    "tax": 11.84,
+    "tip": 0,
+    "date": "2025-06-30T17:43:03",
+    "payment_method": "",
+    "item_count": 3,
+    "items": [
+      [
+        "Printing",
+        22.614930021231284
+      ],
+      [
+        "Meeting Snacks",
+        38.79078060178064
+      ],
+      [
+        "Office Supplies",
+        16.375509316810753
+      ]
+    ],
+    "receipt_number": "#7925",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total",
+      "round_total",
+      "month_end_rush"
+    ],
+    "filename": "590a2918-4539-467d-9ba0-b770a603d6f1.png",
+    "receipt_id": "590a2918-4539-467d-9ba0-b770a603d6f1"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Bailey-Little",
+    "total_amount": 500.0,
+    "subtotal": 471.69,
+    "tax": 28.31,
+    "tip": 0,
+    "date": "2025-03-01T16:43:23",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#9788",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "round_total",
+      "weekend_business"
+    ],
+    "filename": "ac2bc69a-4487-4804-a188-173241d367d8.png",
+    "receipt_id": "ac2bc69a-4487-4804-a188-173241d367d8"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Uber Eats",
+    "total_amount": 266.85,
+    "subtotal": 251.46,
+    "tax": 15.39,
+    "tip": 0,
+    "date": "2025-08-29T09:50:47",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Printing",
+        32.33867125701942
+      ],
+      [
+        "Business Lunch",
+        104.20144124040108
+      ],
+      [
+        "Travel Expense",
+        114.92337612210201
+      ]
+    ],
+    "receipt_number": "#4762",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type",
+      "month_end_rush"
+    ],
+    "filename": "a9a383f7-8cb2-4053-9f04-e2750da95ed4.png",
+    "receipt_id": "a9a383f7-8cb2-4053-9f04-e2750da95ed4"
+  },
+  {
+    "fraud_scenario": "personal_as_business",
+    "vendor": "Best Buy",
+    "total_amount": 313.84,
+    "subtotal": 289.99,
+    "tax": 23.85,
+    "tip": 0,
+    "date": "2025-02-17T13:27:27",
+    "payment_method": "Cash",
+    "item_count": 2,
+    "items": [
+      [
+        "Client Entertainment",
+        200.0
+      ],
+      [
+        "Office Supplies",
+        89.99
+      ]
+    ],
+    "receipt_number": "#9388",
+    "fraud_indicators": [
+      "personal_items_disguised",
+      "suspicious_vendor"
+    ],
+    "filename": "f96ee55d-7a2a-45cd-a510-2e1e36d4306c.png",
+    "receipt_id": "f96ee55d-7a2a-45cd-a510-2e1e36d4306c"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Corporate Services Inc",
+    "total_amount": 283.84,
+    "subtotal": 200.0,
+    "tax": 18.34,
+    "tip": 65.5,
+    "date": "2025-04-23T06:00:10",
+    "payment_method": "Comp",
+    "item_count": 1,
+    "items": [
+      [
+        "Service Charge",
+        200.0
+      ]
+    ],
+    "receipt_number": "#8406",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment"
+    ],
+    "filename": "69a87a30-64d6-4cf1-97f3-1c6073742136.png",
+    "receipt_id": "69a87a30-64d6-4cf1-97f3-1c6073742136"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Business Solutions",
+    "total_amount": 581.84,
+    "subtotal": 425.0,
+    "tax": 40.47,
+    "tip": 116.37,
+    "date": "2025-09-29T23:02:12.636323",
+    "payment_method": "Void",
+    "item_count": 3,
+    "items": [
+      [
+        "Service Charge",
+        200.0
+      ],
+      [
+        "Processing Fee",
+        150.0
+      ],
+      [
+        "Handling Fee",
+        75.0
+      ]
+    ],
+    "receipt_number": "#2197",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment",
+      "month_end_rush"
+    ],
+    "filename": "b60ea7bf-f111-44f2-ae0a-3869e8022783.png",
+    "receipt_id": "b60ea7bf-f111-44f2-ae0a-3869e8022783"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Uber",
+    "total_amount": 193.9,
+    "subtotal": 180.57,
+    "tax": 13.33,
+    "tip": 0,
+    "date": "2025-09-20T13:45:12.642829",
+    "payment_method": "Check",
+    "item_count": 4,
+    "items": [
+      [
+        "Meeting Snacks",
+        12.957099044440774
+      ],
+      [
+        "Business Lunch",
+        66.94313898334264
+      ],
+      [
+        "Printing",
+        28.23949324408646
+      ],
+      [
+        "Office Supplies",
+        72.42685871611295
+      ]
+    ],
+    "receipt_number": "#7407",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type",
+      "weekend_business"
+    ],
+    "filename": "c732bec3-e966-4750-8a7f-c6a494801acc.png",
+    "receipt_id": "c732bec3-e966-4750-8a7f-c6a494801acc"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Jacobs Ltd",
+    "total_amount": 500.0,
+    "subtotal": 461.02,
+    "tax": 38.98,
+    "tip": 0,
+    "date": "2025-09-29T13:45:12.649349",
+    "payment_method": "",
+    "item_count": 2,
+    "items": [
+      [
+        "Printing",
+        16.703776830647037
+      ],
+      [
+        "Business Lunch",
+        83.26149692724444
+      ]
+    ],
+    "receipt_number": "#7670",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total",
+      "round_total",
+      "month_end_rush"
+    ],
+    "filename": "443de0ab-cef4-4d42-ac13-5fbba0e04596.png",
+    "receipt_id": "443de0ab-cef4-4d42-ac13-5fbba0e04596"
+  },
+  {
+    "fraud_scenario": "inflated_prices",
+    "vendor": "Thomas-Tucker",
+    "total_amount": 69.35,
+    "subtotal": 64.98,
+    "tax": 4.37,
+    "tip": 0,
+    "date": "2025-09-28T13:45:12.666168",
+    "payment_method": "Cash",
+    "item_count": 2,
+    "items": [
+      [
+        "Sandwich",
+        18.99
+      ],
+      [
+        "Office Supplies",
+        45.99
+      ]
+    ],
+    "receipt_number": "#3744",
+    "fraud_indicators": [
+      "price_inflation",
+      "unrealistic_pricing",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "79d12daa-1c81-4e91-aa8f-1fdfcf69507b.png",
+    "receipt_id": "79d12daa-1c81-4e91-aa8f-1fdfcf69507b"
+  },
+  {
+    "fraud_scenario": "timing_fraud",
+    "vendor": "Jones PLC",
+    "total_amount": 192.96,
+    "subtotal": 117.96,
+    "tax": 10.68,
+    "tip": 64.32,
+    "date": "2025-07-16T11:07:45",
+    "payment_method": "Credit Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Meeting Snacks",
+        27.843524919503267
+      ],
+      [
+        "Office Supplies",
+        49.293298054218376
+      ],
+      [
+        "Business Lunch",
+        40.824855326228665
+      ]
+    ],
+    "receipt_number": "#7492",
+    "fraud_indicators": [
+      "suspicious_timing",
+      "excessive_tip"
+    ],
+    "filename": "c3d1afe2-be41-466e-beca-e16f96df0343.png",
+    "receipt_id": "c3d1afe2-be41-466e-beca-e16f96df0343"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Hartman-Rivas",
+    "total_amount": 108.19,
+    "subtotal": 93.41,
+    "tax": 14.78,
+    "tip": 0,
+    "date": "2025-09-26T01:57:12.680369",
+    "payment_method": "Check",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        59.329443287621835
+      ],
+      [
+        "Printing",
+        21.689475230848814
+      ],
+      [
+        "Meeting Snacks",
+        12.391721382466962
+      ]
+    ],
+    "receipt_number": "#6311",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts"
+    ],
+    "filename": "10917ed1-1776-4ce4-b422-646f348c91e6.png",
+    "receipt_id": "10917ed1-1776-4ce4-b422-646f348c91e6"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Cole-Hancock",
+    "total_amount": 1000.0,
+    "subtotal": 920.64,
+    "tax": 79.36,
+    "tip": 0,
+    "date": "2025-08-31T17:44:23",
+    "payment_method": "Check",
+    "item_count": 4,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ],
+      [
+        "Office Supplies",
+        25.99
+      ]
+    ],
+    "receipt_number": "#4308",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "03ad540e-2f28-46a1-9c4e-72629adedf39.png",
+    "receipt_id": "03ad540e-2f28-46a1-9c4e-72629adedf39"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Young LLC",
+    "total_amount": 1000.0,
+    "subtotal": 920.77,
+    "tax": 79.23,
+    "tip": 0,
+    "date": "2025-01-02T17:40:58",
+    "payment_method": "",
+    "item_count": 4,
+    "items": [
+      [
+        "Business Lunch",
+        102.95752269871443
+      ],
+      [
+        "Travel Expense",
+        165.80675699997073
+      ],
+      [
+        "Meeting Snacks",
+        18.606286706090106
+      ],
+      [
+        "Office Supplies",
+        46.93353153890091
+      ]
+    ],
+    "receipt_number": "#3558",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total"
+    ],
+    "filename": "a9160b04-3f26-427d-90b4-842116bc32c2.png",
+    "receipt_id": "a9160b04-3f26-427d-90b4-842116bc32c2"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Gallagher Inc",
+    "total_amount": 100.0,
+    "subtotal": 91.7,
+    "tax": 8.3,
+    "tip": 0,
+    "date": "2025-09-21T01:43:12.714481",
+    "payment_method": "",
+    "item_count": 5,
+    "items": [
+      [
+        "Printing",
+        7.509770690799712
+      ],
+      [
+        "Business Lunch",
+        90.11651311657756
+      ],
+      [
+        "Office Supplies",
+        39.27025432082827
+      ],
+      [
+        "Meeting Snacks",
+        16.337970708039443
+      ],
+      [
+        "Travel Expense",
+        110.72556449880705
+      ]
+    ],
+    "receipt_number": "#1891",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total",
+      "round_total",
+      "weekend_business"
+    ],
+    "filename": "77a71621-58e0-4d94-97e1-2b9b7154d535.png",
+    "receipt_id": "77a71621-58e0-4d94-97e1-2b9b7154d535"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Lyft",
+    "total_amount": 150.59,
+    "subtotal": 140.34,
+    "tax": 10.25,
+    "tip": 0,
+    "date": "2025-09-29T13:45:12.733010",
+    "payment_method": "Credit Card",
+    "item_count": 2,
+    "items": [
+      [
+        "Business Lunch",
+        118.76201370506575
+      ],
+      [
+        "Meeting Snacks",
+        21.579320426684454
+      ]
+    ],
+    "receipt_number": "#8288",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type",
+      "month_end_rush"
+    ],
+    "filename": "eec413a1-5464-46f3-8ec9-1675caae7527.png",
+    "receipt_id": "eec413a1-5464-46f3-8ec9-1675caae7527"
+  },
+  {
+    "fraud_scenario": "inflated_prices",
+    "vendor": "Hines, Forbes and Huynh",
+    "total_amount": 136.08,
+    "subtotal": 125.97,
+    "tax": 10.11,
+    "tip": 0,
+    "date": "2025-09-22T23:23:12.741025",
+    "payment_method": "Debit Card",
+    "item_count": 4,
+    "items": [
+      [
+        "Sandwich",
+        18.99
+      ],
+      [
+        "Parking",
+        25.0
+      ],
+      [
+        "Office Supplies",
+        45.99
+      ],
+      [
+        "Printing",
+        35.99
+      ]
+    ],
+    "receipt_number": "#2226",
+    "fraud_indicators": [
+      "price_inflation",
+      "unrealistic_pricing"
+    ],
+    "filename": "03500a50-0efe-468a-b327-131a144406e8.png",
+    "receipt_id": "03500a50-0efe-468a-b327-131a144406e8"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Morales-Walton",
+    "total_amount": 211.37,
+    "subtotal": 186.57,
+    "tax": 24.8,
+    "tip": 0,
+    "date": "2025-09-28T13:45:12.747531",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Business Lunch",
+        117.52283192895808
+      ],
+      [
+        "Travel Expense",
+        63.97646790024682
+      ],
+      [
+        "Printing",
+        5.069029835925316
+      ]
+    ],
+    "receipt_number": "#6639",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "c9352dfa-b00f-44d6-abc2-f8bbbebffd7b.png",
+    "receipt_id": "c9352dfa-b00f-44d6-abc2-f8bbbebffd7b"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Business Expenses LLC",
+    "total_amount": 1082.72,
+    "subtotal": 775.0,
+    "tax": 57.86,
+    "tip": 249.86,
+    "date": "2025-09-29T13:45:12.754546",
+    "payment_method": "Personal Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Handling Fee",
+        75.0
+      ],
+      [
+        "Consultation Fee",
+        500.0
+      ],
+      [
+        "Service Charge",
+        200.0
+      ]
+    ],
+    "receipt_number": "#3758",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment",
+      "month_end_rush"
+    ],
+    "filename": "c08d0ab2-a452-4573-bc83-1b4f01b63a9b.png",
+    "receipt_id": "c08d0ab2-a452-4573-bc83-1b4f01b63a9b"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Serrano-Chambers",
+    "total_amount": 250.0,
+    "subtotal": 219.81,
+    "tax": 30.19,
+    "tip": 0,
+    "date": "2025-09-30T13:45:12.763060",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Business Lunch",
+        106.5660554307383
+      ],
+      [
+        "Travel Expense",
+        92.7940408990045
+      ],
+      [
+        "Office Supplies",
+        20.44687139934832
+      ]
+    ],
+    "receipt_number": "#5170",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "round_total",
+      "month_end_rush"
+    ],
+    "filename": "0c8358d9-9b06-434c-beb5-662203a3b192.png",
+    "receipt_id": "0c8358d9-9b06-434c-beb5-662203a3b192"
+  },
+  {
+    "fraud_scenario": "personal_as_business",
+    "vendor": "Uber",
+    "total_amount": 418.98,
+    "subtotal": 389.99,
+    "tax": 28.99,
+    "tip": 0,
+    "date": "2025-03-09T03:49:36",
+    "payment_method": "Cash",
+    "item_count": 2,
+    "items": [
+      [
+        "Office Supplies",
+        89.99
+      ],
+      [
+        "Professional Development",
+        300.0
+      ]
+    ],
+    "receipt_number": "#1997",
+    "fraud_indicators": [
+      "personal_items_disguised",
+      "suspicious_vendor",
+      "weekend_business"
+    ],
+    "filename": "323352ac-b52e-4be9-9c28-055e0048e3fc.png",
+    "receipt_id": "323352ac-b52e-4be9-9c28-055e0048e3fc"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Hale-Mitchell",
+    "total_amount": 176.57,
+    "subtotal": 152.28,
+    "tax": 24.29,
+    "tip": 0,
+    "date": "2025-09-29T02:51:12.775136",
+    "payment_method": "Credit Card",
+    "item_count": 4,
+    "items": [
+      [
+        "Business Lunch",
+        50.236636456888334
+      ],
+      [
+        "Printing",
+        25.224283416741297
+      ],
+      [
+        "Meeting Snacks",
+        17.486461169809324
+      ],
+      [
+        "Office Supplies",
+        59.33340752438776
+      ]
+    ],
+    "receipt_number": "#6751",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "month_end_rush"
+    ],
+    "filename": "83e73d9d-698a-44dd-a5fe-0e448f72212b.png",
+    "receipt_id": "83e73d9d-698a-44dd-a5fe-0e448f72212b"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Brown LLC",
+    "total_amount": 325.69,
+    "subtotal": 282.53,
+    "tax": 43.16,
+    "tip": 0,
+    "date": "2025-03-28T15:26:51",
+    "payment_method": "Credit Card",
+    "item_count": 5,
+    "items": [
+      [
+        "Printing",
+        9.70392068634621
+      ],
+      [
+        "Business Lunch",
+        84.01929331683735
+      ],
+      [
+        "Meeting Snacks",
+        43.085518371635594
+      ],
+      [
+        "Travel Expense",
+        113.68176329683035
+      ],
+      [
+        "Office Supplies",
+        32.03830828923108
+      ]
+    ],
+    "receipt_number": "#2573",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "month_end_rush"
+    ],
+    "filename": "c1546a53-8fc6-43ca-a9eb-1ed189a84b06.png",
+    "receipt_id": "c1546a53-8fc6-43ca-a9eb-1ed189a84b06"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Davis-Hickman",
+    "total_amount": 171.43,
+    "subtotal": 146.16,
+    "tax": 25.27,
+    "tip": 0,
+    "date": "2025-02-08T16:31:51",
+    "payment_method": "Check",
+    "item_count": 3,
+    "items": [
+      [
+        "Printing",
+        34.88839501741612
+      ],
+      [
+        "Meeting Snacks",
+        43.25486154946823
+      ],
+      [
+        "Office Supplies",
+        68.0170081214595
+      ]
+    ],
+    "receipt_number": "#9316",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business"
+    ],
+    "filename": "469af570-862f-4ac5-9177-8d5891823300.png",
+    "receipt_id": "469af570-862f-4ac5-9177-8d5891823300"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Barr Group",
+    "total_amount": 218.88,
+    "subtotal": 188.97,
+    "tax": 29.91,
+    "tip": 0,
+    "date": "2025-09-20T01:40:12.797091",
+    "payment_method": "Cash",
+    "item_count": 3,
+    "items": [
+      [
+        "Travel Expense",
+        123.88601306687845
+      ],
+      [
+        "Meeting Snacks",
+        31.19552273827191
+      ],
+      [
+        "Printing",
+        33.88763901341285
+      ]
+    ],
+    "receipt_number": "#8280",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business"
+    ],
+    "filename": "c478dd8e-77c9-4f0c-8a8e-52bf9427c745.png",
+    "receipt_id": "c478dd8e-77c9-4f0c-8a8e-52bf9427c745"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Martinez-Campbell",
+    "total_amount": 750.0,
+    "subtotal": 688.79,
+    "tax": 61.21,
+    "tip": 0,
+    "date": "2025-09-29T13:45:12.804105",
+    "payment_method": "Check",
+    "item_count": 4,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#2048",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "month_end_rush"
+    ],
+    "filename": "0eb007a2-7235-48bb-8407-9de568c2cdbd.png",
+    "receipt_id": "0eb007a2-7235-48bb-8407-9de568c2cdbd"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Business Solutions Inc",
+    "total_amount": 971.0,
+    "subtotal": 725.0,
+    "tax": 51.8,
+    "tip": 194.2,
+    "date": "2025-09-28T23:59:12.811257",
+    "payment_method": "Gift Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Handling Fee",
+        75.0
+      ],
+      [
+        "Processing Fee",
+        150.0
+      ],
+      [
+        "Consultation Fee",
+        500.0
+      ]
+    ],
+    "receipt_number": "#4661",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "74ef7040-0943-40a6-aea2-1531ba64eb45.png",
+    "receipt_id": "74ef7040-0943-40a6-aea2-1531ba64eb45"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Business Expenses LLC",
+    "total_amount": 313.14,
+    "subtotal": 225.0,
+    "tax": 15.88,
+    "tip": 72.26,
+    "date": "2025-10-01T01:02:12.818288",
+    "payment_method": "Void",
+    "item_count": 2,
+    "items": [
+      [
+        "Processing Fee",
+        150.0
+      ],
+      [
+        "Handling Fee",
+        75.0
+      ]
+    ],
+    "receipt_number": "#8075",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment"
+    ],
+    "filename": "b471e189-3128-4bd8-bd31-e0c51bd7e997.png",
+    "receipt_id": "b471e189-3128-4bd8-bd31-e0c51bd7e997"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Schneider-Olson",
+    "total_amount": 212.54,
+    "subtotal": 182.2,
+    "tax": 30.34,
+    "tip": 0,
+    "date": "2025-09-28T13:45:12.823430",
+    "payment_method": "Mobile Payment",
+    "item_count": 4,
+    "items": [
+      [
+        "Travel Expense",
+        86.58305188842272
+      ],
+      [
+        "Meeting Snacks",
+        14.241878857757257
+      ],
+      [
+        "Business Lunch",
+        54.60923682316961
+      ],
+      [
+        "Office Supplies",
+        26.764760252113476
+      ]
+    ],
+    "receipt_number": "#2350",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business",
+      "month_end_rush"
+    ],
+    "filename": "ce23fd1a-3f8a-49ff-8ec9-051e5c194046.png",
+    "receipt_id": "ce23fd1a-3f8a-49ff-8ec9-051e5c194046"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Kim, Dixon and Taylor",
+    "total_amount": 418.96,
+    "subtotal": 372.21,
+    "tax": 46.75,
+    "tip": 0,
+    "date": "2025-09-17T02:28:12.829430",
+    "payment_method": "Check",
+    "item_count": 4,
+    "items": [
+      [
+        "Meeting Snacks",
+        44.78613334239058
+      ],
+      [
+        "Business Lunch",
+        117.76380705537197
+      ],
+      [
+        "Printing",
+        29.295521884056356
+      ],
+      [
+        "Travel Expense",
+        180.3623035067213
+      ]
+    ],
+    "receipt_number": "#5263",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts"
+    ],
+    "filename": "ecc60b64-7d0e-458d-ac49-9cf13c578069.png",
+    "receipt_id": "ecc60b64-7d0e-458d-ac49-9cf13c578069"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Perry PLC",
+    "total_amount": 1000.0,
+    "subtotal": 940.39,
+    "tax": 59.61,
+    "tip": 0,
+    "date": "2025-09-18T00:02:12.835446",
+    "payment_method": "Cash",
+    "item_count": 4,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#7005",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total"
+    ],
+    "filename": "b7c528a1-5386-4c0e-a21b-dca2e324a221.png",
+    "receipt_id": "b7c528a1-5386-4c0e-a21b-dca2e324a221"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Davis and Sons",
+    "total_amount": 181.04,
+    "subtotal": 155.75,
+    "tax": 25.29,
+    "tip": 0,
+    "date": "2025-09-13T13:45:12.841821",
+    "payment_method": "Check",
+    "item_count": 3,
+    "items": [
+      [
+        "Travel Expense",
+        114.30415936033395
+      ],
+      [
+        "Meeting Snacks",
+        31.534597356953974
+      ],
+      [
+        "Printing",
+        9.915506311686812
+      ]
+    ],
+    "receipt_number": "#8382",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business"
+    ],
+    "filename": "f4b2834b-0f03-4b77-b731-64947a87492e.png",
+    "receipt_id": "f4b2834b-0f03-4b77-b731-64947a87492e"
+  },
+  {
+    "fraud_scenario": "personal_as_business",
+    "vendor": "Walgreens",
+    "total_amount": 480.6,
+    "subtotal": 439.99,
+    "tax": 40.61,
+    "tip": 0,
+    "date": "2025-09-13T13:45:12.847329",
+    "payment_method": "Credit Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        89.99
+      ],
+      [
+        "Client Entertainment",
+        200.0
+      ],
+      [
+        "Travel Expense",
+        150.0
+      ]
+    ],
+    "receipt_number": "#4792",
+    "fraud_indicators": [
+      "personal_items_disguised",
+      "suspicious_vendor",
+      "weekend_business"
+    ],
+    "filename": "e8c2f9de-fef1-4d74-b54e-f7a0375a412a.png",
+    "receipt_id": "e8c2f9de-fef1-4d74-b54e-f7a0375a412a"
+  },
+  {
+    "fraud_scenario": "poor_quality_scan",
+    "vendor": "Stone Inc",
+    "total_amount": 150.0,
+    "subtotal": 141.33,
+    "tax": 8.67,
+    "tip": 0,
+    "date": "2025-09-30T02:26:12.854339",
+    "payment_method": "",
+    "item_count": 4,
+    "items": [
+      [
+        "Travel Expense",
+        199.75248890460844
+      ],
+      [
+        "Office Supplies",
+        57.40979383000692
+      ],
+      [
+        "Business Lunch",
+        45.61268293533065
+      ],
+      [
+        "Meeting Snacks",
+        28.099194679469893
+      ]
+    ],
+    "receipt_number": "#2298",
+    "fraud_indicators": [
+      "poor_quality",
+      "missing_payment",
+      "round_total",
+      "round_total",
+      "month_end_rush"
+    ],
+    "filename": "b810f665-6890-4b3f-adbd-0de212ca12cf.png",
+    "receipt_id": "b810f665-6890-4b3f-adbd-0de212ca12cf"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Wade-Bautista",
+    "total_amount": 250.0,
+    "subtotal": 235.4,
+    "tax": 14.6,
+    "tip": 0,
+    "date": "2025-04-06T00:50:38",
+    "payment_method": "Check",
+    "item_count": 4,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#3980",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total",
+      "round_total",
+      "weekend_business"
+    ],
+    "filename": "b1a1ddd9-83e7-4656-a990-76da7f9fbeeb.png",
+    "receipt_id": "b1a1ddd9-83e7-4656-a990-76da7f9fbeeb"
+  },
+  {
+    "fraud_scenario": "suspicious_services",
+    "vendor": "Corporate Reimbursement",
+    "total_amount": 284.85,
+    "subtotal": 175.0,
+    "tax": 14.9,
+    "tip": 94.95,
+    "date": "2025-02-11T13:51:13",
+    "payment_method": "Void",
+    "item_count": 2,
+    "items": [
+      [
+        "Handling Fee",
+        75.0
+      ],
+      [
+        "Administrative Fee",
+        100.0
+      ]
+    ],
+    "receipt_number": "#5696",
+    "fraud_indicators": [
+      "excessive_tip",
+      "suspicious_services",
+      "suspicious_payment"
+    ],
+    "filename": "13b7899f-f333-4d4c-b1ad-acd52b504e8f.png",
+    "receipt_id": "13b7899f-f333-4d4c-b1ad-acd52b504e8f"
+  },
+  {
+    "fraud_scenario": "duplicate_submission",
+    "vendor": "Sandoval-Daniels",
+    "total_amount": 1000.0,
+    "subtotal": 926.92,
+    "tax": 73.08,
+    "tip": 0,
+    "date": "2025-07-18T07:31:42",
+    "payment_method": "Credit Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        25.99
+      ],
+      [
+        "Business Lunch",
+        45.0
+      ],
+      [
+        "Travel Expense",
+        75.0
+      ]
+    ],
+    "receipt_number": "#3764",
+    "fraud_indicators": [
+      "duplicate_items",
+      "round_total"
+    ],
+    "filename": "2ff8cfa7-a938-47b9-b986-1ca0bbdc9a25.png",
+    "receipt_id": "2ff8cfa7-a938-47b9-b986-1ca0bbdc9a25"
+  },
+  {
+    "fraud_scenario": "vendor_substitution",
+    "vendor": "Uber",
+    "total_amount": 177.67,
+    "subtotal": 167.46,
+    "tax": 10.21,
+    "tip": 0,
+    "date": "2025-09-30T13:45:12.893487",
+    "payment_method": "Mobile Payment",
+    "item_count": 3,
+    "items": [
+      [
+        "Meeting Snacks",
+        20.32828646470786
+      ],
+      [
+        "Business Lunch",
+        80.87408195563853
+      ],
+      [
+        "Office Supplies",
+        66.25689542190105
+      ]
+    ],
+    "receipt_number": "#2174",
+    "fraud_indicators": [
+      "vendor_mismatch",
+      "wrong_vendor_type",
+      "month_end_rush"
+    ],
+    "filename": "ad99aef2-b460-49dd-9d07-1cffecfdc20f.png",
+    "receipt_id": "ad99aef2-b460-49dd-9d07-1cffecfdc20f"
+  },
+  {
+    "fraud_scenario": "digital_manipulation",
+    "vendor": "Walker PLC",
+    "total_amount": 142.57,
+    "subtotal": 123.22,
+    "tax": 19.35,
+    "tip": 0,
+    "date": "2025-09-27T13:45:12.899990",
+    "payment_method": "Credit Card",
+    "item_count": 3,
+    "items": [
+      [
+        "Office Supplies",
+        27.809399522346844
+      ],
+      [
+        "Meeting Snacks",
+        23.003287751756446
+      ],
+      [
+        "Travel Expense",
+        72.4121914634855
+      ]
+    ],
+    "receipt_number": "#8123",
+    "fraud_indicators": [
+      "tax_manipulation",
+      "digital_artifacts",
+      "weekend_business"
+    ],
+    "filename": "f48eeb44-5451-42fa-91c9-74fa264377e5.png",
+    "receipt_id": "f48eeb44-5451-42fa-91c9-74fa264377e5"
+  }
+]
