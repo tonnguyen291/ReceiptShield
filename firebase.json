@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "source": ".",
+    "public": ".next",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -10,13 +10,9 @@
     "rewrites": [
       {
         "source": "**",
-        "function": "nextjsFunc"
+        "destination": "/index.html"
       }
     ]
-  },
-  "functions": {
-    "source": ".",
-    "runtime": "nodejs18"
   },
   "firestore": {
     "database": "(default)",
