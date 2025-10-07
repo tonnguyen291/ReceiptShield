@@ -36,8 +36,8 @@ export default function MonitoringPage() {
       const perfResponse = await fetch('/api/monitoring/performance');
       const perfData = await perfResponse.json();
       
-      // Fetch analytics for active users
-      const analyticsResponse = await fetch('/api/monitoring/analytics?timeRange=1h');
+      // Fetch analytics for active users (last 5 minutes for real-time)
+      const analyticsResponse = await fetch('/api/monitoring/analytics?timeRange=5m');
       const analyticsData = await analyticsResponse.json();
       
       // Calculate uptime based on health checks in last 24 hours

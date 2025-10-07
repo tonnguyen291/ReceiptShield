@@ -33,11 +33,11 @@ export async function GET(request: NextRequest) {
     const errorChecks = healthChecks.filter(check => check.status === 'critical' || check.status === 'warning').length;
     const errorRate = totalChecks > 0 ? (errorChecks / totalChecks) * 100 : 0.1;
     
-    // Get current active users (last 1 hour)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    // Get current active users (last 5 minutes for real-time tracking)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const analyticsQuery = query(
       collection(db, 'analytics_events'),
-      where('timestamp', '>=', Timestamp.fromDate(oneHourAgo))
+      where('timestamp', '>=', Timestamp.fromDate(fiveMinutesAgo))
     );
     
     const analyticsSnapshot = await getDocs(analyticsQuery);

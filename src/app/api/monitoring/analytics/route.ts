@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     
     // Calculate time range
     let hoursBack = 24;
-    if (timeRange === '1h') hoursBack = 1;
+    if (timeRange === '5m') hoursBack = 5 / 60; // 5 minutes
+    else if (timeRange === '15m') hoursBack = 15 / 60; // 15 minutes
+    else if (timeRange === '1h') hoursBack = 1;
     else if (timeRange === '6h') hoursBack = 6;
     else if (timeRange === '24h') hoursBack = 24;
     else if (timeRange === '7d') hoursBack = 24 * 7;

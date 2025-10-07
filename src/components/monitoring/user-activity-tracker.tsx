@@ -104,8 +104,8 @@ export function UserActivityTracker() {
         });
       };
 
-      // Track session every 5 minutes
-      const sessionInterval = setInterval(trackSession, 5 * 60 * 1000);
+      // Track session every 2 minutes for more real-time tracking
+      const sessionInterval = setInterval(trackSession, 2 * 60 * 1000);
 
       return () => clearInterval(sessionInterval);
     }
