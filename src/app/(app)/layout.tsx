@@ -34,6 +34,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Allow access to notifications page for any role
+    if (currentBaseRoute === 'notifications') {
+      return;
+    }
+
+    // Allow managers and admins to access employee verify-receipt pages
+    if (currentBaseRoute === 'employee' && pathname.includes('/verify-receipt/') && (userBaseRoute === 'manager' || userBaseRoute === 'admin')) {
+      return;
+    }
+
     // If the user is on a page that doesn't match their role, redirect them
     if (currentBaseRoute !== userBaseRoute) {
       router.replace(`/${userBaseRoute}/dashboard`);
@@ -43,7 +53,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   if (isLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-[var(--color-bg)]">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );

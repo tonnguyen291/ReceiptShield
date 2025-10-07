@@ -10,7 +10,8 @@ import {
   User,
   Shield,
   Users,
-  Settings
+  Settings,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +82,12 @@ const bottomNavItems: BottomNavItem[] = [
     label: "Users",
     icon: Users,
     roles: ["admin"]
+  },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
+    roles: ["employee", "manager", "admin"]
   },
   {
     href: "/profile",

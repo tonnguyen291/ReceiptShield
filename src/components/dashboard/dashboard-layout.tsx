@@ -108,7 +108,7 @@ export function DashboardLayout({
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} />
+            <div className="fixed inset-0 bg-[var(--color-bg)]/80" onClick={() => setIsMobileMenuOpen(false)} />
             <div className="fixed left-0 top-0 h-full w-64">
               <SidebarNavigation user={user} onLogout={onLogout} />
             </div>

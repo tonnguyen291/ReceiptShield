@@ -125,21 +125,21 @@ export default function EmployeeBudgetPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-gray-900">${totalAllocated.toLocaleString()}</div>
-              <p className="text-sm text-gray-500">Total Allocated</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">Total Allocated</p>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">${totalSpent.toLocaleString()}</div>
-              <p className="text-sm text-gray-500">Total Spent</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">Total Spent</p>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">${totalRemaining.toLocaleString()}</div>
-              <p className="text-sm text-gray-500">Remaining</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">Remaining</p>
             </div>
           </div>
           <div className="mt-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Overall Progress</span>
-              <span className="text-sm text-gray-500">{overallPercentage.toFixed(1)}%</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">{overallPercentage.toFixed(1)}%</span>
             </div>
             <Progress value={overallPercentage} className="h-2" />
             <div className="flex items-center justify-between mt-2">
@@ -171,7 +171,7 @@ export default function EmployeeBudgetPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Progress</span>
-                    <span className="text-sm text-gray-500">{budget.percentage}%</span>
+                    <span className="text-sm text-[var(--color-text-secondary)]">{budget.percentage}%</span>
                   </div>
                   <Progress value={budget.percentage} className="h-2" />
                 </div>
@@ -179,15 +179,15 @@ export default function EmployeeBudgetPage() {
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-lg font-bold text-gray-900">${budget.allocated}</div>
-                    <p className="text-xs text-gray-500">Allocated</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Allocated</p>
                   </div>
                   <div>
                     <div className="text-lg font-bold text-blue-600">${budget.spent}</div>
-                    <p className="text-xs text-gray-500">Spent</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Spent</p>
                   </div>
                   <div>
                     <div className="text-lg font-bold text-green-600">${budget.remaining}</div>
-                    <p className="text-xs text-gray-500">Remaining</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">Remaining</p>
                   </div>
                 </div>
 

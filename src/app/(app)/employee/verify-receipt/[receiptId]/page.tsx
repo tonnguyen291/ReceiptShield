@@ -148,7 +148,7 @@ export default function VerifyReceiptPage() {
 
   if (receipt === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)] bg-[var(--color-bg)] text-[var(--color-text)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
         Loading receipt for verification...
       </div>
@@ -157,7 +157,7 @@ export default function VerifyReceiptPage() {
 
   if (receipt === null) {
     return (
-      <Card className="max-w-2xl mx-auto my-8 shadow-lg">
+      <Card className="max-w-2xl mx-auto my-8 shadow-lg bg-[var(--color-card)] border-[var(--color-border)]">
         <CardHeader>
           <CardTitle className="text-2xl font-headline text-destructive flex items-center">
             <AlertTriangle className="w-6 h-6 mr-2" />
@@ -165,7 +165,7 @@ export default function VerifyReceiptPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>The receipt you are looking for could not be found for verification.</p>
+          <p className="text-[var(--color-text)]">The receipt you are looking for could not be found for verification.</p>
           <Button onClick={() => router.push(user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard')} className="mt-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
@@ -182,10 +182,10 @@ export default function VerifyReceiptPage() {
   const isPdf = imageSource?.startsWith('data:application/pdf') || receipt.fileName.toLowerCase().endsWith('.pdf');
 
   return (
-    <Card className="max-w-4xl mx-auto my-8 shadow-xl">
+    <Card className="max-w-4xl mx-auto my-8 shadow-xl bg-[var(--color-card)] border-[var(--color-border)]">
       <CardHeader>
         <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-headline flex items-center gap-2">
+            <CardTitle className="text-2xl font-headline flex items-center gap-2 text-[var(--color-text)]">
                 <FileEdit className="w-7 h-7 text-primary"/>
                 {pageTitle}
             </CardTitle>
@@ -194,7 +194,7 @@ export default function VerifyReceiptPage() {
                 Back
             </Button>
         </div>
-        <CardDescription>
+        <CardDescription className="text-[var(--color-text-secondary)]">
           Review the AI-extracted information below. Edit any field as necessary, then confirm to proceed.
           If fields show "Extraction Failed" or are incorrect, please correct them using the receipt image as a reference.
           {user?.role === 'manager' && " As a manager, saving changes will re-trigger fraud analysis."}
@@ -204,17 +204,17 @@ export default function VerifyReceiptPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div>
-              <h3 className="font-semibold text-lg mb-2">Receipt Document</h3>
+              <h3 className="font-semibold text-lg mb-2 text-[var(--color-text)]">Receipt Document</h3>
                 {isPdf ? (
-                    <div className="border rounded-lg shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full flex flex-col items-center justify-center p-4">
-                      <FileType className="w-16 h-16 text-muted-foreground mb-4" />
-                      <p className="text-sm text-center mb-4 text-muted-foreground">The preview is not available here due to security restrictions.</p>
+                    <div className="border border-[var(--color-border)] rounded-lg shadow-md bg-[var(--color-bg-secondary)] min-h-[300px] md:min-h-[400px] h-full flex flex-col items-center justify-center p-4">
+                      <FileType className="w-16 h-16 text-[var(--color-text-secondary)] mb-4" />
+                      <p className="text-sm text-center mb-4 text-[var(--color-text-secondary)]">The preview is not available here due to security restrictions.</p>
                       <Button type="button" onClick={openPdfInNewTab}>
                         <Eye className="mr-2 h-4 w-4" /> View Full PDF
                       </Button>
                     </div>
                 ) : (
-                  <div className="relative border rounded-lg overflow-hidden shadow-md bg-muted min-h-[300px] md:min-h-[400px] h-full">
+                  <div className="relative border border-[var(--color-border)] rounded-lg overflow-hidden shadow-md bg-[var(--color-bg-secondary)] min-h-[300px] md:min-h-[400px] h-full">
                     <Image
                       src={imageSource || ''}
                       alt={`Receipt ${receipt.fileName}`}
@@ -227,10 +227,10 @@ export default function VerifyReceiptPage() {
                 )}
             </div>
             <div className="space-y-3">
-              <h3 className="font-semibold text-lg mb-2">Extracted Items (Editable)</h3>
-              <ScrollArea className="h-[300px] md:h-[400px] pr-3 border rounded-md p-3 bg-muted/30 shadow-inner">
+              <h3 className="font-semibold text-lg mb-2 text-[var(--color-text)]">Extracted Items (Editable)</h3>
+              <ScrollArea className="h-[300px] md:h-[400px] pr-3 border border-[var(--color-border)] rounded-md p-3 bg-[var(--color-bg-secondary)] shadow-inner">
                  {editableItems.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-4 text-center">
+                  <p className="text-sm text-[var(--color-text-secondary)] p-4 text-center">
                     No items were extracted by the AI. This might be due to image quality.
                     Please try uploading a clearer image or a different receipt.
                   </p>
@@ -243,7 +243,7 @@ export default function VerifyReceiptPage() {
 
                 {editableItems.filter(item => item.label !== "Note").map((item, index) => (
                   <div key={`${item.id}-${item.label}-${index}`} className="mb-3">
-                    <Label htmlFor={item.id} className="text-sm font-medium text-foreground/90">
+                    <Label htmlFor={item.id} className="text-sm font-medium text-[var(--color-text)]">
                       {item.label}
                     </Label>
                     <Input
@@ -251,13 +251,13 @@ export default function VerifyReceiptPage() {
                       type="text"
                       value={item.value}
                       onChange={(e) => handleItemChange(item.id, e.target.value)}
-                      className="mt-1 text-sm bg-background"
+                      className="mt-1 text-sm bg-[var(--color-bg)]"
                       disabled={isProcessing}
                     />
                   </div>
                 ))}
               </ScrollArea>
-               <p className="text-xs text-muted-foreground mt-1 px-1">
+               <p className="text-xs text-[var(--color-text-secondary)] mt-1 px-1">
                   Ensure key details like Vendor, Total Amount, and Date are accurate.
                   Correct any "Extraction Failed" or "Not found" values if visible on the receipt.
                 </p>

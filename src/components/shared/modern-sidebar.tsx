@@ -274,7 +274,7 @@ export function ModernSidebar({
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-[var(--color-bg)] bg-opacity-80 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -332,7 +332,7 @@ export function ModernSidebar({
 
         {/* Divider */}
         <div className="px-3">
-          <div className="border-t border-gray-200 dark:border-sidebar-border" />
+          <div className="border-t border-[var(--color-border)]" />
         </div>
 
         {/* Utility Items */}
@@ -483,7 +483,7 @@ export function MobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+      className="lg:hidden p-2 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)]"
     >
       <Menu className="h-5 w-5" />
     </button>
@@ -501,7 +501,7 @@ export function SidebarTooltip({
   return (
     <div className="relative group">
       {children}
-      <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+      <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-[var(--color-card)] text-[var(--color-text)] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-[var(--color-border)]">
         {content}
       </div>
     </div>

@@ -81,10 +81,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-[var(--color-bg)] text-[var(--color-text)]">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-bold text-[var(--color-text)]">Settings</h1>
+        <p className="text-[var(--color-text-secondary)] mt-2">Manage your account settings and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

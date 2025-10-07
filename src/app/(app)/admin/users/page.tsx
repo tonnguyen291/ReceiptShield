@@ -5,79 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, UserPlus, Mail, Phone, Shield, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Users, UserPlus, Mail, Phone, Shield, CheckCircle, Clock, AlertTriangle, Loader2 } from "lucide-react";
+import { getAllUsers } from "@/lib/firebase-auth";
+import { getAllReceipts } from "@/lib/receipt-store";
+import type { User } from "@/types";
+import type { ProcessedReceipt } from "@/types";
+
+// Interface for user with spending data
+interface UserWithSpending extends User {
+  totalSpending: number;
+  receipts: number;
+  lastLogin: string;
+  department: string;
+}
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@company.com",
-      role: "employee",
-      department: "Engineering",
-      status: "active",
-      avatar: "/avatars/sarah.jpg",
-      lastLogin: "2024-01-15",
-      totalSpending: 2450,
-      receipts: 15
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      email: "mike.chen@company.com",
-      role: "manager",
-      department: "Product",
-      status: "active",
-      avatar: "/avatars/mike.jpg",
-      lastLogin: "2024-01-14",
-      totalSpending: 1890,
-      receipts: 12
-    },
-    {
-      id: 3,
-      name: "Emily Davis",
-      email: "emily.davis@company.com",
-      role: "employee",
-      department: "Design",
-      status: "active",
-      avatar: "/avatars/emily.jpg",
-      lastLogin: "2024-01-13",
-      totalSpending: 1650,
-      receipts: 10
-    },
-    {
-      id: 4,
-      name: "John Smith",
-      email: "john.smith@company.com",
-      role: "admin",
-      department: "IT",
-      status: "active",
-      avatar: "/avatars/john.jpg",
-      lastLogin: "2024-01-12",
-      totalSpending: 0,
-      receipts: 0
-    },
-    {
-      id: 5,
-      name: "Lisa Wang",
-      email: "lisa.wang@company.com",
-      role: "employee",
-      department: "Marketing",
-      status: "inactive",
-      avatar: "/avatars/lisa.jpg",
-      lastLogin: "2024-01-05",
-      totalSpending: 1380,
-      receipts: 9
-    }
-  ]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<UserWithSpending[]>([]);
   const [userStats, setUserStats] = useState({
-    totalUsers: 150,
-    activeUsers: 142,
-    inactiveUsers: 8,
-    totalSpending: 125000,
-    averagePerUser: 833.33,
-    pendingInvitations: 5
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    totalSpending: 0,
+    averagePerUser: 0,
+    pendingInvitations: 0
   });
 
   const getStatusColor = (status: string) => {
@@ -119,17 +70,150 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Real-time data fetching functions
+  const fetchRealUsersData = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Fetching real users data...');
+
+      // Fetch all users and receipts
+      const [allUsers, allReceipts] = await Promise.all([
+        getAllUsers(),
+        getAllReceipts()
+      ]);
+
+      console.log('Fetched data:', { users: allUsers.length, receipts: allReceipts.length });
+
+      // Calculate spending per user
+      const userSpendingMap = new Map<string, { totalSpending: number; receipts: number }>();
+      
+      allReceipts.forEach(receipt => {
+        const userEmail = receipt.uploadedBy;
+        if (!userSpendingMap.has(userEmail)) {
+          userSpendingMap.set(userEmail, { totalSpending: 0, receipts: 0 });
+        }
+        
+        const userData = userSpendingMap.get(userEmail)!;
+        userData.receipts++;
+        
+        // Extract amount from receipt
+        const totalItem = receipt.items.find(item => 
+          item.label.toLowerCase().includes('total') || 
+          item.label.toLowerCase().includes('amount')
+        );
+        if (totalItem) {
+          const match = totalItem.value.match(/\$?(\d+\.?\d*)/);
+          userData.totalSpending += match ? parseFloat(match[1]) : 0;
+        }
+      });
+
+      // Create users with spending data
+      const usersWithSpending: UserWithSpending[] = allUsers.map(user => {
+        const spendingData = userSpendingMap.get(user.email) || { totalSpending: 0, receipts: 0 };
+        
+        // Determine department based on role and supervisor
+        let department = 'Unassigned';
+        if (user.role === 'manager') {
+          department = user.name; // Manager's name as department
+        } else if (user.supervisorId) {
+          const supervisor = allUsers.find(u => u.id === user.supervisorId);
+          department = supervisor?.name || 'Unknown';
+        }
+
+        // Generate last login date (mock for now - would come from auth logs)
+        const lastLogin = user.createdAt ? 
+          new Date(user.createdAt).toLocaleDateString() : 
+          new Date().toLocaleDateString();
+
+        return {
+          ...user,
+          totalSpending: spendingData.totalSpending,
+          receipts: spendingData.receipts,
+          lastLogin,
+          department
+        };
+      });
+
+      // Sort users by total spending (highest first)
+      usersWithSpending.sort((a, b) => b.totalSpending - a.totalSpending);
+
+      setUsers(usersWithSpending);
+
+      // Calculate user statistics
+      const totalUsers = allUsers.length;
+      const activeUsers = allUsers.filter(user => user.status === 'active').length;
+      const inactiveUsers = allUsers.filter(user => user.status === 'inactive').length;
+      const totalSpending = usersWithSpending.reduce((sum, user) => sum + user.totalSpending, 0);
+      const averagePerUser = totalUsers > 0 ? totalSpending / totalUsers : 0;
+
+      setUserStats({
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        totalSpending,
+        averagePerUser,
+        pendingInvitations: 0 // TODO: Get from invitations table
+      });
+
+      console.log('Users data updated:', {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        totalSpending,
+        averagePerUser
+      });
+
+    } catch (error) {
+      console.error('Error fetching users data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchRealUsersData();
+  }, []);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] bg-[var(--color-bg)] text-[var(--color-text)]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-[var(--color-text-secondary)]">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-[var(--color-bg)] text-[var(--color-text)]">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage all users in your organization</p>
+          <h1 className="text-3xl font-bold text-[var(--color-text)]">User Management</h1>
+          <p className="text-[var(--color-text-secondary)] mt-2">Real-time user data from your organization</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite User
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={fetchRealUsersData}
+            variant="outline"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Refreshing...
+              </>
+            ) : (
+              'Refresh Data'
+            )}
+          </Button>
+          <Button className="bg-primary hover:bg-primary/90">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite User
+          </Button>
+        </div>
       </div>
 
       {/* User Statistics */}
@@ -186,9 +270,21 @@ export default function AdminUsersPage() {
           <CardDescription>Manage user accounts, roles, and permissions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          {users.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[var(--color-text)] mb-2">No Users Found</h3>
+              <p className="text-[var(--color-text-secondary)] mb-4">
+                No users found in the database. Try refreshing the data or invite new users.
+              </p>
+              <Button onClick={fetchRealUsersData} variant="outline">
+                Refresh Data
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {users.map((user) => (
+              <div key={user.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors bg-[var(--color-card)]">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatar} alt={user.name} />
@@ -198,7 +294,7 @@ export default function AdminUsersPage() {
                   </Avatar>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900">{user.name}</h3>
+                      <h3 className="font-medium text-[var(--color-text)]">{user.name}</h3>
                       <Badge variant={getStatusColor(user.status)}>
                         {getStatusIcon(user.status)}
                         <span className="ml-1 capitalize">{user.status}</span>
@@ -207,8 +303,8 @@ export default function AdminUsersPage() {
                         {user.role}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600">{user.department}</p>
-                    <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                    <p className="text-sm text-[var(--color-text-secondary)]">{user.department}</p>
+                    <div className="flex items-center space-x-4 mt-1 text-xs text-[var(--color-text-secondary)]">
                       <span className="flex items-center">
                         <Mail className="h-3 w-3 mr-1" />
                         {user.email}
@@ -219,8 +315,8 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="font-bold text-lg">${user.totalSpending.toLocaleString()}</div>
-                    <div className="text-sm text-gray-500">{user.receipts} receipts</div>
+                    <div className="font-bold text-lg text-[var(--color-text)]">${user.totalSpending.toLocaleString()}</div>
+                    <div className="text-sm text-[var(--color-text-secondary)]">{user.receipts} receipts</div>
                   </div>
                   <div className="flex flex-col space-y-2">
                     <div className="flex space-x-2">
@@ -245,8 +341,9 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

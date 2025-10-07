@@ -454,11 +454,11 @@ export default function ManagerDashboardPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <h2 className="text-xl font-semibold text-foreground">Loading Dashboard</h2>
-          <p className="text-muted-foreground">Please wait while we load your team data...</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text)]">Loading Dashboard</h2>
+          <p className="text-[var(--color-text-secondary)]">Please wait while we load your team data...</p>
         </div>
       </div>
     );
@@ -467,13 +467,13 @@ export default function ManagerDashboardPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md">
           <div className="p-4 bg-destructive/10 rounded-lg">
             <X className="h-12 w-12 text-destructive mx-auto" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Error Loading Dashboard</h2>
-          <p className="text-muted-foreground">{error}</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text)]">Error Loading Dashboard</h2>
+          <p className="text-[var(--color-text-secondary)]">{error}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             Try Again
           </Button>
@@ -483,10 +483,10 @@ export default function ManagerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/5">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-6">
         {/* Enhanced Header Section */}
-        <div className="bg-card rounded-lg shadow-lg border p-6">
+        <div className="bg-[var(--color-card)] rounded-lg shadow-lg border border-[var(--color-border)] p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
@@ -494,27 +494,27 @@ export default function ManagerDashboardPage() {
                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground">
+                  <h1 className="text-3xl font-headline font-bold tracking-tight text-[var(--color-text)]">
                     Manager Dashboard
                   </h1>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-[var(--color-text-secondary)] text-sm">
                     Welcome back, {user?.name || 'Manager'}
                   </p>
                 </div>
               </div>
-              <p className="text-muted-foreground max-w-2xl">
+              <p className="text-[var(--color-text-secondary)] max-w-2xl">
                 Oversee expenses, review flagged receipts, and manage your team's financial submissions.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Team Members</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">Team Members</p>
                 <p className="text-2xl font-bold text-primary">{teamMembers.length}</p>
               </div>
-              <div className="h-12 w-px bg-border"></div>
+              <div className="h-12 w-px bg-[var(--color-border)]"></div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Role</p>
-                <p className="text-sm font-medium text-foreground capitalize">{user?.role}</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">Role</p>
+                <p className="text-sm font-medium text-[var(--color-text)] capitalize">{user?.role}</p>
               </div>
             </div>
           </div>
@@ -525,7 +525,7 @@ export default function ManagerDashboardPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <div className="h-8 w-1 bg-primary rounded-full"></div>
-            <h2 className="text-xl font-semibold text-foreground">Quick Overview</h2>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">Quick Overview</h2>
           </div>
           <ManagerQuickStats />
         </div>
@@ -534,7 +534,7 @@ export default function ManagerDashboardPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <div className="h-8 w-1 bg-primary rounded-full"></div>
-            <h2 className="text-xl font-semibold text-foreground">Team Overview</h2>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">Team Overview</h2>
           </div>
           <ManagerOverviewCharts />
         </div>

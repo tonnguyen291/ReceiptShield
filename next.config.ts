@@ -46,9 +46,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  experimental: {
-    serverComponentsExternalPackages: ['nodemailer'],
-  },
+  serverExternalPackages: ['nodemailer'],
 };
 
 export default nextConfig;
