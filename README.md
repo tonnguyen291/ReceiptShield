@@ -56,3 +56,4 @@ package.json     # Project dependencies
 next.config.ts   # Next.js configuration
 tailwind.config.ts # Tailwind CSS configuration
 apphosting.yaml  # Firebase App Hosting configuration
+# Test deployment trigger
