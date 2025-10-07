@@ -14,11 +14,16 @@ export async function GET(request: NextRequest) {
     );
     
     const performanceSnapshot = await getDocs(performanceQuery);
-    const performanceData = performanceSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
-    }));
+    const performanceData = performanceSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        metricName: data.metricName || null,
+        value: data.value || 0,
+        timestamp: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
+      };
+    });
     
     // Calculate averages
     const responseTimes = performanceData

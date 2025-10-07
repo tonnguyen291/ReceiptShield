@@ -25,11 +25,16 @@ export async function GET(request: NextRequest) {
     );
     
     const analyticsSnapshot = await getDocs(analyticsQuery);
-    const events = analyticsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
-    }));
+    const events = analyticsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        userId: data.userId || null,
+        eventName: data.eventName || null,
+        timestamp: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
+      };
+    });
     
     // Calculate statistics
     const uniqueUsers = new Set(events.map(event => event.userId).filter(Boolean)).size;
