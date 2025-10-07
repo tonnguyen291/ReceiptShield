@@ -11,6 +11,6 @@ export const getPredictionFromML = async (receiptData: any) => {
   };
 };
 
-export const calculateOverallRiskAssessment = (mlPrediction: any, aiDetection: any) => {
+export const calculateOverallRiskAssessment = (mlPrediction: any, aiDetection: any): 'LOW' | 'MEDIUM' | 'HIGH' => {
   return 'LOW';
 };
