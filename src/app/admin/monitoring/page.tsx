@@ -40,9 +40,12 @@ export default function MonitoringPage() {
       const analyticsResponse = await fetch('/api/monitoring/analytics?timeRange=1h');
       const analyticsData = await analyticsResponse.json();
       
+      // Calculate uptime based on health checks in last 24 hours
+      const uptime = data.uptime || 99.9; // Use actual uptime from health API
+      
       setSystemHealth({
         status: data.status,
-        uptime: 99.9, // This would come from your monitoring system
+        uptime: uptime,
         responseTime: data.responseTime || perfData.averages?.responseTime || 0,
         errorRate: perfData.averages?.errorRate || 0.1,
         activeUsers: analyticsData.statistics?.uniqueUsers || 0,

@@ -30,7 +30,19 @@ export async function GET(request: NextRequest) {
       ...doc.data()
     }));
     
-    return NextResponse.json({ events, timeRange });
+    // Calculate statistics
+    const uniqueUsers = new Set(events.map(event => event.userId || 'anonymous')).size;
+    const totalEvents = events.length;
+    const eventTypes = [...new Set(events.map(event => event.eventName))];
+    
+    const statistics = {
+      uniqueUsers,
+      totalEvents,
+      eventTypes,
+      timeRange
+    };
+    
+    return NextResponse.json({ events, statistics, timeRange });
   } catch (error) {
     console.error('Failed to fetch analytics:', error);
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
