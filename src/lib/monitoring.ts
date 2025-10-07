@@ -33,6 +33,7 @@ export const monitoring = {
       await addDoc(collection(db, 'analytics_events'), {
         eventName,
         parameters,
+        userId: parameters?.userId || 'anonymous',
         timestamp: serverTimestamp(),
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
         url: typeof window !== 'undefined' ? window.location.href : 'server'
