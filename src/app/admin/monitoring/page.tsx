@@ -14,6 +14,12 @@ interface SystemHealth {
 export default function MonitoringPage() {
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionResults, setActionResults] = useState<{
+    uptime?: any;
+    database?: any;
+    performance?: any;
+    logs?: any;
+  }>({});
 
   useEffect(() => {
     fetchSystemHealth();
@@ -72,6 +78,46 @@ export default function MonitoringPage() {
       case 'warning': return 'bg-yellow-500';
       case 'critical': return 'bg-red-500';
       default: return 'bg-gray-500';
+    }
+  };
+
+  const handleCheckUptime = async () => {
+    try {
+      const response = await fetch('/api/monitoring/health');
+      const data = await response.json();
+      setActionResults(prev => ({ ...prev, uptime: data }));
+    } catch (error) {
+      console.error('Failed to check uptime:', error);
+    }
+  };
+
+  const handleDatabaseStatus = async () => {
+    try {
+      const response = await fetch('/api/monitoring/analytics?timeRange=5m');
+      const data = await response.json();
+      setActionResults(prev => ({ ...prev, database: data }));
+    } catch (error) {
+      console.error('Failed to check database status:', error);
+    }
+  };
+
+  const handlePerformanceReport = async () => {
+    try {
+      const response = await fetch('/api/monitoring/performance');
+      const data = await response.json();
+      setActionResults(prev => ({ ...prev, performance: data }));
+    } catch (error) {
+      console.error('Failed to get performance report:', error);
+    }
+  };
+
+  const handleSystemLogs = async () => {
+    try {
+      const response = await fetch('/api/monitoring/errors');
+      const data = await response.json();
+      setActionResults(prev => ({ ...prev, logs: data }));
+    } catch (error) {
+      console.error('Failed to get system logs:', error);
     }
   };
 
@@ -155,20 +201,76 @@ export default function MonitoringPage() {
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <button 
+              onClick={handleCheckUptime}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
               Check Uptime
             </button>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <button 
+              onClick={handleDatabaseStatus}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
               Database Status
             </button>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <button 
+              onClick={handlePerformanceReport}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
               Performance Report
             </button>
-            <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <button 
+              onClick={handleSystemLogs}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
               System Logs
             </button>
           </div>
         </div>
+
+        {/* Action Results */}
+        {(actionResults.uptime || actionResults.database || actionResults.performance || actionResults.logs) && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Action Results</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {actionResults.uptime && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-blue-900 mb-2">Uptime Check</h3>
+                  <p className="text-sm text-blue-700">Status: {actionResults.uptime.status}</p>
+                  <p className="text-sm text-blue-700">Uptime: {actionResults.uptime.uptime}%</p>
+                  <p className="text-sm text-blue-700">Response Time: {actionResults.uptime.responseTime}ms</p>
+                </div>
+              )}
+              {actionResults.database && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-green-900 mb-2">Database Status</h3>
+                  <p className="text-sm text-green-700">Active Users: {actionResults.database.statistics.uniqueUsers}</p>
+                  <p className="text-sm text-green-700">Total Events: {actionResults.database.statistics.totalEvents}</p>
+                  <p className="text-sm text-green-700">Event Types: {actionResults.database.statistics.eventTypes.join(', ')}</p>
+                </div>
+              )}
+              {actionResults.performance && (
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-purple-900 mb-2">Performance Report</h3>
+                  <p className="text-sm text-purple-700">Response Time: {actionResults.performance.averages.responseTime}ms</p>
+                  <p className="text-sm text-purple-700">Error Rate: {actionResults.performance.averages.errorRate}%</p>
+                  <p className="text-sm text-purple-700">Uptime: {actionResults.performance.averages.uptime}%</p>
+                </div>
+              )}
+              {actionResults.logs && (
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-orange-900 mb-2">System Logs</h3>
+                  <p className="text-sm text-orange-700">Total Errors: {actionResults.logs.errors.length}</p>
+                  {actionResults.logs.errors.slice(0, 2).map((error: any, index: number) => (
+                    <p key={index} className="text-sm text-orange-700">
+                      {error.message || 'Unknown error'} ({new Date(error.timestamp).toLocaleString()})
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* System Information */}
         <div className="bg-white rounded-lg shadow p-6">
