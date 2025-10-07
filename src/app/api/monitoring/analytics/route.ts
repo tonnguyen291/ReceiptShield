@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const statistics = {
       uniqueUsers: 0,
       totalEvents: 0,
-      eventTypes: [],
+      eventTypes: [] as string[],
       timeRange
     };
     

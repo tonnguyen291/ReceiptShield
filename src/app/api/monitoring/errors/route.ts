@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Return mock error data for static export
-    const errors = [];
+    const errors: any[] = [];
     
     return NextResponse.json({ 
       errors,
