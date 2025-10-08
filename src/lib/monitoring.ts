@@ -76,15 +76,24 @@ export const monitoring = {
       // Sanitize parameters to remove DOM elements and non-serializable data
       const sanitizedParameters = parameters ? sanitizeData(parameters) : {};
       
-      // Also log to Firestore for custom analytics
-      await addDoc(collection(db, 'analytics_events'), {
-        eventName,
-        parameters: sanitizedParameters,
-        userId: parameters?.userId || 'anonymous',
-        timestamp: serverTimestamp(),
-        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-        url: typeof window !== 'undefined' ? window.location.href : 'server'
-      });
+      // Also log to Firestore for custom analytics (with network error handling)
+      try {
+        await addDoc(collection(db, 'analytics_events'), {
+          eventName,
+          parameters: sanitizedParameters,
+          userId: parameters?.userId || 'anonymous',
+          timestamp: serverTimestamp(),
+          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
+          url: typeof window !== 'undefined' ? window.location.href : 'server'
+        });
+      } catch (firestoreError) {
+        // Handle network errors gracefully
+        if (firestoreError instanceof Error && firestoreError.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+          console.warn('Analytics tracking blocked by browser extension, continuing without Firestore logging');
+        } else {
+          throw firestoreError;
+        }
+      }
     } catch (error) {
       console.error('Failed to track event:', error);
     }
@@ -101,7 +110,12 @@ export const monitoring = {
         url: typeof window !== 'undefined' ? window.location.href : 'server'
       });
     } catch (error) {
-      console.error('Failed to track performance metric:', error);
+      // Handle network errors gracefully
+      if (error instanceof Error && error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
+        console.warn('Performance tracking blocked by browser extension, continuing without Firestore logging');
+      } else {
+        console.error('Failed to track performance metric:', error);
+      }
     }
   },
 
