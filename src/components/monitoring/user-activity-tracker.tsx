@@ -47,7 +47,7 @@ export function UserActivityTracker() {
         monitoring.trackEvent('user_interaction', {
           userId: user?.id || 'anonymous',
           element: target.tagName,
-          className: target.className,
+          className: typeof target.className === 'string' ? target.className : String(target.className),
           id: target.id,
           timestamp: new Date().toISOString()
         });

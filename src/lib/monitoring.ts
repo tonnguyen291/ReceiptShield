@@ -3,6 +3,50 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, analytics, app } from './firebase';
 import { alerting } from './alerting';
 
+// Helper function to sanitize data for Firestore
+function sanitizeData(data: any): any {
+  if (data === null || data === undefined) {
+    return data;
+  }
+  
+  if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
+    return data;
+  }
+  
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+  
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeData(item));
+  }
+  
+  if (typeof data === 'object') {
+    // Check if it's a DOM element or other non-serializable object
+    if (data.nodeType || data.constructor?.name === 'SVGAnimatedString' || 
+        data.constructor?.name === 'HTMLCollection' || 
+        data.constructor?.name === 'NodeList' ||
+        typeof data === 'function') {
+      return '[DOM Element]';
+    }
+    
+    const sanitized: any = {};
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        try {
+          sanitized[key] = sanitizeData(data[key]);
+        } catch (error) {
+          // Skip properties that can't be serialized
+          sanitized[key] = '[Non-serializable]';
+        }
+      }
+    }
+    return sanitized;
+  }
+  
+  return '[Non-serializable]';
+}
+
 export const monitoring = {
   // Initialize monitoring
   initialize: () => {
@@ -29,10 +73,13 @@ export const monitoring = {
         logEvent(analytics, eventName, parameters);
       }
       
+      // Sanitize parameters to remove DOM elements and non-serializable data
+      const sanitizedParameters = parameters ? sanitizeData(parameters) : {};
+      
       // Also log to Firestore for custom analytics
       await addDoc(collection(db, 'analytics_events'), {
         eventName,
-        parameters,
+        parameters: sanitizedParameters,
         userId: parameters?.userId || 'anonymous',
         timestamp: serverTimestamp(),
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
