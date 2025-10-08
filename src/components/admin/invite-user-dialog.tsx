@@ -288,7 +288,7 @@ export function InviteUserDialog({
   };
 
   const invitationUrl = sentInvitation
-    ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation?token=${sentInvitation.token}`
+    ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com'}/accept-invitation?token=${sentInvitation.token}`
     : '';
 
   const handleCopy = async () => {

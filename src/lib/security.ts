@@ -97,6 +97,7 @@ export const securityMiddleware = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       const allowedOrigins = [
         process.env.NEXT_PUBLIC_APP_URL,
+        'https://compensationengine.com',
         'http://localhost:3000',
         'http://localhost:9003',
       ].filter(Boolean);
