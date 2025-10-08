@@ -23,7 +23,7 @@ export interface EmailServiceConfig {
 const defaultConfig: EmailServiceConfig = {
   fromEmail: process.env.EMAIL_FROM || 'noreply@receiptshield.com',
   fromName: process.env.EMAIL_FROM_NAME || 'ReceiptShield',
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9003',
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com',
 };
 
 // SMTP configuration
