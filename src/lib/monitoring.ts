@@ -1,6 +1,6 @@
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, analytics, app } from './firebase';
+import { db, app } from './firebase';
 import { alerting } from './alerting';
 
 // Helper function to sanitize data for Firestore
@@ -32,7 +32,7 @@ function sanitizeData(data: any): any {
     
     const sanitized: any = {};
     for (const key in data) {
-      if (data.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
         try {
           sanitized[key] = sanitizeData(data[key]);
         } catch (error) {
