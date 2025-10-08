@@ -27,7 +27,8 @@ import {
   Bot,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  Activity
 } from "lucide-react";
 
 interface ModernSidebarProps {
@@ -169,6 +170,12 @@ export function ModernSidebar({
             href: `${basePath}/analytics`,
             label: "Organization Analytics",
             icon: BarChart3,
+            badge: null
+          },
+          {
+            href: `${basePath}/monitoring`,
+            label: "System Monitoring",
+            icon: Activity,
             badge: null
           },
           {

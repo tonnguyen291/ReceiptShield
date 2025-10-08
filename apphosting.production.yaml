@@ -1,0 +1,79 @@
+# Firebase App Hosting configuration for production environment
+runConfig:
+  # Set the minimum number of instances to 0 for auto-scaling
+  minInstances: 0
+  
+  # Maximum number of concurrent requests per instance
+  concurrency: 80
+  
+  # CPU allocation (1 = 1 vCPU)
+  cpu: 1
+  
+  # Memory allocation in GB
+  memoryMiB: 512
+  
+  # Maximum number of instances
+  maxInstances: 4
+
+env:
+  # Gmail SMTP Configuration for sending invitation emails
+  - variable: GMAIL_USER
+    value: aqallaf76@gmail.com
+    availability:
+      - RUNTIME
+  
+  - variable: GMAIL_APP_PASSWORD
+    secret: GMAIL_APP_PASSWORD
+    availability:
+      - RUNTIME
+  
+  # Application URL
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://compensationengine.com
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  # Firebase Configuration (from existing setup)
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBJUMBq1qLQnJjNz7lp72lJ7awKeod3qMo"
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: recieptshield.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: recieptshield
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: recieptshield.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "74288524309"
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:74288524309:web:51054e09d910415a19f21c
+    availability:
+      - BUILD
+      - RUNTIME
+  
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-LTKF1K1NFL
+    availability:
+      - BUILD
+      - RUNTIME
+

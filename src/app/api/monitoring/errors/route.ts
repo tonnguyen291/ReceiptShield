@@ -1,54 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
+import { requireMonitoringAuth, logMonitoringAccess } from '@/lib/monitoring-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const severity = searchParams.get('severity');
-    const limitCount = parseInt(searchParams.get('limit') || '10');
-    
-    let errorsQuery = query(
+    // Require authentication for monitoring access
+    const user = requireMonitoringAuth(request);
+    logMonitoringAccess(user, '/api/monitoring/errors', 'GET');
+    // Fetch error logs from last 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const errorsQuery = query(
       collection(db, 'error_logs'),
+      where('timestamp', '>=', Timestamp.fromDate(twentyFourHoursAgo)),
       orderBy('timestamp', 'desc'),
-      limit(limitCount)
+      limit(50)
     );
     
-    if (severity) {
-      errorsQuery = query(
-        collection(db, 'error_logs'),
-        where('severity', '==', severity),
-        orderBy('timestamp', 'desc'),
-        limit(limitCount)
-      );
-    }
-    
-    const snapshot = await getDocs(errorsQuery);
-    const errors = snapshot.docs.map(doc => ({
+    const errorsSnapshot = await getDocs(errorsQuery);
+    const errors = errorsSnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
     }));
     
-    return NextResponse.json({ errors });
-  } catch (error) {
-    console.error('Failed to fetch errors:', error);
-    return NextResponse.json({ error: 'Failed to fetch errors' }, { status: 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const errorData = await request.json();
-    
-    await addDoc(collection(db, 'error_logs'), {
-      ...errorData,
-      timestamp: serverTimestamp(),
-      severity: errorData.severity || 'error'
+    return NextResponse.json({ 
+      errors,
+      timestamp: new Date().toISOString()
     });
-    
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Failed to log error:', error);
-    return NextResponse.json({ error: 'Failed to log error' }, { status: 500 });
+    console.error('Failed to fetch error data:', error);
+    
+    // Check if it's an auth error
+    if (error instanceof Error && error.message.includes('Unauthorized')) {
+      return NextResponse.json({
+        error: 'Unauthorized: Monitoring access required'
+      }, { status: 401 });
+    }
+    
+    return NextResponse.json({ error: 'Failed to fetch error data' }, { status: 500 });
   }
 }

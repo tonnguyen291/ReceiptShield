@@ -1,74 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getInvitationByToken, updateInvitationStatus, isInvitationExpired } from '@/lib/firebase-invitation-store';
-import { sendWelcomeEmail } from '@/lib/email-service';
+import { getInvitationByToken, updateInvitationStatus } from '@/lib/firebase-invitation-store';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { token, name, password } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get('token');
 
-    if (!token || !name || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields: token, name, and password are required' },
-        { status: 400 }
-      );
+    if (!token) {
+      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
 
-    // Get the invitation
     const invitation = await getInvitationByToken(token);
     
     if (!invitation) {
-      return NextResponse.json(
-        { error: 'Invalid invitation token' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Invalid or expired invitation' }, { status: 404 });
     }
 
-    // Check invitation status
-    if (invitation.status !== 'pending') {
-      return NextResponse.json(
-        { error: `Invitation has already been ${invitation.status}` },
-        { status: 400 }
-      );
-    }
-
-    // Check if invitation is expired
-    if (isInvitationExpired(invitation)) {
-      await updateInvitationStatus(invitation.id, 'expired');
-      return NextResponse.json(
-        { error: 'Invitation has expired' },
-        { status: 400 }
-      );
-    }
-
-    // Validate invitation and return success
-    // The actual user creation will happen on the client side
-    return NextResponse.json({
-      success: true,
-      message: 'Invitation is valid',
-      invitation: {
-        email: invitation.email,
-        role: invitation.role,
-        supervisorId: invitation.supervisorId,
-        invitedBy: invitation.invitedBy,
-      },
-    });
-
+    return NextResponse.json({ invitation });
   } catch (error) {
-    console.error('Error accepting invitation:', error);
-    
-    if (error instanceof Error) {
-      // Handle specific Firebase errors
-      if (error.message.includes('already exists')) {
-        return NextResponse.json(
-          { error: 'A user with this email already exists' },
-          { status: 409 }
-        );
-      }
+    console.error('Failed to get invitation:', error);
+    return NextResponse.json({ error: 'Failed to get invitation' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { token, userData } = await request.json();
+
+    if (!token || !userData) {
+      return NextResponse.json({ error: 'Token and user data are required' }, { status: 400 });
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create account. Please try again.' },
-      { status: 500 }
-    );
+    // Get the invitation first
+    const invitation = await getInvitationByToken(token);
+    
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invalid or expired invitation' }, { status: 404 });
+    }
+
+    // Update invitation status to accepted
+    await updateInvitationStatus(invitation.id, 'accepted', userData.id);
+    
+    return NextResponse.json({ success: true, message: 'Invitation accepted successfully' });
+  } catch (error) {
+    console.error('Failed to accept invitation:', error);
+    return NextResponse.json({ error: 'Failed to accept invitation' }, { status: 500 });
   }
 }

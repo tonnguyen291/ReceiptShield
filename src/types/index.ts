@@ -174,6 +174,7 @@ export interface Invitation {
   token: string; // Unique token for invitation link
   expiresAt: Date;
   createdAt: Date;
+  lastSentAt?: Date; // When the invitation was last sent/resent
   acceptedAt?: Date;
   acceptedBy?: string; // User ID of who accepted the invitation
 }

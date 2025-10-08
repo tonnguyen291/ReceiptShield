@@ -1,6 +1,7 @@
 
 import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
+import { UserActivityTracker } from '@/components/monitoring/user-activity-tracker';
 import './globals.css';
 
 export default function RootLayout({
@@ -22,6 +23,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
+          <UserActivityTracker />
           {children}
           <Toaster />
         </AuthProvider>
