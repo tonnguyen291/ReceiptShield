@@ -38,16 +38,69 @@ export async function createInvitation(
       throw new Error(`A user with email "${invitationData.email}" already exists in the system. Please use a different email address.`);
     }
 
-    // Check if there's already a pending invitation for this email
+    // Check if there's already a pending or expired invitation for this email
     const existingInvitationQuery = query(
       collection(db, INVITATIONS_COLLECTION),
       where('email', '==', invitationData.email.toLowerCase()),
-      where('status', '==', 'pending')
+      where('status', 'in', ['pending', 'expired'])
     );
     const existingInvitationSnapshot = await getDocs(existingInvitationQuery);
     
     if (!existingInvitationSnapshot.empty) {
-      throw new Error(`A pending invitation for "${invitationData.email}" already exists. Please wait for the user to respond or cancel the existing invitation first.`);
+      const existingDoc = existingInvitationSnapshot.docs[0];
+      const existingData = existingDoc.data();
+      const existingInvitation = {
+        id: existingDoc.id,
+        email: existingData.email,
+        role: existingData.role,
+        supervisorId: existingData.supervisorId,
+        invitedBy: existingData.invitedBy,
+        status: existingData.status,
+        token: existingData.token,
+        expiresAt: existingData.expiresAt?.toDate() || new Date(),
+        createdAt: existingData.createdAt?.toDate() || new Date(),
+        acceptedAt: existingData.acceptedAt?.toDate(),
+      } as Invitation;
+
+      console.log('📧 Found existing invitation:', {
+        id: existingInvitation.id,
+        email: existingInvitation.email,
+        status: existingInvitation.status,
+        expiresAt: existingInvitation.expiresAt,
+        isExpiredByDate: new Date() > existingInvitation.expiresAt,
+        daysUntilExpiry: Math.ceil((existingInvitation.expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      });
+
+      // If the invitation is expired or past its expiry date, renew it
+      const isExpiredByDate = new Date() > existingInvitation.expiresAt;
+      if (existingInvitation.status === 'expired' || (existingInvitation.status === 'pending' && isExpiredByDate)) {
+        console.log('🔄 Renewing expired/outdated invitation:', existingInvitation.id, {
+          status: existingInvitation.status,
+          isExpiredByDate: isExpiredByDate
+        });
+        const now = new Date();
+        const newExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+        
+        // Update the invitation to pending status with new expiry and resend timestamp
+        await updateDoc(doc(db, INVITATIONS_COLLECTION, existingDoc.id), {
+          status: 'pending',
+          expiresAt: Timestamp.fromDate(newExpiresAt),
+          lastSentAt: Timestamp.fromDate(now),
+        });
+
+        console.log('✅ Invitation renewed - status: pending, new expiry:', newExpiresAt);
+
+        // Return the updated invitation
+        return {
+          ...existingInvitation,
+          status: 'pending',
+          expiresAt: newExpiresAt,
+          lastSentAt: now,
+        };
+      }
+
+      // For pending invitations, just return the existing one
+      return existingInvitation;
     }
 
     const now = new Date();
@@ -56,19 +109,33 @@ export async function createInvitation(
     const invitation: Omit<Invitation, 'id'> = {
       email: invitationData.email.toLowerCase().trim(),
       role: invitationData.role,
-      supervisorId: invitationData.supervisorId || undefined,
+      supervisorId: invitationData.supervisorId || null,
       invitedBy,
       status: 'pending',
       token: generateInvitationToken(),
       expiresAt,
       createdAt: now,
+      lastSentAt: now,
     };
 
-    const docRef = await addDoc(collection(db, INVITATIONS_COLLECTION), {
-      ...invitation,
+    // Prepare the document data, omitting null supervisorId for non-employees
+    const docData: any = {
+      email: invitation.email,
+      role: invitation.role,
+      invitedBy: invitation.invitedBy,
+      status: invitation.status,
+      token: invitation.token,
       expiresAt: Timestamp.fromDate(expiresAt),
       createdAt: Timestamp.fromDate(now),
-    });
+      lastSentAt: Timestamp.fromDate(now),
+    };
+
+    // Only include supervisorId if it's not null
+    if (invitation.supervisorId !== null) {
+      docData.supervisorId = invitation.supervisorId;
+    }
+
+    const docRef = await addDoc(collection(db, INVITATIONS_COLLECTION), docData);
 
     console.log('Invitation created successfully with ID:', docRef.id);
     
@@ -78,6 +145,7 @@ export async function createInvitation(
       ...invitation,
       expiresAt,
       createdAt: now,
+      lastSentAt: now,
     };
   } catch (error) {
     console.error('Error creating invitation:', error);
@@ -102,6 +170,7 @@ export async function getInvitations(): Promise<Invitation[]> {
         ...data,
         expiresAt: data.expiresAt?.toDate() || new Date(),
         createdAt: data.createdAt?.toDate() || new Date(),
+        lastSentAt: data.lastSentAt?.toDate(),
         acceptedAt: data.acceptedAt?.toDate(),
       } as Invitation;
     });
@@ -133,6 +202,7 @@ export async function getInvitationByToken(token: string): Promise<Invitation | 
       ...data,
       expiresAt: data.expiresAt?.toDate() || new Date(),
       createdAt: data.createdAt?.toDate() || new Date(),
+      lastSentAt: data.lastSentAt?.toDate(),
       acceptedAt: data.acceptedAt?.toDate(),
     } as Invitation;
   } catch (error) {
@@ -164,11 +234,22 @@ export async function getPendingInvitationByEmail(email: string): Promise<Invita
       ...data,
       expiresAt: data.expiresAt?.toDate() || new Date(),
       createdAt: data.createdAt?.toDate() || new Date(),
+      lastSentAt: data.lastSentAt?.toDate(),
       acceptedAt: data.acceptedAt?.toDate(),
     } as Invitation;
   } catch (error) {
     console.error('Error getting pending invitation by email:', error);
     throw error;
+  }
+}
+
+// Check if there's a pending invitation for an email and return it
+export async function checkExistingPendingInvitation(email: string): Promise<Invitation | null> {
+  try {
+    return await getPendingInvitationByEmail(email);
+  } catch (error) {
+    console.error('Error checking existing pending invitation:', error);
+    return null;
   }
 }
 

@@ -47,6 +47,15 @@ const inviteUserSchema = z.object({
   role: z.enum(['employee', 'manager', 'admin'] as const),
   supervisorId: z.string().optional(),
   message: z.string().max(500, 'Message must be less than 500 characters').optional(),
+}).refine((data) => {
+  // If role is employee, supervisorId is required
+  if (data.role === 'employee') {
+    return !!data.supervisorId;
+  }
+  return true;
+}, {
+  message: 'Manager assignment is required for employees',
+  path: ['supervisorId'],
 });
 
 type InviteUserFormData = z.infer<typeof inviteUserSchema>;
@@ -174,10 +183,13 @@ export function InviteUserDialog({
       const invitationsSnapshot = await getDocs(invitationsQuery);
 
       if (!invitationsSnapshot.empty) {
+        const existingInvitation = invitationsSnapshot.docs[0].data();
+        const daysUntilExpiry = Math.ceil((existingInvitation.expiresAt?.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        
         setEmailValidation({
           isValidating: false,
           isExisting: true,
-          message: 'A pending invitation already exists for this email.',
+          message: `A pending invitation already exists for this email (expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}). Please check the invitation management table or wait for the user to respond.`,
         });
         return;
       }
@@ -239,11 +251,31 @@ export function InviteUserDialog({
     } catch (error) {
       console.error('Error sending invitation:', error);
       setEmailStatus('failed');
-      setEmailError(error instanceof Error ? error.message : 'Failed to send invitation');
+      
+      let errorMessage = 'Failed to send invitation';
+      let toastTitle = 'Error';
+      let toastDescription = errorMessage;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Handle specific error cases
+        if (error.message.includes('pending invitation')) {
+          toastTitle = 'Duplicate Invitation';
+          toastDescription = 'A pending invitation already exists for this email. Please check the invitation management table or wait for the user to respond.';
+        } else if (error.message.includes('already exists in the system')) {
+          toastTitle = 'User Already Exists';
+          toastDescription = 'This email is already registered in the system. Please use a different email address.';
+        } else {
+          toastDescription = errorMessage;
+        }
+      }
+      
+      setEmailError(errorMessage);
       
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send invitation',
+        title: toastTitle,
+        description: toastDescription,
         variant: 'destructive',
       });
     } finally {
@@ -297,68 +329,74 @@ export function InviteUserDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[640px]">
+      <DialogContent className="sm:max-w-[900px]">
         {sentInvitation ? (
           // Success View
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-8 w-8 text-white" />
+          <div className="space-y-5">
+            {/* Success Header */}
+            <div className="text-center space-y-4 pt-2">
+              <div className="mx-auto w-20 h-20 bg-primary rounded-full flex items-center justify-center">
+                <CheckCircle className="h-10 w-10 text-primary-foreground" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-foreground">
                   Invitation Sent Successfully!
                 </h2>
-                <p className="text-gray-600">
-                  An invitation email has been sent to <span className="font-semibold">{sentInvitation.email}</span>
-                </p>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    An invitation email has been sent to
+                  </p>
+                  <p className="text-base font-semibold text-foreground">
+                    {sentInvitation.email}
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Email Status Indicator */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  {emailStatus === 'sending' && <Loader2 className="h-5 w-5 text-green-600 animate-spin" />}
-                  {emailStatus === 'sent' && <Check className="h-5 w-5 text-green-600" />}
-                  {emailStatus === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-green-900">
+            <div className="bg-muted/50 border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    {emailStatus === 'sending' && <Loader2 className="h-5 w-5 text-primary animate-spin" />}
+                    {emailStatus === 'sent' && <Check className="h-5 w-5 text-primary" />}
+                    {emailStatus === 'failed' && <XCircle className="h-5 w-5 text-destructive" />}
+                  </div>
+                  <div className="flex-1">
+                    <span className={`text-base font-medium ${emailStatus === 'failed' ? 'text-destructive' : 'text-foreground'}`}>
                       {emailStatus === 'sending' && 'Sending email...'}
                       {emailStatus === 'sent' && 'Email delivered successfully'}
                       {emailStatus === 'failed' && 'Email delivery failed'}
                     </span>
-                    <Badge className={getRoleBadgeColor(sentInvitation.role)}>
-                      {sentInvitation.role}
-                    </Badge>
+                    {emailStatus === 'failed' && emailError && (
+                      <p className="text-sm text-destructive mt-1">{emailError}</p>
+                    )}
                   </div>
-                  {emailStatus === 'failed' && emailError && (
-                    <p className="text-sm text-red-600 mt-1">{emailError}</p>
-                  )}
                 </div>
+                <Badge className={`${getRoleBadgeColor(sentInvitation.role)} text-sm`} variant="outline">
+                  {sentInvitation.role.charAt(0).toUpperCase() + sentInvitation.role.slice(1)}
+                </Badge>
               </div>
             </div>
 
             {/* Invitation Link */}
             <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">Share Invitation Link</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3">
-                  <LinkIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-600 truncate">{invitationUrl}</span>
+              <label className="text-sm font-medium text-foreground">Share Invitation Link</label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex-1 flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+                  <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-foreground truncate font-mono">{invitationUrl}</span>
                 </div>
                 <Button
                   type="button"
                   onClick={handleCopy}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 w-full sm:w-auto"
                   variant={copied ? "default" : "outline"}
                 >
                   {copied ? (
                     <>
                       <Check className="h-4 w-4 mr-2" />
-                      Copied
+                      Copied!
                     </>
                   ) : (
                     <>
@@ -371,20 +409,20 @@ export function InviteUserDialog({
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 onClick={handleSendAnother}
                 variant="outline"
-                className="w-full"
+                className="flex-1 w-full"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Send Another
               </Button>
               <Button
                 onClick={handleClose}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                className="flex-1 w-full bg-primary hover:bg-primary/90"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4 mr-2" />
                 Done
               </Button>
             </div>
@@ -472,39 +510,39 @@ export function InviteUserDialog({
                   )}
                 />
 
-                {form.watch('role') === 'employee' && (
-                  <FormField
-                    control={form.control}
-                    name="supervisorId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assign Manager</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a manager (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {managers.map((manager) => (
-                              <SelectItem key={manager.id} value={manager.id}>
-                                {manager.name} ({manager.email})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Optionally assign a manager to this employee
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                 {form.watch('role') === 'employee' && (
+                   <FormField
+                     control={form.control}
+                     name="supervisorId"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>Assign Manager <span className="text-destructive">*</span></FormLabel>
+                         <Select 
+                           onValueChange={field.onChange} 
+                           defaultValue={field.value}
+                           disabled={isLoading}
+                         >
+                           <FormControl>
+                             <SelectTrigger>
+                               <SelectValue placeholder="Select a manager" />
+                             </SelectTrigger>
+                           </FormControl>
+                           <SelectContent>
+                             {managers.map((manager) => (
+                               <SelectItem key={manager.id} value={manager.id}>
+                                 {manager.name} ({manager.email})
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                         <FormDescription>
+                           This employee must be assigned to a manager
+                         </FormDescription>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+                 )}
 
                 <FormField
                   control={form.control}
@@ -538,23 +576,23 @@ export function InviteUserDialog({
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading || emailValidation.isExisting}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Send Invitation
-                      </>
-                    )}
-                  </Button>
+                   <Button 
+                     type="submit" 
+                     disabled={isLoading || emailValidation.isExisting}
+                     className="bg-primary hover:bg-primary/90"
+                   >
+                     {isLoading ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Sending...
+                       </>
+                     ) : (
+                       <>
+                         <Send className="mr-2 h-4 w-4" />
+                         Send Invitation
+                       </>
+                     )}
+                   </Button>
                 </DialogFooter>
               </form>
             </Form>

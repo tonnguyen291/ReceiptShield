@@ -17,10 +17,19 @@ export async function POST(request: NextRequest) {
     // In a real app, this would come from authentication
     const invitedBy = 'system-admin';
 
-    // Create invitation in database
+    // Create invitation in database (or get existing one)
     console.log('📧 Creating invitation in database...');
     const invitation = await createInvitation(invitationData, invitedBy);
-    console.log('📧 Invitation created successfully:', invitation.id);
+    console.log('📧 Invitation created/retrieved successfully:', invitation.id);
+    
+    // Check if this is a resend of an existing invitation
+    const isResend = invitation.createdAt.getTime() < (Date.now() - 60000); // Created more than 1 minute ago
+    console.log('📧 Invitation details:', {
+      id: invitation.id,
+      status: invitation.status,
+      createdAt: invitation.createdAt,
+      isResend: isResend
+    });
 
     // Generate email content
     console.log('📧 Generating email content...');
@@ -78,8 +87,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       token: invitation.token,
-      message: 'Invitation created and email sent successfully.',
-      invitationUrl: invitationUrl
+      message: isResend 
+        ? 'Invitation email resent successfully.' 
+        : 'Invitation created and email sent successfully.',
+      invitationUrl: invitationUrl,
+      isResend: isResend
     });
   } catch (error) {
     console.error('❌ Failed to create invitation:', error);
