@@ -26,9 +26,33 @@ export async function POST(request: NextRequest) {
     console.log('📧 Generating email content...');
     const { subject, html, text } = generateInvitationEmail(invitation, invitationData.message);
 
-    // In a real application, you would integrate with an email service like SendGrid, Mailgun, or AWS SES here.
-    // For this mock implementation, we'll just log the email content.
-    console.log('--- MOCK EMAIL SERVICE ---');
+    // Send the invitation email
+    console.log('📧 Sending invitation email...');
+    try {
+      const emailResponse = await fetch('/api/send-invitation-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitation,
+          customMessage: invitationData.message,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      const emailResult = await emailResponse.json();
+      console.log('📧 Email sent successfully:', emailResult);
+    } catch (emailError) {
+      console.error('📧 Failed to send email:', emailError);
+      // Continue anyway - the invitation was created successfully
+    }
+
+    // Log the email content for debugging
+    console.log('--- EMAIL CONTENT ---');
     console.log('To:', invitation.email);
     console.log('Subject:', subject);
     console.log('Invitation URL:', `https://compensationengine.com/accept-invitation?token=${invitation.token}`);
