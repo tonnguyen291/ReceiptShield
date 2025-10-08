@@ -9,10 +9,29 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com';
     const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
     
-    console.log('📧 Sending email to:', invitation.email);
-    console.log('📧 Invitation URL:', invitationUrl);
+    console.log('📧 Email Service Debug:');
+    console.log('  - GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
+    console.log('  - GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? 'SET (length: ' + process.env.GMAIL_APP_PASSWORD.length + ')' : 'NOT SET');
+    console.log('  - To:', invitation.email);
+    console.log('  - Invitation URL:', invitationUrl);
+    
+    // Check if Gmail credentials are available
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error('❌ Gmail credentials not found in environment variables!');
+      console.error('  - GMAIL_USER:', process.env.GMAIL_USER);
+      console.error('  - GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? '***' : 'undefined');
+      
+      return NextResponse.json({ 
+        error: 'Gmail credentials not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.',
+        details: {
+          gmailUser: !!process.env.GMAIL_USER,
+          gmailPassword: !!process.env.GMAIL_APP_PASSWORD
+        }
+      }, { status: 500 });
+    }
     
     // Create Gmail SMTP transporter
+    console.log('📧 Creating Gmail SMTP transporter...');
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -20,6 +39,7 @@ export async function POST(request: NextRequest) {
         pass: process.env.GMAIL_APP_PASSWORD, // Use App Password, not regular password
       },
     });
+    console.log('✅ Transporter created successfully');
 
     // Email HTML template
     const htmlContent = `
