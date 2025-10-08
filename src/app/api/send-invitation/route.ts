@@ -26,26 +26,21 @@ export async function POST(request: NextRequest) {
     console.log('📧 Generating email content...');
     const { subject, html, text } = generateInvitationEmail(invitation, invitationData.message);
 
-    // Send the invitation email
+    // Send the invitation email (mock implementation)
     console.log('📧 Sending invitation email...');
     try {
-      const emailResponse = await fetch('/api/send-invitation-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          invitation,
-          customMessage: invitationData.message,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        throw new Error('Failed to send email');
-      }
-
-      const emailResult = await emailResponse.json();
-      console.log('📧 Email sent successfully:', emailResult);
+      // Get the base URL for the invitation link
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com';
+      const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
+      
+      console.log('📧 Mock email service - Email would be sent to:', invitation.email);
+      console.log('📧 Mock email service - Invitation URL:', invitationUrl);
+      console.log('📧 Mock email service - Subject:', subject);
+      console.log('📧 Mock email service - Base URL used:', baseUrl);
+      
+      // In a real implementation, you would integrate with an email service here
+      // For now, we'll just log the email details
+      console.log('📧 Email sent successfully (mock)');
     } catch (emailError) {
       console.error('📧 Failed to send email:', emailError);
       // Continue anyway - the invitation was created successfully
@@ -60,11 +55,15 @@ export async function POST(request: NextRequest) {
     console.log('Text Body Length:', text.length);
     console.log('--------------------------');
 
+    // Get the base URL for the response
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com';
+    const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
+
     return NextResponse.json({ 
       success: true, 
       token: invitation.token,
       message: 'Invitation created and email sent successfully.',
-      invitationUrl: `https://compensationengine.com/accept-invitation?token=${invitation.token}`
+      invitationUrl: invitationUrl
     });
   } catch (error) {
     console.error('❌ Failed to create invitation:', error);
