@@ -37,7 +37,7 @@ env:
   
   # Firebase Configuration (from existing setup)
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: AIzaSyBJUMBq1qLQnJjNz7lp72lJ7awKeod3qMo
+    value: "AIzaSyBJUMBq1qLQnJjNz7lp72lJ7awKeod3qMo"
     availability:
       - BUILD
       - RUNTIME
