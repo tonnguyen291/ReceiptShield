@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import confetti from 'canvas-confetti';
 import {
   Dialog,
   DialogContent,
@@ -28,17 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Mail, UserPlus, AlertCircle, CheckCircle, XCircle, Link as LinkIcon, Copy } from 'lucide-react';
+import { Loader2, Mail, UserPlus, AlertCircle, CheckCircle, XCircle, Link as LinkIcon, Copy, Send, Eye, RefreshCw, List, Sparkles, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { createInvitation, getInvitationByToken } from '@/lib/firebase-invitation-store';
 import { getUsers } from '@/lib/firebase-user-store';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-// Email service is now handled via API route
 import type { User, UserRole, InvitationRequest } from '@/types';
 
 const inviteUserSchema = z.object({
@@ -76,8 +77,8 @@ export function InviteUserDialog({
     isExisting: false,
     message: '',
   });
-
-  console.log('🔍 InviteUserDialog rendered:', { isOpen, currentUser: !!currentUser });
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const form = useForm<InviteUserFormData>({
     resolver: zodResolver(inviteUserSchema),
@@ -89,7 +90,14 @@ export function InviteUserDialog({
     },
   });
 
-  const selectedRole = form.watch('role');
+  // Trigger confetti on successful invitation
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+  };
 
   // Load managers when dialog opens
   useEffect(() => {
@@ -104,7 +112,7 @@ export function InviteUserDialog({
     if (email) {
       const timeoutId = setTimeout(() => {
         validateEmail(email);
-      }, 500); // 500ms delay
+      }, 500);
       
       return () => clearTimeout(timeoutId);
     } else {
@@ -143,31 +151,29 @@ export function InviteUserDialog({
     });
 
     try {
-      // Check if user already exists
-      const existingUserQuery = query(
+      const usersQuery = query(
         collection(db, 'users'),
         where('email', '==', email.toLowerCase())
       );
-      const existingUserSnapshot = await getDocs(existingUserQuery);
-      
-      if (!existingUserSnapshot.empty) {
+      const usersSnapshot = await getDocs(usersQuery);
+
+      if (!usersSnapshot.empty) {
         setEmailValidation({
           isValidating: false,
           isExisting: true,
-          message: 'A user with this email already exists in the system.',
+          message: 'This email is already registered in the system.',
         });
         return;
       }
 
-      // Check if there's already a pending invitation
-      const existingInvitationQuery = query(
+      const invitationsQuery = query(
         collection(db, 'invitations'),
         where('email', '==', email.toLowerCase()),
         where('status', '==', 'pending')
       );
-      const existingInvitationSnapshot = await getDocs(existingInvitationQuery);
-      
-      if (!existingInvitationSnapshot.empty) {
+      const invitationsSnapshot = await getDocs(invitationsQuery);
+
+      if (!invitationsSnapshot.empty) {
         setEmailValidation({
           isValidating: false,
           isExisting: true,
@@ -176,7 +182,6 @@ export function InviteUserDialog({
         return;
       }
 
-      // Email is available
       setEmailValidation({
         isValidating: false,
         isExisting: false,
@@ -193,18 +198,12 @@ export function InviteUserDialog({
   };
 
   const onSubmit = async (data: InviteUserFormData) => {
-    console.log('🔍 Form submitted:', data);
-    if (!currentUser) {
-      console.log('❌ No current user found');
-      return;
-    }
-
-    // Check if email validation failed
-    if (emailValidation.isExisting) {
-      return;
-    }
+    if (!currentUser || emailValidation.isExisting) return;
 
     setIsLoading(true);
+    setEmailStatus('sending');
+    setEmailError(null);
+
     try {
       const invitationData: InvitationRequest = {
         email: data.email,
@@ -213,12 +212,10 @@ export function InviteUserDialog({
         message: data.message || undefined,
       };
 
-      // Send invitation via API route (handles both database creation and email sending)
+      // Send invitation
       const response = await fetch('/api/send-invitation', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...invitationData,
           message: data.message,
@@ -226,47 +223,27 @@ export function InviteUserDialog({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send invitation');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send invitation');
       }
 
       const result = await response.json();
-      
-      // Get the invitation details for display
       const invitation = await getInvitationByToken(result.token);
       
       if (invitation) {
         setSentInvitation({ email: invitation.email, token: invitation.token, role: invitation.role });
+        setEmailStatus('sent');
+        triggerConfetti();
+        onInvitationSent();
       }
-      setCopied(false);
-      onInvitationSent();
     } catch (error) {
       console.error('Error sending invitation:', error);
-      
-      let errorTitle = 'Error';
-      let errorMessage = 'Failed to send invitation';
-      let errorIcon = <XCircle className="h-4 w-4" />;
-      
-      if (error instanceof Error) {
-        if (error.message.includes('already exists')) {
-          errorTitle = 'User Already Exists';
-          errorMessage = error.message;
-          errorIcon = <AlertCircle className="h-4 w-4" />;
-        } else if (error.message.includes('pending invitation')) {
-          errorTitle = 'Invitation Already Sent';
-          errorMessage = error.message;
-          errorIcon = <Mail className="h-4 w-4" />;
-        } else if (error.message.includes('Failed to send invitation email')) {
-          errorTitle = 'Email Error';
-          errorMessage = 'The invitation was created but the email could not be sent. Please try again.';
-          errorIcon = <Mail className="h-4 w-4" />;
-        } else {
-          errorMessage = error.message;
-        }
-      }
+      setEmailStatus('failed');
+      setEmailError(error instanceof Error ? error.message : 'Failed to send invitation');
       
       toast({
-        title: errorTitle,
-        description: errorMessage,
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send invitation',
         variant: 'destructive',
       });
     } finally {
@@ -278,13 +255,19 @@ export function InviteUserDialog({
     if (!isLoading) {
       form.reset();
       setSentInvitation(null);
-      setEmailValidation({
-        isValidating: false,
-        isExisting: false,
-        message: '',
-      });
+      setEmailStatus('idle');
+      setEmailError(null);
+      setEmailValidation({ isValidating: false, isExisting: false, message: '' });
       onClose();
     }
+  };
+
+  const handleSendAnother = () => {
+    form.reset();
+    setSentInvitation(null);
+    setEmailStatus('idle');
+    setEmailError(null);
+    setCopied(false);
   };
 
   const invitationUrl = sentInvitation
@@ -296,217 +279,289 @@ export function InviteUserDialog({
     try {
       await navigator.clipboard.writeText(invitationUrl);
       setCopied(true);
+      toast({ description: '✅ Link copied to clipboard!' });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback toast if clipboard fails
-      toast({ description: 'Could not copy link. Please copy manually.' });
+      toast({ description: 'Could not copy link. Please copy manually.', variant: 'destructive' });
+    }
+  };
+
+  const getRoleBadgeColor = (role: UserRole) => {
+    switch (role) {
+      case 'admin': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'manager': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'employee': return 'bg-green-100 text-green-700 border-green-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <UserPlus className="h-5 w-5 text-primary" />
+      <DialogContent className="sm:max-w-[640px]">
+        {sentInvitation ? (
+          // Success View
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Invitation Sent Successfully!
+                </h2>
+                <p className="text-gray-600">
+                  An invitation email has been sent to <span className="font-semibold">{sentInvitation.email}</span>
+                </p>
+              </div>
             </div>
-            Invite New User
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            Send an invitation to a new user to join your organization. They will receive an email with instructions to create their account.
-          </DialogDescription>
-        </DialogHeader>
 
-        {sentInvitation && (
-          <div className="mb-4 rounded-md border border-border bg-muted p-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1">
-                <div className="font-medium">Invitation sent to {sentInvitation.email}</div>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Share or copy the link below if needed:
+            {/* Email Status Indicator */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  {emailStatus === 'sending' && <Loader2 className="h-5 w-5 text-green-600 animate-spin" />}
+                  {emailStatus === 'sent' && <Check className="h-5 w-5 text-green-600" />}
+                  {emailStatus === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
                 </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm max-w-full overflow-hidden">
-                    <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate" title={invitationUrl}>{invitationUrl}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-green-900">
+                      {emailStatus === 'sending' && 'Sending email...'}
+                      {emailStatus === 'sent' && 'Email delivered successfully'}
+                      {emailStatus === 'failed' && 'Email delivery failed'}
+                    </span>
+                    <Badge className={getRoleBadgeColor(sentInvitation.role)}>
+                      {sentInvitation.role}
+                    </Badge>
                   </div>
-                  <Button type="button" variant="secondary" size="sm" onClick={handleCopy}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    {copied ? 'Copied' : 'Copy'}
-                  </Button>
+                  {emailStatus === 'failed' && emailError && (
+                    <p className="text-sm text-red-600 mt-1">{emailError}</p>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="user@company.com"
-                        className={`pl-10 ${
-                          emailValidation.isExisting 
-                            ? 'border-destructive focus:border-destructive' 
-                            : emailValidation.message === 'Email is available.' 
-                            ? 'border-green-500 focus:border-green-500' 
-                            : ''
-                        }`}
-                        disabled={!!sentInvitation || isLoading}
-                        {...field}
-                      />
-                      {emailValidation.isValidating && (
-                        <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
-                      )}
-                      {!emailValidation.isValidating && emailValidation.isExisting && (
-                        <XCircle className="absolute right-3 top-3 h-4 w-4 text-destructive" />
-                      )}
-                      {!emailValidation.isValidating && emailValidation.message === 'Email is available.' && (
-                        <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                  </FormControl>
-                  {emailValidation.message && (
-                    <div className={`text-sm flex items-center gap-2 p-2 rounded-md ${
-                      emailValidation.isExisting 
-                        ? 'text-destructive bg-destructive/10 border border-destructive/20' 
-                        : emailValidation.message === 'Email is available.' 
-                        ? 'text-primary/90 bg-muted border border-border' 
-                        : 'text-muted-foreground'
-                    }`}>
-                      {emailValidation.isExisting && <AlertCircle className="h-3 w-3" />}
-                      {emailValidation.message === 'Email is available.' && <CheckCircle className="h-3 w-3 text-primary" />}
-                      {emailValidation.message}
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!sentInvitation || isLoading}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="employee">Employee</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {selectedRole === 'employee' && 'Can submit receipts and view their own expense history'}
-                    {selectedRole === 'manager' && 'Can manage team members and approve/reject receipts'}
-                    {selectedRole === 'admin' && 'Full access to all features and user management'}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {selectedRole === 'employee' && (
-              <FormField
-                control={form.control}
-                name="supervisorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supervisor</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!!sentInvitation || isLoading}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a supervisor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {managers.map((manager) => (
-                          <SelectItem key={manager.id} value={manager.id}>
-                            {manager.name} ({manager.email})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select the manager who will supervise this employee
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Personal Message (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add a personal message to include in the invitation email..."
-                      className="resize-none"
-                      rows={3}
-                      disabled={!!sentInvitation || isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This message will be included in the invitation email
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isLoading}
-              >
-                {sentInvitation ? 'Done' : 'Cancel'}
-              </Button>
-              {!sentInvitation && (
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || emailValidation.isValidating || emailValidation.isExisting} 
-                  className="min-w-[140px]"
+            {/* Invitation Link */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">Share Invitation Link</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-4 py-3">
+                  <LinkIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 truncate">{invitationUrl}</span>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex-shrink-0"
+                  variant={copied ? "default" : "outline"}
                 >
-                  {isLoading ? (
+                  {copied ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      <Check className="h-4 w-4 mr-2" />
+                      Copied
                     </>
                   ) : (
                     <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Invitation
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy
                     </>
                   )}
                 </Button>
-              )}
-            </DialogFooter>
-          </form>
-        </Form>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <Button
+                onClick={handleSendAnother}
+                variant="outline"
+                className="w-full"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Send Another
+              </Button>
+              <Button
+                onClick={handleClose}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Done
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // Form View
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                </div>
+                Invite New User
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Send an invitation to a new user to join your organization. They will receive an email with instructions.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="user@company.com"
+                            className={`pl-10 ${
+                              emailValidation.isExisting 
+                                ? 'border-destructive focus:border-destructive' 
+                                : emailValidation.message === 'Email is available.' 
+                                ? 'border-green-500 focus:border-green-500' 
+                                : ''
+                            }`}
+                            disabled={isLoading}
+                            {...field}
+                          />
+                          {emailValidation.isValidating && (
+                            <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
+                      </FormControl>
+                      {emailValidation.message && (
+                        <p className={`text-sm ${emailValidation.isExisting ? 'text-destructive' : 'text-green-600'}`}>
+                          {emailValidation.message}
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="employee">Employee</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Choose the user's role in the organization
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch('role') === 'employee' && (
+                  <FormField
+                    control={form.control}
+                    name="supervisorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assign Manager</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          disabled={isLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a manager (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {managers.map((manager) => (
+                              <SelectItem key={manager.id} value={manager.id}>
+                                {manager.name} ({manager.email})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Optionally assign a manager to this employee
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Personal Message (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Add a personal welcome message..."
+                          className="resize-none"
+                          rows={3}
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This message will be included in the invitation email
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleClose}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || emailValidation.isExisting}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Invitation
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
+
