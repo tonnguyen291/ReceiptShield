@@ -26,21 +26,37 @@ export async function POST(request: NextRequest) {
     console.log('📧 Generating email content...');
     const { subject, html, text } = generateInvitationEmail(invitation, invitationData.message);
 
-    // Send the invitation email (mock implementation)
+    // Send the invitation email
     console.log('📧 Sending invitation email...');
+    let emailSent = false;
     try {
-      // Get the base URL for the invitation link
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com';
-      const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
+      // Get the request URL to determine the base URL
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const host = request.headers.get('host') || 'compensationengine.com';
+      const baseUrl = `${protocol}://${host}`;
+      const emailServiceUrl = `${baseUrl}/api/send-invitation-email`;
       
-      console.log('📧 Mock email service - Email would be sent to:', invitation.email);
-      console.log('📧 Mock email service - Invitation URL:', invitationUrl);
-      console.log('📧 Mock email service - Subject:', subject);
-      console.log('📧 Mock email service - Base URL used:', baseUrl);
+      console.log('📧 Calling email service at:', emailServiceUrl);
       
-      // In a real implementation, you would integrate with an email service here
-      // For now, we'll just log the email details
-      console.log('📧 Email sent successfully (mock)');
+      const emailResponse = await fetch(emailServiceUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitation,
+          customMessage: invitationData.message,
+        }),
+      });
+
+      if (emailResponse.ok) {
+        const emailResult = await emailResponse.json();
+        console.log('📧 Email sent successfully:', emailResult.messageId);
+        emailSent = true;
+      } else {
+        const errorData = await emailResponse.json();
+        console.error('📧 Email service error:', errorData);
+      }
     } catch (emailError) {
       console.error('📧 Failed to send email:', emailError);
       // Continue anyway - the invitation was created successfully
