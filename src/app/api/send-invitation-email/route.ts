@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,36 +10,31 @@ export async function POST(request: NextRequest) {
     const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
     
     console.log('📧 Email Service Debug:');
-    console.log('  - GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
-    console.log('  - GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? 'SET (length: ' + process.env.GMAIL_APP_PASSWORD.length + ')' : 'NOT SET');
+    console.log('  - SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'SET' : 'NOT SET');
+    console.log('  - SENDGRID_FROM_EMAIL:', process.env.SENDGRID_FROM_EMAIL || 'NOT SET');
     console.log('  - To:', invitation.email);
     console.log('  - Invitation URL:', invitationUrl);
     
-    // Check if Gmail credentials are available
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      console.error('❌ Gmail credentials not found in environment variables!');
-      console.error('  - GMAIL_USER:', process.env.GMAIL_USER);
-      console.error('  - GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? '***' : 'undefined');
+    // Check if SendGrid credentials are available
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('❌ SendGrid API key not found in environment variables!');
       
       return NextResponse.json({ 
-        error: 'Gmail credentials not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.',
+        error: 'SendGrid API key not configured. Please set SENDGRID_API_KEY environment variable.',
         details: {
-          gmailUser: !!process.env.GMAIL_USER,
-          gmailPassword: !!process.env.GMAIL_APP_PASSWORD
+          sendgridApiKey: !!process.env.SENDGRID_API_KEY,
+          sendgridFromEmail: !!process.env.SENDGRID_FROM_EMAIL
         }
       }, { status: 500 });
     }
     
-    // Create Gmail SMTP transporter
-    console.log('📧 Creating Gmail SMTP transporter...');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD, // Use App Password, not regular password
-      },
-    });
-    console.log('✅ Transporter created successfully');
+    // Initialize SendGrid with API key
+    console.log('📧 Initializing SendGrid...');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    console.log('✅ SendGrid initialized successfully');
+    
+    // Get the from email (use environment variable or default to Gmail)
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'aqallaf76@gmail.com';
 
     // Email HTML template
     const htmlContent = `
@@ -115,10 +110,13 @@ export async function POST(request: NextRequest) {
       </html>
     `;
 
-    // Send email
-    const info = await transporter.sendMail({
-      from: `"ReceiptShield" <${process.env.GMAIL_USER}>`,
+    // Prepare email message
+    const msg = {
       to: invitation.email,
+      from: {
+        email: fromEmail,
+        name: 'ReceiptShield',
+      },
       subject: "You're invited to join ReceiptShield",
       html: htmlContent,
       text: `You're Invited to Join ReceiptShield!
@@ -144,14 +142,19 @@ ReceiptShield is an intelligent expense management system that helps you:
 If you didn't expect this invitation, you can safely ignore this email.
 
 © 2025 ReceiptShield. All rights reserved.`,
-    });
+    };
 
-    console.log('✅ Email sent successfully:', info.messageId);
+    // Send email using SendGrid
+    console.log('📧 Sending email via SendGrid...');
+    const response = await sgMail.send(msg);
+    const messageId = response[0]?.headers?.['x-message-id'] || 'unknown';
+
+    console.log('✅ Email sent successfully:', messageId);
     
     return NextResponse.json({ 
       success: true,
       message: 'Email sent successfully',
-      messageId: info.messageId,
+      messageId: messageId,
       invitationUrl: invitationUrl
     });
   } catch (error) {
@@ -161,11 +164,13 @@ If you didn't expect this invitation, you can safely ignore this email.
     if (error instanceof Error) {
       errorMessage = error.message;
       
-      // Provide helpful error messages
-      if (errorMessage.includes('Invalid login')) {
-        errorMessage = 'Gmail authentication failed. Please check your Gmail credentials and ensure you are using an App Password.';
-      } else if (errorMessage.includes('ECONNREFUSED')) {
-        errorMessage = 'Could not connect to Gmail SMTP server. Please check your internet connection.';
+      // Provide helpful error messages for SendGrid errors
+      if (errorMessage.includes('Unauthorized')) {
+        errorMessage = 'SendGrid authentication failed. Please check your API key.';
+      } else if (errorMessage.includes('Forbidden')) {
+        errorMessage = 'SendGrid access denied. Please verify your sender email is verified in SendGrid.';
+      } else if (errorMessage.includes('Bad Request')) {
+        errorMessage = 'Invalid email request. Please check the email address and try again.';
       }
     }
     
