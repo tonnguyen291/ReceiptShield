@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createInvitation } from '@/lib/firebase-invitation-store';
 import { generateInvitationEmail } from '@/lib/email-service';
 
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': 'https://compensationengine.com',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('📧 Send invitation API called');
@@ -92,6 +103,12 @@ export async function POST(request: NextRequest) {
         : 'Invitation created and email sent successfully.',
       invitationUrl: invitationUrl,
       isResend: isResend
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': 'https://compensationengine.com',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
     });
   } catch (error) {
     console.error('❌ Failed to create invitation:', error);
@@ -109,6 +126,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       error: errorMessage,
       details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    }, { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': 'https://compensationengine.com',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 }
