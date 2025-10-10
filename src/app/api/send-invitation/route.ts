@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createInvitation } from '@/lib/firebase-invitation-store';
 import { generateInvitationEmail } from '@/lib/email-service';
+import { sendInvitationEmail } from '@/lib/sendgrid-service';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -46,40 +47,21 @@ export async function POST(request: NextRequest) {
     console.log('📧 Generating email content...');
     const { subject, html, text } = generateInvitationEmail(invitation, invitationData.message);
 
-    // Send the invitation email
+    // Send the invitation email using SendGrid service
     console.log('📧 Sending invitation email...');
     let emailSent = false;
     try {
-      // Get the current request URL to determine the backend base URL
-      const protocol = request.headers.get('x-forwarded-proto') || 'https';
-      const host = request.headers.get('host') || '';
-      
-      // Construct the full backend URL for the email service
-      const baseUrl = `${protocol}://${host}`;
-      const emailServiceUrl = `${baseUrl}/api/send-invitation-email`;
-      
-      console.log('📧 Calling email service at:', emailServiceUrl);
-      console.log('📧 Request host:', host);
-      
-      const emailResponse = await fetch(emailServiceUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const emailResult = await sendInvitationEmail({
+        invitation: {
+          email: invitation.email,
+          role: invitation.role,
+          token: invitation.token,
         },
-        body: JSON.stringify({
-          invitation,
-          customMessage: invitationData.message,
-        }),
+        customMessage: invitationData.message,
       });
-
-      if (emailResponse.ok) {
-        const emailResult = await emailResponse.json();
-        console.log('📧 Email sent successfully:', emailResult.messageId);
-        emailSent = true;
-      } else {
-        const errorData = await emailResponse.json();
-        console.error('📧 Email service error:', errorData);
-      }
+      
+      console.log('📧 Email sent successfully:', emailResult.messageId);
+      emailSent = true;
     } catch (emailError) {
       console.error('📧 Failed to send email:', emailError);
       // Continue anyway - the invitation was created successfully
