@@ -50,13 +50,16 @@ export async function POST(request: NextRequest) {
     console.log('📧 Sending invitation email...');
     let emailSent = false;
     try {
-      // Get the request URL to determine the base URL
+      // Get the current request URL to determine the backend base URL
       const protocol = request.headers.get('x-forwarded-proto') || 'https';
-      const host = request.headers.get('host') || 'compensationengine.com';
+      const host = request.headers.get('host') || '';
+      
+      // Construct the full backend URL for the email service
       const baseUrl = `${protocol}://${host}`;
       const emailServiceUrl = `${baseUrl}/api/send-invitation-email`;
       
       console.log('📧 Calling email service at:', emailServiceUrl);
+      console.log('📧 Request host:', host);
       
       const emailResponse = await fetch(emailServiceUrl, {
         method: 'POST',

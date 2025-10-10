@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sgMail from '@sendgrid/mail';
 
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { invitation, customMessage } = await request.json();
@@ -156,6 +167,12 @@ If you didn't expect this invitation, you can safely ignore this email.
       message: 'Email sent successfully',
       messageId: messageId,
       invitationUrl: invitationUrl
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
     });
   } catch (error) {
     console.error('❌ Failed to send invitation email:', error);
@@ -177,6 +194,13 @@ If you didn't expect this invitation, you can safely ignore this email.
     return NextResponse.json({ 
       error: errorMessage,
       details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    }, { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 }
