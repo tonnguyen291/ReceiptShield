@@ -6,9 +6,10 @@ import { FlaggedReceiptsTable } from '@/components/manager/flagged-receipts-tabl
 import { ManagerOverviewCharts } from '@/components/manager/manager-overview-charts';
 import { TeamActivityTable } from '@/components/manager/team-activity-table';
 import { ManagerQuickStats } from '@/components/manager/manager-quick-stats';
+import { ManagerAnalyticsDashboard } from '@/components/manager-analytics/manager-analytics-dashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FileText, Filter, LogOut, ChevronDown, Loader2, Calendar as CalendarIcon, X } from 'lucide-react';
+import { FileText, Filter, LogOut, ChevronDown, Loader2, Calendar as CalendarIcon, X, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ export default function ManagerDashboardPage() {
   const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   // State for filtering
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -532,12 +534,34 @@ export default function ManagerDashboardPage() {
 
         {/* Overview Charts Section */}
         <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-1 bg-primary rounded-full"></div>
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">Team Overview</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-1 bg-primary rounded-full"></div>
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">Team Overview</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+            </Button>
           </div>
           <ManagerOverviewCharts />
         </div>
+
+        {/* Advanced Analytics Section */}
+        {showAnalytics && user && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-1 bg-purple-500 rounded-full"></div>
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">Advanced Analytics</h2>
+            </div>
+            <ManagerAnalyticsDashboard managerId={user.id} />
+          </div>
+        )}
 
         {/* Report Generation Section */}
         <Card className="shadow-lg border-l-4 border-l-blue-500">

@@ -14,7 +14,9 @@ import {
   BarChart3,
   Lightbulb
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AnalyticsDashboard } from '@/components/analytics/analytics-dashboard';
+import { getUserSpendingAnalytics, type SpendingAnalytics } from '@/lib/data-service';
 
 interface OriginDashboardEnhancedProps {
   user?: {
@@ -26,24 +28,52 @@ interface OriginDashboardEnhancedProps {
 
 export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState<SpendingAnalytics | null>(null);
 
-  // Mock data - replace with real data
-  const summaryData = {
-    totalReceipts: 24,
-    totalAmount: 2847.50,
-    pendingAmount: 156.30,
-    approvedAmount: 2691.20
+  // Load real analytics data
+  useEffect(() => {
+    if (user?.email) {
+      getUserSpendingAnalytics(user.email).then(setAnalytics).catch(console.error);
+    }
+  }, [user?.email]);
+
+  // Use real data if available, otherwise fallback to mock data
+  const summaryData = analytics ? {
+    totalReceipts: analytics.totalReceipts,
+    totalAmount: analytics.totalSpent,
+    pendingAmount: analytics.statusBreakdown.find(s => s.status === 'Pending')?.amount || 0,
+    approvedAmount: analytics.statusBreakdown.find(s => s.status === 'Approved')?.amount || 0
+  } : {
+    totalReceipts: 0,
+    totalAmount: 0,
+    pendingAmount: 0,
+    approvedAmount: 0
   };
 
-  const recentReceipts = [
-    { id: 1, amount: 45.60, vendor: "Starbucks", date: "2024-01-15", status: "approved" },
-    { id: 2, amount: 23.40, vendor: "McDonald's", date: "2024-01-14", status: "pending" },
-    { id: 3, amount: 89.90, vendor: "Office Depot", date: "2024-01-13", status: "approved" }
-  ];
+  // Use real recent receipts if available
+  const recentReceipts = analytics?.recentReceipts.slice(0, 3).map(receipt => {
+    const amount = receipt.items.reduce((sum, item) => {
+      const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+      return sum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+    }, 0);
+    
+    return {
+      id: receipt.id,
+      amount,
+      vendor: receipt.items[0]?.label || 'Unknown',
+      date: new Date(receipt.uploadedAt).toLocaleDateString(),
+      status: receipt.status || 'pending'
+    };
+  }) || [];
 
   const quickActions = [
-    { label: "Submit Receipt", icon: Plus, href: "/employee/submit-receipt" },
-    { label: "View Analytics", icon: BarChart3, href: "/employee/analytics" },
+    { label: "Submit Receipt", icon: Plus, href: "/employee/upload" },
+    { 
+      label: "View Analytics", 
+      icon: BarChart3, 
+      onClick: () => setShowAnalytics(!showAnalytics) 
+    },
     { label: "Get Insights", icon: Lightbulb, href: "/employee/insights" }
   ];
 
@@ -71,9 +101,11 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           <h1 className="text-display text-[var(--color-text)]">Dashboard</h1>
           <p className="text-caption text-[var(--color-text-secondary)]">Welcome back, {user?.name || user?.email}</p>
         </div>
-        <Button className="origin-button" onClick={() => setIsLoading(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Submit Receipt
+        <Button className="origin-button" asChild>
+          <a href="/employee/upload">
+            <Plus className="h-4 w-4 mr-2" />
+            Submit Receipt
+          </a>
         </Button>
       </div>
 
@@ -137,12 +169,20 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
                 key={index}
                 variant="outline"
                 className="h-auto p-4 flex flex-col items-center space-y-2 hover:bg-[var(--color-bg-secondary)] border-[var(--color-border)]"
-                asChild
+                asChild={!!action.href}
+                onClick={action.onClick}
               >
-                <a href={action.href}>
-                  <action.icon className="h-6 w-6" />
-                  <span>{action.label}</span>
-                </a>
+                {action.href ? (
+                  <a href={action.href}>
+                    <action.icon className="h-6 w-6" />
+                    <span>{action.label}</span>
+                  </a>
+                ) : (
+                  <div>
+                    <action.icon className="h-6 w-6" />
+                    <span>{action.label}</span>
+                  </div>
+                )}
               </Button>
             ))}
           </div>
@@ -191,14 +231,49 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </CardContent>
         </Card>
 
-        {/* Mini Chart Placeholder */}
+        {/* Mini Analytics Preview */}
         <Card className="origin-card">
           <CardHeader>
-            <CardTitle>Spending Trends</CardTitle>
-            <CardDescription>Your spending over time</CardDescription>
+            <CardTitle>Quick Analytics</CardTitle>
+            <CardDescription>Your spending overview</CardDescription>
           </CardHeader>
           <CardContent>
-            <LoadingChart />
+            {analytics && analytics.monthlyTrends.length > 0 ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    ${analytics.totalSpent.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-600">Total spent this period</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-lg font-semibold">{analytics.totalReceipts}</p>
+                    <p className="text-xs text-gray-600">Receipts</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold">{analytics.categoryBreakdown.length}</p>
+                    <p className="text-xs text-gray-600">Categories</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowAnalytics(true)}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Full Analytics
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">No analytics data yet</p>
+                <Button asChild>
+                  <a href="/employee/upload">Submit Receipt</a>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -236,6 +311,13 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </div>
         </CardContent>
       </Card>
+
+      {/* Analytics Dashboard */}
+      {showAnalytics && (
+        <div className="mt-8">
+          <AnalyticsDashboard />
+        </div>
+      )}
     </div>
   );
 }
