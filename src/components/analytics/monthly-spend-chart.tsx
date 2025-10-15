@@ -60,7 +60,7 @@ export function MonthlySpendChart({ data, className }: MonthlySpendChartProps) {
                       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                         <p className="font-medium text-gray-900">{label}</p>
                         <p className="text-blue-600">
-                          Amount: <span className="font-semibold">${payload[0].value?.toFixed(2)}</span>
+                          Amount: <span className="font-semibold">${typeof payload[0].value === 'number' ? payload[0].value.toFixed(2) : payload[0].value}</span>
                         </p>
                       </div>
                     );
