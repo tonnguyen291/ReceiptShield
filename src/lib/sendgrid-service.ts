@@ -1,21 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
 import sgMail from '@sendgrid/mail';
 
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
+export interface SendInvitationEmailParams {
+  invitation: {
+    email: string;
+    role: string;
+    token: string;
+  };
+  customMessage?: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function sendInvitationEmail({ invitation, customMessage }: SendInvitationEmailParams) {
   try {
-    const { invitation, customMessage } = await request.json();
-    
     // Get the base URL from environment or use production domain
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://compensationengine.com';
     const invitationUrl = `${baseUrl}/accept-invitation?token=${invitation.token}`;
@@ -29,14 +24,7 @@ export async function POST(request: NextRequest) {
     // Check if SendGrid credentials are available
     if (!process.env.SENDGRID_API_KEY) {
       console.error('❌ SendGrid API key not found in environment variables!');
-      
-      return NextResponse.json({ 
-        error: 'SendGrid API key not configured. Please set SENDGRID_API_KEY environment variable.',
-        details: {
-          sendgridApiKey: !!process.env.SENDGRID_API_KEY,
-          sendgridFromEmail: !!process.env.SENDGRID_FROM_EMAIL
-        }
-      }, { status: 500 });
+      throw new Error('SendGrid API key not configured. Please set SENDGRID_API_KEY environment variable.');
     }
     
     // Initialize SendGrid with API key
@@ -162,18 +150,12 @@ If you didn't expect this invitation, you can safely ignore this email.
 
     console.log('✅ Email sent successfully:', messageId);
     
-    return NextResponse.json({ 
+    return {
       success: true,
       message: 'Email sent successfully',
       messageId: messageId,
       invitationUrl: invitationUrl
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    };
   } catch (error) {
     console.error('❌ Failed to send invitation email:', error);
     
@@ -191,16 +173,7 @@ If you didn't expect this invitation, you can safely ignore this email.
       }
     }
     
-    return NextResponse.json({ 
-      error: errorMessage,
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { 
-      status: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    throw new Error(errorMessage);
   }
 }
+

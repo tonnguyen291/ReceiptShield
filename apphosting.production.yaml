@@ -16,16 +16,27 @@ runConfig:
   maxInstances: 4
 
 env:
-  # Gmail SMTP Configuration for sending invitation emails
-  - variable: GMAIL_USER
+  # SendGrid Email Configuration (more reliable for production)
+  - variable: SENDGRID_API_KEY
+    secret: SENDGRID_API_KEY
+    availability:
+      - RUNTIME
+  
+  - variable: SENDGRID_FROM_EMAIL
     value: aqallaf76@gmail.com
     availability:
       - RUNTIME
   
-  - variable: GMAIL_APP_PASSWORD
-    secret: GMAIL_APP_PASSWORD
-    availability:
-      - RUNTIME
+  # Gmail SMTP Configuration (backup - keeping for reference)
+  # - variable: GMAIL_USER
+  #   value: aqallaf76@gmail.com
+  #   availability:
+  #     - RUNTIME
+  # 
+  # - variable: GMAIL_APP_PASSWORD
+  #   secret: GMAIL_APP_PASSWORD
+  #   availability:
+  #     - RUNTIME
   
   # Application URL
   - variable: NEXT_PUBLIC_APP_URL

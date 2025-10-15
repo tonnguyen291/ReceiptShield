@@ -109,7 +109,7 @@ export async function createInvitation(
     const invitation: Omit<Invitation, 'id'> = {
       email: invitationData.email.toLowerCase().trim(),
       role: invitationData.role,
-      supervisorId: invitationData.supervisorId || null,
+      supervisorId: invitationData.supervisorId || undefined,
       invitedBy,
       status: 'pending',
       token: generateInvitationToken(),
@@ -118,7 +118,7 @@ export async function createInvitation(
       lastSentAt: now,
     };
 
-    // Prepare the document data, omitting null supervisorId for non-employees
+    // Prepare the document data, omitting undefined supervisorId for non-employees
     const docData: any = {
       email: invitation.email,
       role: invitation.role,
@@ -130,8 +130,8 @@ export async function createInvitation(
       lastSentAt: Timestamp.fromDate(now),
     };
 
-    // Only include supervisorId if it's not null
-    if (invitation.supervisorId !== null) {
+    // Only include supervisorId if it's defined
+    if (invitation.supervisorId !== undefined) {
       docData.supervisorId = invitation.supervisorId;
     }
 

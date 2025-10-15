@@ -225,7 +225,12 @@ export function InviteUserDialog({
       };
 
       // Send invitation
-      const response = await fetch('/api/send-invitation', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://receiptshield-backend--recieptshield.us-central1.hosted.app/api/send-invitation'
+        : '/api/send-invitation';
+      
+      console.log('📧 Calling API:', apiUrl);
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
