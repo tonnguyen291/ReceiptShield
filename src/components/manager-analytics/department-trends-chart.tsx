@@ -64,8 +64,10 @@ export function DepartmentTrendsChart({ data }: DepartmentTrendsChartProps) {
   // Calculate growth rates
   const getGrowthRate = (dept: string) => {
     if (data.length < 2) return 0;
-    const firstMonth = typeof data[0][dept] === 'number' ? data[0][dept] : 0;
-    const lastMonth = typeof data[data.length - 1][dept] === 'number' ? data[data.length - 1][dept] : 0;
+    const firstMonthValue = data[0][dept];
+    const lastMonthValue = data[data.length - 1][dept];
+    const firstMonth = typeof firstMonthValue === 'number' ? firstMonthValue : 0;
+    const lastMonth = typeof lastMonthValue === 'number' ? lastMonthValue : 0;
     if (firstMonth === 0) return lastMonth > 0 ? 100 : 0;
     return ((lastMonth - firstMonth) / firstMonth) * 100;
   };
