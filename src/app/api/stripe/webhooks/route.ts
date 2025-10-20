@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { updateCompanySubscription } from '@/lib/firebase-company-store';
 import { mapStripeStatusToInternal, mapStripePlanToTier } from '@/lib/stripe-subscriptions';
 import Stripe from 'stripe';
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-if (!webhookSecret) {
-  throw new Error('STRIPE_WEBHOOK_SECRET is not set');
-}
-
 export async function POST(request: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+  if (!webhookSecret) {
+    return NextResponse.json(
+      { error: 'STRIPE_WEBHOOK_SECRET is not set' },
+      { status: 500 }
+    );
+  }
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
 
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret!);
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     return NextResponse.json(
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
         let currentPeriodEnd: Date | undefined;
         if (session.subscription) {
           try {
-            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            const subscription = await getStripe().subscriptions.retrieve(session.subscription as string);
             currentPeriodEnd = new Date((subscription as any).current_period_end * 1000);
           } catch (err) {
             console.error('Error fetching subscription details:', err);
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
         }
         
         // Get subscription details to find company
-        const subscriptionDetails = await stripe.subscriptions.retrieve(subscription);
+        const subscriptionDetails = await getStripe().subscriptions.retrieve(subscription);
         const companyId = subscriptionDetails.metadata?.companyId;
 
         if (!companyId) {
@@ -144,7 +146,7 @@ export async function POST(request: NextRequest) {
         }
         
         // Get subscription details to find company
-        const subscriptionDetails = await stripe.subscriptions.retrieve(subscription);
+        const subscriptionDetails = await getStripe().subscriptions.retrieve(subscription);
         const companyId = subscriptionDetails.metadata?.companyId;
 
         if (!companyId) {

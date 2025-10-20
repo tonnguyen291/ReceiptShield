@@ -1,4 +1,4 @@
-import { stripe, SUBSCRIPTION_PLANS, type SubscriptionPlanKey } from './stripe';
+import { getStripe, SUBSCRIPTION_PLANS, type SubscriptionPlanKey } from './stripe';
 import type { Company, SubscriptionTier, SubscriptionStatus } from '@/types';
 
 export interface CreateCheckoutSessionParams {
@@ -24,7 +24,7 @@ export async function createCheckoutSession({
 }: CreateCheckoutSessionParams) {
   const planConfig = SUBSCRIPTION_PLANS[plan];
   
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [
@@ -60,7 +60,7 @@ export async function createPortalSession({
   companyId,
   customerId,
 }: CreatePortalSessionParams) {
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings/subscription`,
   });
@@ -72,21 +72,21 @@ export async function createPortalSession({
  * Get subscription details from Stripe
  */
 export async function getSubscription(subscriptionId: string) {
-  return await stripe.subscriptions.retrieve(subscriptionId);
+  return await getStripe().subscriptions.retrieve(subscriptionId);
 }
 
 /**
  * Get customer details from Stripe
  */
 export async function getCustomer(customerId: string) {
-  return await stripe.customers.retrieve(customerId);
+  return await getStripe().customers.retrieve(customerId);
 }
 
 /**
  * Cancel a subscription
  */
 export async function cancelSubscription(subscriptionId: string) {
-  return await stripe.subscriptions.cancel(subscriptionId);
+  return await getStripe().subscriptions.cancel(subscriptionId);
 }
 
 /**
@@ -96,9 +96,9 @@ export async function updateSubscription(
   subscriptionId: string,
   newPriceId: string
 ) {
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
   
-  return await stripe.subscriptions.update(subscriptionId, {
+  return await getStripe().subscriptions.update(subscriptionId, {
     items: [
       {
         id: subscription.items.data[0].id,
