@@ -222,8 +222,15 @@ export async function getCompanyUsage(companyId: string): Promise<{
 export async function incrementReceiptCount(companyId: string): Promise<void> {
   try {
     const companyRef = doc(db, COMPANIES_COLLECTION, companyId);
+    const companyDoc = await getDoc(companyRef);
+    
+    if (!companyDoc.exists()) {
+      throw new Error('Company not found');
+    }
+    
+    const companyData = companyDoc.data();
     await updateDoc(companyRef, {
-      receiptCount: company.receiptCount + 1,
+      receiptCount: (companyData?.receiptCount || 0) + 1,
       updatedAt: Timestamp.now(),
     });
   } catch (error) {
@@ -238,8 +245,15 @@ export async function incrementReceiptCount(companyId: string): Promise<void> {
 export async function incrementUserCount(companyId: string): Promise<void> {
   try {
     const companyRef = doc(db, COMPANIES_COLLECTION, companyId);
+    const companyDoc = await getDoc(companyRef);
+    
+    if (!companyDoc.exists()) {
+      throw new Error('Company not found');
+    }
+    
+    const companyData = companyDoc.data();
     await updateDoc(companyRef, {
-      userCount: company.userCount + 1,
+      userCount: (companyData?.userCount || 0) + 1,
       updatedAt: Timestamp.now(),
     });
   } catch (error) {
@@ -254,8 +268,15 @@ export async function incrementUserCount(companyId: string): Promise<void> {
 export async function decrementUserCount(companyId: string): Promise<void> {
   try {
     const companyRef = doc(db, COMPANIES_COLLECTION, companyId);
+    const companyDoc = await getDoc(companyRef);
+    
+    if (!companyDoc.exists()) {
+      throw new Error('Company not found');
+    }
+    
+    const companyData = companyDoc.data();
     await updateDoc(companyRef, {
-      userCount: Math.max(0, company.userCount - 1),
+      userCount: Math.max(0, (companyData?.userCount || 0) - 1),
       updatedAt: Timestamp.now(),
     });
   } catch (error) {

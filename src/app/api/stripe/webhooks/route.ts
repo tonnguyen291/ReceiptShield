@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret!);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     return NextResponse.json(
@@ -45,13 +45,24 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Get subscription details if available
+        let currentPeriodEnd: Date | undefined;
+        if (session.subscription) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            currentPeriodEnd = new Date((subscription as any).current_period_end * 1000);
+          } catch (err) {
+            console.error('Error fetching subscription details:', err);
+          }
+        }
+
         // Update company subscription
         await updateCompanySubscription(companyId, {
           subscriptionTier: plan as any,
           subscriptionStatus: 'active',
           stripeCustomerId: session.customer as string,
           stripeSubscriptionId: session.subscription as string,
-          currentPeriodEnd: new Date(session.subscription_details?.current_period_end * 1000),
+          currentPeriodEnd,
         });
 
         console.log(`Subscription created for company ${companyId}`);
@@ -73,7 +84,7 @@ export async function POST(request: NextRequest) {
         await updateCompanySubscription(companyId, {
           subscriptionTier: tier,
           subscriptionStatus: status,
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         });
 
         console.log(`Subscription updated for company ${companyId}: ${status}`);
@@ -99,7 +110,12 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscription = invoice.subscription as string;
+        const subscription = (invoice as any).subscription as string;
+        
+        if (!subscription) {
+          console.error('No subscription found in invoice:', invoice.id);
+          break;
+        }
         
         // Get subscription details to find company
         const subscriptionDetails = await stripe.subscriptions.retrieve(subscription);
@@ -120,7 +136,12 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscription = invoice.subscription as string;
+        const subscription = (invoice as any).subscription as string;
+        
+        if (!subscription) {
+          console.error('No subscription found in invoice:', invoice.id);
+          break;
+        }
         
         // Get subscription details to find company
         const subscriptionDetails = await stripe.subscriptions.retrieve(subscription);
