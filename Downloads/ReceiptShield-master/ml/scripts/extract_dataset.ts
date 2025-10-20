@@ -97,18 +97,20 @@ function extractFlatFeatures(items: { label: string; value: string }[]) {
 
 /** simple hash based on filename and size */
 function hashImage(filePath: string): Promise<string> {
-  return new Promise(async (res) => {
-    try {
-      const stats = await fs.stat(filePath);
-      const fileName = path.basename(filePath);
-      const simpleHash = Buffer.from(`${fileName}_${stats.size}`).toString('base64').slice(0, 16);
-      res(simpleHash);
-    } catch (err) {
-      // Fallback to filename hash
-      const fileName = path.basename(filePath);
-      const fallbackHash = Buffer.from(fileName).toString('base64').slice(0, 16);
-      res(fallbackHash);
-    }
+  return new Promise((res) => {
+    (async () => {
+      try {
+        const stats = await fs.stat(filePath);
+        const fileName = path.basename(filePath);
+        const simpleHash = Buffer.from(`${fileName}_${stats.size}`).toString('base64').slice(0, 16);
+        res(simpleHash);
+      } catch (err) {
+        // Fallback to filename hash
+        const fileName = path.basename(filePath);
+        const fallbackHash = Buffer.from(fileName).toString('base64').slice(0, 16);
+        res(fallbackHash);
+      }
+    })();
   });
 }
 
