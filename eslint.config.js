@@ -61,6 +61,7 @@ module.exports = [
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/triple-slash-reference': 'off', // Allow triple slash references for Next.js
       'prefer-const': 'warn',
       'no-console': 'warn',
       'no-undef': 'off', // Turn off no-undef since we're using TypeScript
@@ -79,6 +80,10 @@ module.exports = [
       'scripts/',
       'test-auth.js',
       'verify-firebase.js',
+      'next-env.d.ts',
+      'setup-firestore-connection.js',
+      'check-firebase-status.js',
+      'get-firebase-token.js',
     ],
   },
 ];
