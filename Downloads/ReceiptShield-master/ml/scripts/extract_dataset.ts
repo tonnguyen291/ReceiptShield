@@ -310,7 +310,7 @@ async function run() {
       // 2️⃣ AI extraction (disabled for build - can be re-enabled)
       const photoDataUri   = await imageToDataURI(filePath);
       // const { items }      = await summarizeReceipt({ photoDataUri });
-      const items = []; // Fallback: empty items for now
+      const items: any[] = []; // Fallback: empty items for now
       const flat           = extractFlatFeatures(items);
 
       // 3️⃣ derived fields and fraud detection
