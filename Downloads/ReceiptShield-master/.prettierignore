@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+build
+dist
+
+# ML models and data
+*.pkl
+*.csv
+ml/receipts
+
+# Logs
+*.log
+logs
+
+# Environment files
+.env*
+!.env.example
+
+# Git
+.git
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+
+# Firebase
+.firebase
+firebase-debug.log
+
+# Coverage
+coverage
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+

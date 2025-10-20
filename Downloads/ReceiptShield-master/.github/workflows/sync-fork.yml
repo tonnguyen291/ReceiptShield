@@ -1,0 +1,46 @@
+name: Sync Fork
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Sync fork
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Add upstream remote
+          git remote add upstream https://github.com/tonnguyen291/ReceiptShield.git
+          
+          # Fetch upstream changes
+          git fetch upstream
+          
+          # Check if there are changes
+          if git diff --quiet HEAD upstream/main; then
+            echo "No changes to sync"
+            exit 0
+          fi
+          
+          # Merge upstream changes
+          git checkout main
+          git merge upstream/main
+          
+          # Push changes to fork
+          git push origin main
+          
+      - name: Create sync notification
+        if: success()
+        run: |
+          echo "✅ Fork synced successfully with upstream repository"
