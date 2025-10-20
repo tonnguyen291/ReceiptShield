@@ -1,12 +1,47 @@
 
 export type UserRole = 'employee' | 'manager' | 'admin';
 
+export type SubscriptionTier = 'trial' | 'basic' | 'professional' | 'enterprise';
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+
+export interface Company {
+  id: string;
+  name: string;
+  ownerId: string; // User ID of the company owner
+  subscriptionTier: SubscriptionTier;
+  subscriptionStatus: SubscriptionStatus;
+  trialEndsAt?: Date;
+  currentPeriodEnd?: Date;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  receiptCount: number; // Current month's receipt count
+  userCount: number; // Current user count
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CompanySettings {
+  allowAdminsToManageSubscription: boolean;
+  maxReceiptsPerMonth: number;
+  maxUsers: number;
+  features: {
+    advancedAnalytics: boolean;
+    apiAccess: boolean;
+    customIntegrations: boolean;
+    prioritySupport: boolean;
+  };
+}
+
 export interface User {
   id: string;
   uid: string; // Firebase Auth UID
   name: string; // Required for full name
   email: string;
   role: UserRole;
+  companyId?: string; // Links user to their company (optional for platform admins)
+  isCompanyOwner?: boolean; // Identifies the company creator
+  canManageSubscription?: boolean; // Permission flag set by owner
+  isPlatformAdmin?: boolean; // Identifies ReceiptShield platform administrators with cross-company access
   dob?: string; // Date of Birth
   supervisorId?: string; // ID of the user's manager
   status: 'active' | 'inactive';
@@ -51,6 +86,9 @@ export interface ProcessedReceipt {
   imageUrl?: string; // Firebase Storage URL
   imageStoragePath?: string; // Firebase Storage path for deletion
   items: ReceiptDataItem[];
+  
+  // Company isolation
+  companyId: string; // Isolates receipts by company
   
   // User tracking
   userUid?: string; // Firebase Auth UID of the submitter

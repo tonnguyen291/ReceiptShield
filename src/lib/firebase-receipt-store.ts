@@ -168,15 +168,26 @@ export async function getReceipt(receiptId: string): Promise<ProcessedReceipt | 
 /**
  * Get all receipts for a specific user
  * @param userEmail - The email of the user
+ * @param companyId - The company ID to filter by
  * @returns Promise with array of receipts
  */
-export async function getReceiptsByUser(userEmail: string): Promise<ProcessedReceipt[]> {
+export async function getReceiptsByUser(userEmail: string, companyId?: string): Promise<ProcessedReceipt[]> {
   try {
-    const q = query(
-      collection(db, RECEIPTS_COLLECTION),
-      where('uploadedBy', '==', userEmail),
-      orderBy('uploadedAt', 'desc')
-    );
+    let q;
+    if (companyId) {
+      q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('companyId', '==', companyId),
+        where('uploadedBy', '==', userEmail),
+        orderBy('uploadedAt', 'desc')
+      );
+    } else {
+      q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('uploadedBy', '==', userEmail),
+        orderBy('uploadedAt', 'desc')
+      );
+    }
     
     const querySnapshot = await getDocs(q);
     const receipts: ProcessedReceipt[] = [];
@@ -208,20 +219,32 @@ export async function getReceiptsByUser(userEmail: string): Promise<ProcessedRec
 /**
  * Get all receipts for a supervisor's team
  * @param supervisorId - The ID of the supervisor
+ * @param companyId - The company ID to filter by
  * @returns Promise with array of receipts
  */
-export async function getReceiptsBySupervisor(supervisorId: string): Promise<ProcessedReceipt[]> {
+export async function getReceiptsBySupervisor(supervisorId: string, companyId?: string): Promise<ProcessedReceipt[]> {
   try {
     console.log('getReceiptsBySupervisor called with supervisorId:', supervisorId);
     
     // Try the optimized query first (requires index)
     try {
-      const q = query(
-        collection(db, RECEIPTS_COLLECTION),
-        where('supervisorId', '==', supervisorId),
-        where('status', '!=', 'draft'), // Exclude draft receipts
-        orderBy('uploadedAt', 'desc')
-      );
+      let q;
+      if (companyId) {
+        q = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('companyId', '==', companyId),
+          where('supervisorId', '==', supervisorId),
+          where('status', '!=', 'draft'), // Exclude draft receipts
+          orderBy('uploadedAt', 'desc')
+        );
+      } else {
+        q = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('supervisorId', '==', supervisorId),
+          where('status', '!=', 'draft'), // Exclude draft receipts
+          orderBy('uploadedAt', 'desc')
+        );
+      }
       
       const querySnapshot = await getDocs(q);
       console.log('Query snapshot size:', querySnapshot.size);
@@ -251,11 +274,21 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
       // Fallback: Use simpler query and filter client-side
       console.warn('Index not ready, using fallback query:', indexError.message);
       
-      const fallbackQuery = query(
-        collection(db, RECEIPTS_COLLECTION),
-        where('supervisorId', '==', supervisorId),
-        orderBy('uploadedAt', 'desc')
-      );
+      let fallbackQuery;
+      if (companyId) {
+        fallbackQuery = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('companyId', '==', companyId),
+          where('supervisorId', '==', supervisorId),
+          orderBy('uploadedAt', 'desc')
+        );
+      } else {
+        fallbackQuery = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('supervisorId', '==', supervisorId),
+          orderBy('uploadedAt', 'desc')
+        );
+      }
       
       const querySnapshot = await getDocs(fallbackQuery);
       console.log('Fallback query snapshot size:', querySnapshot.size);
@@ -296,19 +329,30 @@ export async function getReceiptsBySupervisor(supervisorId: string): Promise<Pro
 /**
  * Get all receipts excluding drafts (for managers and non-admin users)
  * @param limitCount - Optional limit on number of receipts to return
+ * @param companyId - The company ID to filter by
  * @returns Promise with array of receipts
  */
-export async function getAllSubmittedReceipts(limitCount?: number): Promise<ProcessedReceipt[]> {
+export async function getAllSubmittedReceipts(limitCount?: number, companyId?: string): Promise<ProcessedReceipt[]> {
   try {
     console.log('getAllSubmittedReceipts called with limitCount:', limitCount);
     
     // Try the optimized query first (requires index)
     try {
-      let q = query(
-        collection(db, RECEIPTS_COLLECTION),
-        where('status', '!=', 'draft'), // Exclude draft receipts
-        orderBy('uploadedAt', 'desc')
-      );
+      let q;
+      if (companyId) {
+        q = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('companyId', '==', companyId),
+          where('status', '!=', 'draft'), // Exclude draft receipts
+          orderBy('uploadedAt', 'desc')
+        );
+      } else {
+        q = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('status', '!=', 'draft'), // Exclude draft receipts
+          orderBy('uploadedAt', 'desc')
+        );
+      }
       
       if (limitCount) {
         q = query(q, limit(limitCount));
@@ -359,10 +403,19 @@ export async function getAllSubmittedReceipts(limitCount?: number): Promise<Proc
       // Fallback: Use simpler query and filter client-side
       console.warn('Index not ready, using fallback query:', indexError.message);
       
-      let fallbackQuery = query(
-        collection(db, RECEIPTS_COLLECTION),
-        orderBy('uploadedAt', 'desc')
-      );
+      let fallbackQuery;
+      if (companyId) {
+        fallbackQuery = query(
+          collection(db, RECEIPTS_COLLECTION),
+          where('companyId', '==', companyId),
+          orderBy('uploadedAt', 'desc')
+        );
+      } else {
+        fallbackQuery = query(
+          collection(db, RECEIPTS_COLLECTION),
+          orderBy('uploadedAt', 'desc')
+        );
+      }
       
       if (limitCount) {
         fallbackQuery = query(fallbackQuery, limit(limitCount * 2)); // Get more to account for filtering
@@ -410,16 +463,26 @@ export async function getAllSubmittedReceipts(limitCount?: number): Promise<Proc
 /**
  * Get all receipts (admin function - includes drafts)
  * @param limitCount - Optional limit on number of receipts to return
+ * @param companyId - The company ID to filter by
  * @returns Promise with array of receipts
  */
-export async function getAllReceipts(limitCount?: number): Promise<ProcessedReceipt[]> {
+export async function getAllReceipts(limitCount?: number, companyId?: string): Promise<ProcessedReceipt[]> {
   try {
     console.log('getAllReceipts called with limitCount:', limitCount);
     
-    let q = query(
-      collection(db, RECEIPTS_COLLECTION),
-      orderBy('uploadedAt', 'desc')
-    );
+    let q;
+    if (companyId) {
+      q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        where('companyId', '==', companyId),
+        orderBy('uploadedAt', 'desc')
+      );
+    } else {
+      q = query(
+        collection(db, RECEIPTS_COLLECTION),
+        orderBy('uploadedAt', 'desc')
+      );
+    }
     
     if (limitCount) {
       q = query(q, limit(limitCount));

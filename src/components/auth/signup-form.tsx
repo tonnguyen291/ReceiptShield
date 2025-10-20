@@ -28,6 +28,7 @@ export function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('employee');
   const [supervisorId, setSupervisorId] = useState<string>('');
+  const [companyName, setCompanyName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { createAccount, user, isLoading } = useAuth();
@@ -96,8 +97,12 @@ export function SignupForm() {
         showErrorToast('You must select a supervisor.');
         return;
       }
+      if (role === 'admin' && !companyName.trim()) {
+        showErrorToast('Company name is required for admin accounts.');
+        return;
+      }
       
-      const response = await createAccount(name, email, password, role, supervisorId);
+      const response = await createAccount(name, email, password, role, supervisorId, companyName);
       if (!response.success) {
         showErrorToast(response.message || "Failed to create account.");
       }
@@ -204,6 +209,22 @@ export function SignupForm() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+          {role === 'admin' && (
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                type="text"
+                placeholder="Your Company Name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+              />
+              <p className="text-sm text-gray-600">
+                You'll be creating a new company and will be the owner with full control.
+              </p>
             </div>
           )}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
