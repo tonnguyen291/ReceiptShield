@@ -9,6 +9,7 @@
   "rules": {
     "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/triple-slash-reference": "off",
     "prefer-const": "warn",
     "no-console": "warn"
   },
@@ -19,6 +20,8 @@
     "build/",
     "dist/",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "next-env.d.ts",
+    "ml/"
   ]
 }
