@@ -2,9 +2,103 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow all operations for testing - we can add security later
-    match /{document=**} {
-      allow read, write: if true;
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserCompanyId() {
+      return request.auth.token.companyId;
+    }
+    
+    function isPlatformAdmin() {
+      return request.auth.token.isPlatformAdmin == true;
+    }
+    
+    function isCompanyOwner() {
+      return request.auth.token.isCompanyOwner == true;
+    }
+    
+    function canManageSubscription() {
+      return request.auth.token.canManageSubscription == true;
+    }
+    
+    function isSameCompany(resource) {
+      return resource.data.companyId == getUserCompanyId();
+    }
+    
+    function isSameCompanyOrPlatformAdmin(resource) {
+      return isSameCompany(resource) || isPlatformAdmin();
+    }
+
+    // Users collection - company isolation
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+    }
+
+    // Companies collection
+    match /companies/{companyId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.ownerId == request.auth.uid || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        request.resource.data.ownerId == request.auth.uid;
+    }
+    
+    // Company settings subcollection
+    match /companies/{companyId}/settings/{settingId} {
+      allow read, write: if isAuthenticated() && 
+        (getUserCompanyId() == companyId || isPlatformAdmin());
+    }
+
+    // Receipts collection - company isolation
+    match /receipts/{receiptId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+    }
+
+    // Subscription usage tracking
+    match /subscriptionUsage/{usageId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+    }
+
+    // Invitations collection - company isolation
+    match /invitations/{invitationId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.invitedBy == request.auth.token.email || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.invitedBy == request.auth.token.email || isPlatformAdmin());
+    }
+
+    // OCR analysis results - company isolation
+    match /ocrAnalysis/{analysisId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+    }
+
+    // Fraud analysis results - company isolation
+    match /fraudAnalysis/{analysisId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+    }
+
+    // Receipt submissions - company isolation
+    match /receiptSubmissions/{submissionId} {
+      allow read, write: if isAuthenticated() && 
+        (resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
+      allow create: if isAuthenticated() && 
+        (request.resource.data.companyId == getUserCompanyId() || isPlatformAdmin());
     }
   }
 }

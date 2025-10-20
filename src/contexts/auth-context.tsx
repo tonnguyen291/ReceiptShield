@@ -22,7 +22,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
-  createAccount: (name: string, email: string, password: string, role: UserRole, supervisorId?: string) => Promise<AuthResponse>;
+  createAccount: (name: string, email: string, password: string, role: UserRole, supervisorId?: string, companyName?: string) => Promise<AuthResponse>;
   logout: () => void;
   setUser: Dispatch<SetStateAction<User | null>>;
 }
@@ -81,12 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const createAccount = async (name: string, email: string, password: string, role: UserRole, supervisorId?: string): Promise<AuthResponse> => {
+  const createAccount = async (name: string, email: string, password: string, role: UserRole, supervisorId?: string, companyName?: string): Promise<AuthResponse> => {
     try {
       // Clear any existing session data before creating a new account
       logout();
 
-      const user = await signUpWithEmail(email, password, name, role, supervisorId);
+      const user = await signUpWithEmail(email, password, name, role, supervisorId, companyName);
       setUser(user);
       
       // Let the AppLayout's useEffect handle redirection based on role

@@ -118,7 +118,8 @@ export async function signUpWithEmail(
   password: string, 
   name: string, 
   role: UserRole, 
-  supervisorId?: string
+  supervisorId?: string,
+  companyName?: string
 ): Promise<User> {
   try {
     // Create Firebase Auth user
@@ -128,12 +129,27 @@ export async function signUpWithEmail(
     // Update display name
     await updateProfile(firebaseUser, { displayName: name });
 
+    let companyId: string | undefined;
+    let isCompanyOwner = false;
+    let canManageSubscription = false;
+
+    // If company name is provided, create a new company
+    if (companyName && role === 'admin') {
+      const { createCompany } = await import('./firebase-company-store');
+      companyId = await createCompany(companyName, firebaseUser.uid);
+      isCompanyOwner = true;
+      canManageSubscription = true;
+    }
+
     // Create user profile in Firestore
     await createUserProfile(firebaseUser.uid, {
       name,
       email,
       role,
       supervisorId,
+      companyId,
+      isCompanyOwner,
+      canManageSubscription,
     });
 
     // Get the complete user data

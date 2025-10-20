@@ -97,9 +97,19 @@ export async function initializeDefaultUsers(): Promise<void> {
   }
 }
 
-export async function getUsers(): Promise<User[]> {
+export async function getUsers(companyId?: string): Promise<User[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, USERS_COLLECTION));
+    let q;
+    if (companyId) {
+      q = query(
+        collection(db, USERS_COLLECTION),
+        where('companyId', '==', companyId)
+      );
+    } else {
+      q = collection(db, USERS_COLLECTION);
+    }
+    
+    const querySnapshot = await getDocs(q);
     const users: User[] = [];
     
     querySnapshot.forEach((doc) => {
@@ -110,6 +120,10 @@ export async function getUsers(): Promise<User[]> {
         name: data.name,
         email: data.email,
         role: data.role,
+        companyId: data.companyId,
+        isCompanyOwner: data.isCompanyOwner,
+        canManageSubscription: data.canManageSubscription,
+        isPlatformAdmin: data.isPlatformAdmin,
         status: data.status,
         supervisorId: data.supervisorId,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
@@ -205,13 +219,24 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
   }
 }
 
-export async function getManagers(): Promise<User[]> {
+export async function getManagers(companyId?: string): Promise<User[]> {
   try {
-    const q = query(
-      collection(db, USERS_COLLECTION),
-      where('role', '==', 'manager'),
-      where('status', '==', 'active')
-    );
+    let q;
+    if (companyId) {
+      q = query(
+        collection(db, USERS_COLLECTION),
+        where('companyId', '==', companyId),
+        where('role', '==', 'manager'),
+        where('status', '==', 'active')
+      );
+    } else {
+      q = query(
+        collection(db, USERS_COLLECTION),
+        where('role', '==', 'manager'),
+        where('status', '==', 'active')
+      );
+    }
+    
     const querySnapshot = await getDocs(q);
     const managers: User[] = [];
     
@@ -223,6 +248,10 @@ export async function getManagers(): Promise<User[]> {
         name: data.name,
         email: data.email,
         role: data.role,
+        companyId: data.companyId,
+        isCompanyOwner: data.isCompanyOwner,
+        canManageSubscription: data.canManageSubscription,
+        isPlatformAdmin: data.isPlatformAdmin,
         status: data.status,
         supervisorId: data.supervisorId,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,

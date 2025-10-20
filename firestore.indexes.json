@@ -5,6 +5,56 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "companyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "companyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "companyId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "supervisorId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "receipts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "supervisorId",
           "order": "ASCENDING"
         },
@@ -100,6 +150,10 @@
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "companyId",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "role",
           "order": "ASCENDING"
