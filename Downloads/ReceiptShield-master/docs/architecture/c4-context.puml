@@ -1,0 +1,34 @@
+@startuml ReceiptShield_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(employee, "Employee", "Submits expense receipts and tracks status.")
+Person(manager, "Manager", "Reviews, approves, or rejects receipts.")
+Person(financeAdmin, "Finance Administrator", "Configures the system and manages invitations.")
+Person_Ext(invitee, "Invitation Recipient", "Receives invitation emails and onboards via acceptance flow.")
+
+System_Boundary(rsBoundary, "ReceiptShield System") {
+  System(receiptshield, "ReceiptShield Web Application", "AI-powered expense management and fraud detection platform.")
+}
+
+System_Ext(firebase, "Firebase Platform", "Auth, Firestore, Storage, and App Hosting for ReceiptShield.")
+System_Ext(sendgrid, "SendGrid", "Transactional email delivery.")
+System_Ext(ocrServices, "Google AI & Tesseract", "OCR engines for receipt processing.")
+System_Ext(mlOps, "ML Ops Environment", "Python training scripts and datasets for fraud models.")
+
+Rel(employee, receiptshield, "Uploads receipts, views workflow status", "Browser / HTTPS")
+Rel(manager, receiptshield, "Reviews and approves receipts", "Browser / HTTPS")
+Rel(financeAdmin, receiptshield, "Manages invites, monitors fraud trends", "Browser / HTTPS")
+Rel(invitee, receiptshield, "Accepts invitations and signs up", "Browser / HTTPS")
+
+Rel(receiptshield, firebase, "Stores users, receipts, submissions, files", "Firestore / Storage APIs")
+Rel(receiptshield, sendgrid, "Sends invitations and alerts", "REST API")
+Rel(receiptshield, ocrServices, "Extracts structured data from images", "OCR API / WebAssembly")
+Rel(receiptshield, mlOps, "Consumes trained models, exports datasets", "Model artifacts / JSON")
+
+Rel(financeAdmin, sendgrid, "Reviews delivery metrics", "SendGrid Console")
+Rel(mlOps, firebase, "Loads receipt datasets for training", "Firestore exports")
+
+SHOW_LEGEND()
+@enduml

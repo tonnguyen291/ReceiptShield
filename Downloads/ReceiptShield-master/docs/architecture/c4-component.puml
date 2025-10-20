@@ -1,0 +1,65 @@
+@startuml ReceiptShield_Component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(employee, "Employee")
+Person(manager, "Manager")
+Person(financeAdmin, "Finance Administrator")
+
+Container_Boundary(webBoundary, "Next.js Web Application") {
+  Component(uiShells, "UI Feature Shells", "Next.js App Router pages", "Role-focused experiences for employees, managers, and admins.")
+  Component(authCtx, "Auth Context & Guards", "React Context / Hooks", "Manages authentication state and role-based routing.")
+  Component(domainStores, "Domain Stores & Services", "TypeScript modules", "Encapsulate Firestore and storage access for receipts, submissions, users, invitations.")
+  Component(ocrPipeline, "OCR & AI Pipeline Helpers", "TypeScript modules", "Coordinate hybrid OCR execution with Google AI and Tesseract.")
+  Component(fraudLayer, "Fraud Analysis Layer", "TypeScript modules", "Combines ML scoring and AI heuristics into unified classifications.")
+  Component(emailWorkflow, "Email & Invitation Workflow", "TypeScript modules", "Generates invitation templates and invokes SendGrid integration.")
+  Component(monitoringUtils, "Monitoring & Alerting Utilities", "TypeScript modules", "Emits telemetry, health checks, alerting signals.")
+  Component(sharedUi, "Shared UI Library", "React component library", "Design system primitives, dashboards, analytics widgets.")
+}
+
+Container(apiLayer, "Next.js API Layer", "Route Handlers (TypeScript)", "Server-side endpoints for invitations, monitoring, ML proxy.")
+Container(authSvc, "Firebase Authentication", "Firebase Auth")
+Container(firestoreDb, "Firestore Database", "Firebase Firestore")
+Container(storage, "Firebase Storage", "Receipt image storage")
+Container(sendgridSvc, "SendGrid Integration", "REST API")
+Container(externalOCR, "Google AI & Tesseract", "OCR services")
+Container(mlService, "Fraud Detection Service", "Python REST / Cloud Function")
+Container(monitoringStack, "Monitoring Stack", "Sentry / Custom Scripts")
+
+Rel(employee, uiShells, "Interacts with", "Browser")
+Rel(manager, uiShells, "Interacts with", "Browser")
+Rel(financeAdmin, uiShells, "Interacts with", "Browser")
+
+Rel(uiShells, authCtx, "Checks auth state, triggers login/signup")
+Rel(uiShells, sharedUi, "Renders using")
+Rel(uiShells, domainStores, "Loads & mutates data via")
+
+Rel(authCtx, authSvc, "Observes auth state")
+Rel(authCtx, domainStores, "Requests user profile, roles")
+
+Rel(domainStores, apiLayer, "Invokes server routes")
+Rel(domainStores, firestoreDb, "Reads / writes receipts, users, invitations")
+Rel(domainStores, storage, "Uploads / deletes images")
+
+Rel(ocrPipeline, externalOCR, "Runs OCR extraction")
+Rel(ocrPipeline, domainStores, "Persists OCR results")
+
+Rel(fraudLayer, mlService, "Requests fraud scoring")
+Rel(fraudLayer, domainStores, "Persists risk assessment")
+
+Rel(emailWorkflow, apiLayer, "Dispatches send-invitation route")
+Rel(emailWorkflow, sendgridSvc, "Sends emails via (through API layer)")
+
+Rel(monitoringUtils, monitoringStack, "Pushes metrics and alerts")
+Rel(monitoringUtils, apiLayer, "Exposes health endpoints")
+
+Rel(apiLayer, firestoreDb, "CRUD operations")
+Rel(apiLayer, storage, "Signed upload/delete")
+Rel(apiLayer, sendgridSvc, "Send invitations")
+Rel(apiLayer, externalOCR, "Test / debug OCR calls")
+Rel(apiLayer, mlService, "Fraud prediction proxy")
+Rel(apiLayer, monitoringStack, "Health checks & dashboards")
+
+SHOW_LEGEND()
+@enduml

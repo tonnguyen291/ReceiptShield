@@ -1,0 +1,35 @@
+@startuml ReceiptShield_ReceiptProcessing_Dynamic
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(employee, "Employee")
+Container(ui, "UI Feature Shell", "Next.js page component")
+Component(domainStores, "Receipt Store Service", "TypeScript module")
+Component(storage, "Firebase Storage", "Binary object store")
+Component(submissionStore, "Submission Tracking Service", "TypeScript module")
+Component(ocrPipeline, "Hybrid OCR Pipeline", "TypeScript module")
+Component(fraudLayer, "Fraud Analysis Layer", "TypeScript module")
+Component(receiptRepo, "Firestore Receipt Repository", "TypeScript module")
+Component(firestore, "Firestore Database", "Managed NoSQL")
+Component(sendgrid, "SendGrid API", "Email delivery")
+Component(monitoring, "Monitoring Utilities", "TypeScript module")
+
+Rel(employee, ui, "Uploads receipt image")
+Rel(ui, submissionStore, "saveSubmission(metadata)")
+Rel(submissionStore, firestore, "Persist submission record")
+Rel(ui, storage, "uploadReceiptImage(file)")
+Rel(ui, domainStores, "processReceipt(submissionId)")
+Rel(domainStores, ocrPipeline, "performHybridOCRAnalysis(image)")
+Rel(ocrPipeline, storage, "download image")
+Rel(ocrPipeline, firestore, "save OCR results")
+Rel(domainStores, fraudLayer, "analyzeReceiptForFraud(data)")
+Rel(fraudLayer, firestore, "fetch historical receipts")
+Rel(fraudLayer, receiptRepo, "store risk assessment")
+Rel(receiptRepo, firestore, "addReceipt / updateReceipt")
+Rel(domainStores, monitoring, "logProcessingEvent()")
+Rel(monitoring, firestore, "record monitoring event")
+Rel(domainStores, sendgrid, "sendReceiptAlert()", "optional, via API route")
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,60 @@
+{
+  "Pages": {
+    "/login": {
+      "CustomComponents": ["LoginForm"],
+      "ShadCN": ["Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter", "Label", "Input", "Select", "SelectTrigger", "SelectValue", "SelectContent", "SelectItem", "Button"],
+      "LucideIcons": ["Shield", "Loader2"]
+    },
+    "/employee/dashboard": {
+      "CustomComponents": ["AppHeader", "SubmissionHistoryTable"],
+      "ShadCN": ["Button", "Separator", "Card", "CardContent", "Table", "TableHeader", "TableBody", "TableRow", "TableHead", "TableCell", "Badge", "AlertDialog", "AlertDialogAction", "AlertDialogCancel", "AlertDialogContent", "AlertDialogDescription", "AlertDialogFooter", "AlertDialogHeader", "AlertDialogTitle", "CardHeader", "CardTitle", "CardDescription"],
+      "LucideIcons": ["PlusCircle", "History", "BrainCircuit", "Bell", "UserCog", "Loader2", "FileText", "Eye", "Pencil", "Trash2", "ClipboardCheck", "AlertTriangle", "ShieldQuestion", "CheckCircle", "XCircle"]
+    },
+    "/employee/upload": {
+      "CustomComponents": ["AppHeader", "ReceiptUploadForm"],
+      "ShadCN": ["Button", "Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter", "Label", "Input"],
+      "NextJS": ["Image"],
+      "LucideIcons": ["ArrowLeft", "Loader2", "UploadCloud"]
+    },
+    "/employee/verify-receipt/[receiptId]": {
+      "CustomComponents": ["AppHeader"],
+      "ShadCN": ["Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter", "Button", "Label", "Input", "ScrollArea"],
+      "LucideIcons": ["ArrowLeft", "AlertTriangle", "CheckCircle", "Loader2", "FileEdit"],
+      "NextJS": ["Image"]
+    },
+    "/employee/receipt/[receiptId]": {
+      "CustomComponents": ["AppHeader"],
+      "ShadCN": ["Card", "CardContent", "CardDescription", "CardFooter", "CardHeader", "CardTitle", "Button", "Badge", "Progress", "Separator", "ScrollArea"],
+      "LucideIcons": ["ArrowLeft", "AlertTriangle", "Info", "MessageSquareText", "ShieldQuestion", "CheckCircle", "XCircle"],
+      "NextJS": ["Image"]
+    },
+    "/manager/dashboard": {
+      "CustomComponents": ["AppHeader", "ManagerOverviewCharts", "FlaggedReceiptsTable", "ReceiptDetailsDialog"],
+      "ShadCN": ["Separator", "Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "Table", "TableHeader", "TableBody", "TableRow", "TableHead", "TableCell", "Button", "Badge", "Progress", "AlertDialog", "AlertDialogAction", "AlertDialogCancel", "AlertDialogContent", "AlertDialogDescription", "AlertDialogFooter", "AlertDialogHeader", "AlertDialogTitle"],
+      "Recharts": ["BarChart", "Bar", "ResponsiveContainer", "XAxis", "YAxis", "Tooltip", "Legend", "CartesianGrid"],
+      "LucideIcons": ["TrendingUp", "ShieldAlert", "Users", "FileText", "Bell", "Settings", "FileWarning", "CheckCircle2", "Loader2", "ShieldQuestion", "AlertCircle", "CheckCircle", "Eye", "Pencil", "XCircle"]
+    },
+    "/profile": {
+      "CustomComponents": ["AppHeader"],
+      "ShadCN": ["Button", "Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter", "Label", "Input"],
+      "LucideIcons": ["ArrowLeft", "UserCircle2"]
+    },
+    "/profile/change-password": {
+      "CustomComponents": ["AppHeader"],
+      "ShadCN": ["Button", "Card", "CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter", "Label", "Input"],
+      "LucideIcons": ["ArrowLeft", "KeyRound"]
+    }
+  },
+  "SharedComponents": {
+    "AppHeader": {
+      "NextJS": ["Link"],
+      "ShadCN": ["DropdownMenu", "DropdownMenuTrigger", "DropdownMenuContent", "DropdownMenuItem", "DropdownMenuLabel", "DropdownMenuSeparator", "Button", "Avatar", "AvatarImage", "AvatarFallback"],
+      "LucideIcons": ["Shield", "UserCircle", "ChevronDown", "UserCog", "KeyRound", "LogOut"]
+    },
+    "ReceiptDetailsDialog": {
+      "ShadCN": ["Dialog", "DialogContent", "DialogDescription", "DialogHeader", "DialogTitle", "DialogFooter", "Button", "Badge", "ScrollArea", "Separator"],
+      "NextJS": ["Image"],
+      "LucideIcons": ["Info", "CheckCircle", "XCircle", "ShieldQuestion"]
+    }
+  }
+}

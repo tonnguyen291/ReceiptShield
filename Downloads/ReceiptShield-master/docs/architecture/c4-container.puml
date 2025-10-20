@@ -1,0 +1,44 @@
+@startuml ReceiptShield_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(employee, "Employee")
+Person(manager, "Manager")
+Person(financeAdmin, "Finance Administrator")
+Person_Ext(invitee, "Invitation Recipient")
+
+System_Boundary(rsBoundary, "ReceiptShield System") {
+  Container(webApp, "Next.js Web Application", "Next.js (React, Tailwind)", "UI composition, client workflows, and client-side auth.")
+  Container(apiLayer, "Next.js API Layer", "Next.js Route Handlers (TypeScript)", "Server-side capabilities for invitations, monitoring, ML proxy, OCR tests.")
+  Container(auth, "Firebase Authentication", "Firebase Auth", "User identity and session management.")
+  Container(firestoreDb, "Firestore Database", "Firebase Firestore", "Persists users, receipts, submissions, invitations, analytics.")
+  Container(storage, "Firebase Storage", "Firebase Storage", "Stores receipt images and artifacts.")
+  Container(appHosting, "Firebase App Hosting / CDN", "Firebase App Hosting", "Static hosting, edge caching, and SSL termination.")
+  Container(sendgridSvc, "SendGrid Integration", "SendGrid REST API", "Dispatches invitation and notification emails.")
+  Container(ocrPipeline, "OCR / AI Pipeline", "Google AI via Genkit & Tesseract", "Performs OCR and extraction with fallback strategies.")
+  Container(mlService, "Fraud Detection Service", "Python ML Model via REST / Cloud Function", "Scores receipts for fraud risk (currently stubbed).")
+  Container(monitoringTools, "Monitoring & Alerting Toolkit", "Sentry, custom scripts", "Collects metrics, health checks, and operational alerts.")
+}
+
+Rel(employee, webApp, "Uses for uploading receipts and tracking status", "HTTPS")
+Rel(manager, webApp, "Uses for review workflow", "HTTPS")
+Rel(financeAdmin, webApp, "Configures system, sends invites", "HTTPS")
+Rel(invitee, webApp, "Accepts invitation and signs up", "HTTPS")
+
+Rel(webApp, apiLayer, "Invokes server actions and APIs", "Fetch / HTTPS")
+Rel(webApp, auth, "Authenticates & observes session state", "Firebase SDK")
+Rel(apiLayer, firestoreDb, "Stores and retrieves domain data", "Firestore SDK")
+Rel(apiLayer, storage, "Uploads / deletes receipt images", "Firebase Storage SDK")
+Rel(apiLayer, sendgridSvc, "Sends invitation emails", "REST API")
+Rel(apiLayer, ocrPipeline, "Runs OCR & extraction tasks", "HTTP / WASM")
+Rel(apiLayer, mlService, "Requests fraud risk scoring", "REST API")
+Rel(apiLayer, monitoringTools, "Writes monitoring events, health metrics", "HTTP / SDK")
+Rel(auth, firestoreDb, "Reads/writes user profiles & roles", "Firestore SDK")
+Rel(appHosting, webApp, "Serves compiled app artifacts", "HTTPS")
+
+Rel_Back(mlService, firestoreDb, "Consumes training data / writes assessment metadata", "Firestore exports / JSON")
+Rel_Back(monitoringTools, firestoreDb, "Stores operational metrics", "Firestore SDK")
+
+SHOW_LEGEND()
+@enduml
