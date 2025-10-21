@@ -123,7 +123,7 @@ export function OriginDashboardEnhanced({
     <div className="space-y-6 bg-[var(--color-bg)] text-[var(--color-text)]">
       {/* Header */}
       {/* Moved things to the right */}
-      <div className="flex items-center justify-between pl-4">
+      <div className="flex items-center justify-between pl-4 mt-4">
         <div>
           <h1 className="text-display text-[var(--color-text)]">Dashboard</h1>
           <p className="text-caption text-[var(--color-text-secondary)]">
