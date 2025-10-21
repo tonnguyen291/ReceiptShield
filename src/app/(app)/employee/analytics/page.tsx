@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Receipt } from "lucide-react";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { TrendingUp, DollarSign, Receipt } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function EmployeeAnalyticsPage() {
-  const [analytics, setAnalytics] = useState({
-    totalSpent: 2450.00,
-    averagePerReceipt: 89.50,
+  const { user } = useAuth(); // ✅ Fix: access current user from context
+
+  const [analytics] = useState({
+    totalSpent: 2450.0,
+    averagePerReceipt: 89.5,
     topCategory: "Meals",
     totalReceipts: 28,
     monthlyTrend: [
@@ -16,21 +24,28 @@ export default function EmployeeAnalyticsPage() {
       { month: "Feb", amount: 1450 },
       { month: "Mar", amount: 1800 },
       { month: "Apr", amount: 2100 },
-      { month: "May", amount: 2450 }
+      { month: "May", amount: 2450 },
     ],
     categoryBreakdown: [
       { category: "Meals", amount: 1200, percentage: 49 },
       { category: "Transportation", amount: 600, percentage: 24 },
       { category: "Office Supplies", amount: 400, percentage: 16 },
-      { category: "Other", amount: 250, percentage: 11 }
-    ]
+      { category: "Other", amount: 250, percentage: 11 },
+    ],
   });
 
   return (
     <div className="space-y-6 p-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Spending Analytics</h1>
-        <p className="text-gray-600 mt-2">Track your expense patterns and spending insights</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {user?.name
+            ? `${user.name}'s Spending Analytics`
+            : "Spending Analytics"}
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Track your expense patterns and spending insights
+        </p>
       </div>
 
       {/* Summary Cards */}
@@ -41,18 +56,24 @@ export default function EmployeeAnalyticsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analytics.totalSpent.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              ${analytics.totalSpent.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average per Receipt</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Average per Receipt
+            </CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analytics.averagePerReceipt}</div>
+            <div className="text-2xl font-bold">
+              ${analytics.averagePerReceipt}
+            </div>
             <p className="text-xs text-muted-foreground">Per transaction</p>
           </CardContent>
         </Card>
@@ -70,7 +91,9 @@ export default function EmployeeAnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Receipts</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Receipts
+            </CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -85,13 +108,17 @@ export default function EmployeeAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Monthly Spending Trend</CardTitle>
-            <CardDescription>Your spending pattern over the last 5 months</CardDescription>
+            <CardDescription>
+              Your spending pattern over the last 5 months
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
               <div className="text-center">
                 <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Chart visualization would go here</p>
+                <p className="text-gray-500">
+                  Chart visualization would go here
+                </p>
               </div>
             </div>
           </CardContent>
@@ -100,7 +127,9 @@ export default function EmployeeAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
-            <CardDescription>Breakdown of your expenses by category</CardDescription>
+            <CardDescription>
+              Breakdown of your expenses by category
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -112,7 +141,9 @@ export default function EmployeeAnalyticsPage() {
                   </div>
                   <div className="text-right">
                     <div className="font-medium">${category.amount}</div>
-                    <div className="text-sm text-gray-500">{category.percentage}%</div>
+                    <div className="text-sm text-gray-500">
+                      {category.percentage}%
+                    </div>
                   </div>
                 </div>
               ))}
