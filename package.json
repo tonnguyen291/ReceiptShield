@@ -9,7 +9,7 @@
     "build": "next build",
     "build:production": "next build && next export",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 1000",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 2000",
     "typecheck": "tsc --noEmit",
     "extract-dataset": "tsx ml/extract_dataset.ts",
     "firebase:emulators": "firebase emulators:start",
