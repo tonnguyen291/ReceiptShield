@@ -110,6 +110,7 @@
     "@types/nodemailer": "^7.0.2",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
+    "@types/stripe": "^8.0.416",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "firebase-tools": "^14.18.0",

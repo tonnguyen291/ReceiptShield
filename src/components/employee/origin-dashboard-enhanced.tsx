@@ -1,22 +1,35 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingGrid, LoadingChart, LoadingSpinner } from "@/components/ui/loading-states";
-import { 
-  ReceiptText, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  LoadingGrid,
+  LoadingChart,
+  LoadingSpinner,
+} from "@/components/ui/loading-states";
+import {
+  ReceiptText,
+  DollarSign,
+  TrendingUp,
   AlertCircle,
   Plus,
   FileText,
   BarChart3,
-  Lightbulb
+  Lightbulb,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { AnalyticsDashboard } from '@/components/analytics/analytics-dashboard';
-import { getUserSpendingAnalytics, type SpendingAnalytics } from '@/lib/data-service';
+import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
+import {
+  getUserSpendingAnalytics,
+  type SpendingAnalytics,
+} from "@/lib/data-service";
 
 interface OriginDashboardEnhancedProps {
   user?: {
@@ -26,7 +39,9 @@ interface OriginDashboardEnhancedProps {
   };
 }
 
-export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) {
+export function OriginDashboardEnhanced({
+  user,
+}: OriginDashboardEnhancedProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [analytics, setAnalytics] = useState<SpendingAnalytics | null>(null);
@@ -34,47 +49,56 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
   // Load real analytics data
   useEffect(() => {
     if (user?.email) {
-      getUserSpendingAnalytics(user.email).then(setAnalytics).catch(console.error);
+      getUserSpendingAnalytics(user.email)
+        .then(setAnalytics)
+        .catch(console.error);
     }
   }, [user?.email]);
 
   // Use real data if available, otherwise fallback to mock data
-  const summaryData = analytics ? {
-    totalReceipts: analytics.totalReceipts,
-    totalAmount: analytics.totalSpent,
-    pendingAmount: analytics.statusBreakdown.find(s => s.status === 'Pending')?.amount || 0,
-    approvedAmount: analytics.statusBreakdown.find(s => s.status === 'Approved')?.amount || 0
-  } : {
-    totalReceipts: 0,
-    totalAmount: 0,
-    pendingAmount: 0,
-    approvedAmount: 0
-  };
+  const summaryData = analytics
+    ? {
+        totalReceipts: analytics.totalReceipts,
+        totalAmount: analytics.totalSpent,
+        pendingAmount:
+          analytics.statusBreakdown.find((s) => s.status === "Pending")
+            ?.amount || 0,
+        approvedAmount:
+          analytics.statusBreakdown.find((s) => s.status === "Approved")
+            ?.amount || 0,
+      }
+    : {
+        totalReceipts: 0,
+        totalAmount: 0,
+        pendingAmount: 0,
+        approvedAmount: 0,
+      };
 
   // Use real recent receipts if available
-  const recentReceipts = analytics?.recentReceipts.slice(0, 3).map(receipt => {
-    const amount = receipt.items.reduce((sum, item) => {
-      const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
-      return sum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
-    }, 0);
-    
-    return {
-      id: receipt.id,
-      amount,
-      vendor: receipt.items[0]?.label || 'Unknown',
-      date: new Date(receipt.uploadedAt).toLocaleDateString(),
-      status: receipt.status || 'pending'
-    };
-  }) || [];
+  const recentReceipts =
+    analytics?.recentReceipts.slice(0, 3).map((receipt) => {
+      const amount = receipt.items.reduce((sum, item) => {
+        const priceMatch = item.value.match(/\$?(\d+\.?\d*)/);
+        return sum + (priceMatch ? parseFloat(priceMatch[1]) : 0);
+      }, 0);
+
+      return {
+        id: receipt.id,
+        amount,
+        vendor: receipt.items[0]?.label || "Unknown",
+        date: new Date(receipt.uploadedAt).toLocaleDateString(),
+        status: receipt.status || "pending",
+      };
+    }) || [];
 
   const quickActions = [
     { label: "Submit Receipt", icon: Plus, href: "/employee/upload" },
-    { 
-      label: "View Analytics", 
-      icon: BarChart3, 
-      onClick: () => setShowAnalytics(!showAnalytics) 
+    {
+      label: "View Analytics",
+      icon: BarChart3,
+      onClick: () => setShowAnalytics(!showAnalytics),
     },
-    { label: "Get Insights", icon: Lightbulb, href: "/employee/insights" }
+    { label: "Get Insights", icon: Lightbulb, href: "/employee/insights" },
   ];
 
   if (isLoading) {
@@ -83,7 +107,9 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-display">Dashboard</h1>
-            <p className="text-caption">Welcome back, {user?.name || user?.email}</p>
+            <p className="text-caption">
+              Welcome back, {user?.name || user?.email}
+            </p>
           </div>
           <LoadingSpinner size="lg" />
         </div>
@@ -96,10 +122,13 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
   return (
     <div className="space-y-6 bg-[var(--color-bg)] text-[var(--color-text)]">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Moved things to the right */}
+      <div className="flex items-center justify-between pl-4 mt-4">
         <div>
           <h1 className="text-display text-[var(--color-text)]">Dashboard</h1>
-          <p className="text-caption text-[var(--color-text-secondary)]">Welcome back, {user?.name || user?.email}</p>
+          <p className="text-caption text-[var(--color-text-secondary)]">
+            Welcome back, {user?.name || user?.email}
+          </p>
         </div>
         <Button className="origin-button" asChild>
           <a href="/employee/upload">
@@ -108,59 +137,85 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </a>
         </Button>
       </div>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-[var(--color-card)] border-[var(--color-border)] shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-text)]">Total Receipts</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--color-text)]">
+              Total Receipts
+            </CardTitle>
             <ReceiptText className="h-4 w-4 text-[var(--color-text-secondary)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--color-primary)]">{summaryData.totalReceipts}</div>
-            <p className="text-xs text-[var(--color-text-secondary)]">This month</p>
+            <div className="text-2xl font-bold text-[var(--color-primary)]">
+              {summaryData.totalReceipts}
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              This month
+            </p>
           </CardContent>
         </Card>
 
         <Card className="bg-[var(--color-card)] border-[var(--color-border)] shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-text)]">Total Amount</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--color-text)]">
+              Total Amount
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-[var(--color-text-secondary)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--color-info)]">${summaryData.totalAmount.toFixed(2)}</div>
-            <p className="text-xs text-[var(--color-text-secondary)]">All receipts</p>
+            <div className="text-2xl font-bold text-[var(--color-info)]">
+              ${summaryData.totalAmount.toFixed(2)}
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              All receipts
+            </p>
           </CardContent>
         </Card>
 
         <Card className="bg-[var(--color-card)] border-[var(--color-border)] shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-text)]">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--color-text)]">
+              Pending
+            </CardTitle>
             <AlertCircle className="h-4 w-4 text-[var(--color-text-secondary)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--color-warning)]">${summaryData.pendingAmount.toFixed(2)}</div>
-            <p className="text-xs text-[var(--color-text-secondary)]">Awaiting approval</p>
+            <div className="text-2xl font-bold text-[var(--color-warning)]">
+              ${summaryData.pendingAmount.toFixed(2)}
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Awaiting approval
+            </p>
           </CardContent>
         </Card>
 
         <Card className="bg-[var(--color-card)] border-[var(--color-border)] shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-text)]">Approved</CardTitle>
+            <CardTitle className="text-sm font-medium text-[var(--color-text)]">
+              Approved
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-[var(--color-text-secondary)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--color-success)]">${summaryData.approvedAmount.toFixed(2)}</div>
-            <p className="text-xs text-[var(--color-text-secondary)]">Processed</p>
+            <div className="text-2xl font-bold text-[var(--color-success)]">
+              ${summaryData.approvedAmount.toFixed(2)}
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Processed
+            </p>
           </CardContent>
         </Card>
       </div>
-
       {/* Quick Actions */}
       <Card className="bg-[var(--color-card)] border-[var(--color-border)] shadow-sm">
         <CardHeader>
-          <CardTitle className="text-[var(--color-text)]">Quick Actions</CardTitle>
-          <CardDescription className="text-[var(--color-text-secondary)]">Common tasks and shortcuts</CardDescription>
+          <CardTitle className="text-[var(--color-text)]">
+            Quick Actions
+          </CardTitle>
+          <CardDescription className="text-[var(--color-text-secondary)]">
+            Common tasks and shortcuts
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -188,7 +243,6 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </div>
         </CardContent>
       </Card>
-
       {/* Recent Receipts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="origin-card">
@@ -200,19 +254,28 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
             {recentReceipts.length > 0 ? (
               <div className="space-y-4">
                 {recentReceipts.map((receipt) => (
-                  <div key={receipt.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div
+                    key={receipt.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  >
                     <div className="flex items-center space-x-3">
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="font-medium">{receipt.vendor}</p>
-                        <p className="text-sm text-muted-foreground">{receipt.date}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {receipt.date}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">${receipt.amount}</p>
-                      <p className={`text-xs ${
-                        receipt.status === 'approved' ? 'text-green-600' : 'text-yellow-600'
-                      }`}>
+                      <p
+                        className={`text-xs ${
+                          receipt.status === "approved"
+                            ? "text-green-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
                         {receipt.status}
                       </p>
                     </div>
@@ -244,20 +307,26 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
                   <p className="text-2xl font-bold text-blue-600">
                     ${analytics.totalSpent.toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-600">Total spent this period</p>
+                  <p className="text-sm text-gray-600">
+                    Total spent this period
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <p className="text-lg font-semibold">{analytics.totalReceipts}</p>
+                    <p className="text-lg font-semibold">
+                      {analytics.totalReceipts}
+                    </p>
                     <p className="text-xs text-gray-600">Receipts</p>
                   </div>
                   <div>
-                    <p className="text-lg font-semibold">{analytics.categoryBreakdown.length}</p>
+                    <p className="text-lg font-semibold">
+                      {analytics.categoryBreakdown.length}
+                    </p>
                     <p className="text-xs text-gray-600">Categories</p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={() => setShowAnalytics(true)}
                 >
@@ -277,12 +346,13 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </CardContent>
         </Card>
       </div>
-
       {/* Insights */}
       <Card className="origin-card">
         <CardHeader>
           <CardTitle>AI Insights</CardTitle>
-          <CardDescription>Smart recommendations based on your data</CardDescription>
+          <CardDescription>
+            Smart recommendations based on your data
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -292,7 +362,8 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
                 <div>
                   <p className="font-medium">Spending Pattern Detected</p>
                   <p className="text-sm text-muted-foreground">
-                    You tend to spend more on weekdays. Consider setting a daily budget limit.
+                    You tend to spend more on weekdays. Consider setting a daily
+                    budget limit.
                   </p>
                 </div>
               </div>
@@ -303,7 +374,8 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
                 <div>
                   <p className="font-medium">Expense Optimization</p>
                   <p className="text-sm text-muted-foreground">
-                    You could save ~$50/month by consolidating similar purchases.
+                    You could save ~$50/month by consolidating similar
+                    purchases.
                   </p>
                 </div>
               </div>
@@ -311,7 +383,6 @@ export function OriginDashboardEnhanced({ user }: OriginDashboardEnhancedProps) 
           </div>
         </CardContent>
       </Card>
-
       {/* Analytics Dashboard */}
       {showAnalytics && (
         <div className="mt-8">
