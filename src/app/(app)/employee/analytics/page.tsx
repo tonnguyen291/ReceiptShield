@@ -38,13 +38,11 @@ export default function EmployeeAnalyticsPage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {user?.name
-            ? `${user.name}'s Spending Analytics`
-            : "Spending Analytics"}
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Spending Analytics</h1>
         <p className="text-gray-600 mt-2">
-          Track your expense patterns and spending insights
+          Employee:{" "}
+          <span className="font-semibold">{user?.name || "Unknown"}</span> —
+          Track expense patterns and spending insights
         </p>
       </div>
 
