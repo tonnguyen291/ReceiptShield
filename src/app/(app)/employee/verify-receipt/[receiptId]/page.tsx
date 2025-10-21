@@ -12,8 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, FileEdit, FileType, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-// import { performEnhancedFraudAnalysis } from '@/lib/enhanced-fraud-service'; // Temporarily disabled
-import { extractTextWithTesseract } from '@/lib/tesseract-ocr-service';
+import { performEnhancedFraudAnalysis } from '@/lib/enhanced-fraud-service';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 import type { FraudAnalysis } from '@/types';
@@ -26,8 +25,6 @@ export default function VerifyReceiptPage() {
   const [receipt, setReceipt] = useState<ProcessedReceipt | null | undefined>(undefined);
   const [editableItems, setEditableItems] = useState<ReceiptDataItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isOcrProcessing, setIsOcrProcessing] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState(0);
   const receiptId = params.receiptId as string;
 
   useEffect(() => {
@@ -58,159 +55,6 @@ export default function VerifyReceiptPage() {
       prevItems.map(item => (item.id === id ? { ...item, value: newValue } : item))
     );
   };
-
-  const convertImageToDataUri = async (imageUrl: string): Promise<string> => {
-    try {
-      // If it's already a data URI, return it
-      if (imageUrl.startsWith('data:')) {
-        console.log('✅ Image is already a data URI');
-        return imageUrl;
-      }
-
-      console.log('🔄 Converting image URL to data URI:', imageUrl.substring(0, 100) + '...');
-
-      // Try different fetch strategies for Firebase Storage URLs
-      let response: Response;
-      
-      try {
-        // First try: Standard fetch with CORS
-        response = await fetch(imageUrl, {
-          mode: 'cors',
-          credentials: 'omit',
-          headers: {
-            'Accept': 'image/*'
-          }
-        });
-      } catch (corsError) {
-        console.warn('CORS fetch failed, trying proxy endpoint:', corsError);
-        
-        // Second try: Use our proxy endpoint to avoid CORS issues
-        if (imageUrl.includes('firebasestorage.googleapis.com')) {
-          try {
-            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
-            console.log('🔄 Using proxy endpoint:', proxyUrl);
-            response = await fetch(proxyUrl);
-          } catch (proxyError) {
-            console.warn('Proxy fetch failed, trying no-cors mode:', proxyError);
-            
-            // Third try: No-cors mode (limited but might work)
-            response = await fetch(imageUrl, {
-              mode: 'no-cors',
-              credentials: 'omit'
-            });
-          }
-        } else {
-          // For non-Firebase URLs, try no-cors mode
-          response = await fetch(imageUrl, {
-            mode: 'no-cors',
-            credentials: 'omit'
-          });
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-      }
-
-      console.log('✅ Image fetched successfully, converting to blob...');
-      const blob = await response.blob();
-      
-      if (blob.size === 0) {
-        throw new Error('Received empty image blob');
-      }
-
-      console.log('✅ Image blob created, size:', blob.size, 'bytes');
-
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          console.log('✅ Image converted to data URI successfully');
-          resolve(reader.result as string);
-        };
-        reader.onerror = (error) => {
-          console.error('❌ FileReader error:', error);
-          reject(new Error('Failed to convert image blob to data URI'));
-        };
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('❌ Error converting image to data URI:', error);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch')) {
-          if (imageUrl.includes('firebasestorage.googleapis.com')) {
-            throw new Error('Cannot access Firebase Storage image. This might be due to CORS restrictions. Try uploading the image again or contact support.');
-          }
-          throw new Error('Cannot access image URL. This might be due to CORS restrictions or network issues.');
-        }
-        if (error.message.includes('CORS')) {
-          throw new Error('Image access blocked by CORS policy. The image URL may not be accessible from this domain.');
-        }
-        throw new Error(`Image processing failed: ${error.message}`);
-      }
-      
-      throw new Error('Failed to prepare image for OCR processing');
-    }
-  };
-
-  const handleTesseractOCR = async () => {
-    if (!receipt) return;
-    
-    setIsOcrProcessing(true);
-    setOcrProgress(0);
-    
-    try {
-      toast({
-        title: 'Starting Tesseract OCR',
-        description: 'Preparing image and extracting text...',
-      });
-
-      const imageSource = receipt.imageUrl || receipt.imageDataUri;
-      if (!imageSource) {
-        throw new Error('No image available for OCR processing');
-      }
-
-      console.log('🔍 Tesseract OCR - Image source:', {
-        hasImageUrl: !!receipt.imageUrl,
-        hasImageDataUri: !!receipt.imageDataUri,
-        imageSourceType: imageSource.startsWith('data:') ? 'data-uri' : 'url',
-        imageSourceLength: imageSource.length
-      });
-
-      // Convert image to data URI format for Tesseract
-      setOcrProgress(10);
-      const dataUri = await convertImageToDataUri(imageSource);
-      
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setOcrProgress(prev => Math.min(prev + 5, 90));
-      }, 200);
-
-      const ocrResult = await extractTextWithTesseract(dataUri);
-      
-      clearInterval(progressInterval);
-      setOcrProgress(100);
-
-      // Update the editable items with Tesseract results
-      setEditableItems(ocrResult.items);
-
-      toast({
-        title: 'OCR Complete!',
-        description: `Extracted ${ocrResult.items.length} items with ${Math.round(ocrResult.confidence * 100)}% confidence`,
-      });
-
-    } catch (error) {
-      console.error('Tesseract OCR failed:', error);
-      toast({
-        title: 'OCR Failed',
-        description: error instanceof Error ? error.message : 'Failed to extract text from image',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsOcrProcessing(false);
-      setOcrProgress(0);
-    }
-  };
   
   const openPdfInNewTab = () => {
     if (receipt && isPdf) {
@@ -239,86 +83,23 @@ export default function VerifyReceiptPage() {
 
     setIsProcessing(true);
     try {
-      toast({
-        title: 'Starting Analysis',
-        description: 'Running fraud detection...',
-      });
-
-      // Get ML prediction
-      let mlPrediction = null;
-      try {
-        console.log('🤖 Calling ML prediction API...');
-        
-        // Prepare receipt data for ML model
-        const receiptData = {
-          amount: editableItems.find(item => 
-            item.label.toLowerCase().includes('total') || 
-            item.label.toLowerCase().includes('amount')
-          )?.value || '0',
-          merchant: editableItems.find(item => 
-            item.label.toLowerCase().includes('vendor') || 
-            item.label.toLowerCase().includes('store')
-          )?.value || 'Unknown',
-          category: 'Business Expense', // Default category
-          items: editableItems
-        };
-
-        const mlResponse = await fetch('/api/ml-predict', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(receiptData)
-        });
-
-        if (mlResponse.ok) {
-          const mlData = await mlResponse.json();
-          mlPrediction = mlData.prediction;
-          console.log('✅ ML prediction received:', mlPrediction);
-        } else {
-          console.warn('⚠️ ML prediction failed:', mlResponse.status);
-        }
-      } catch (mlError) {
-        console.warn('⚠️ ML prediction error:', mlError);
+      // Check if we have submission ID for enhanced tracking
+      if (!receipt.submissionId) {
+        throw new Error('Receipt missing submission ID - cannot perform enhanced analysis');
       }
 
-      // Create fraud analysis with ML prediction
-      const fraudResult = {
-        isFraudulent: mlPrediction?.is_fraudulent || false,
-        fraudProbability: mlPrediction?.fraud_probability || 0.1,
-        explanation: mlPrediction ? 
-          `ML Analysis: ${mlPrediction.risk_level} risk (${(mlPrediction.fraud_probability * 100).toFixed(1)}% fraud probability)` :
-          'Receipt processed successfully. No fraud detected.',
-        riskFactors: {
-          imageQuality: 'good' as const,
-          extractionConfidence: 'high' as const,
-          vendorVerification: 'unknown' as const,
-          amountReasonableness: 'normal' as const,
-        },
-        duplicateDetection: {
-          isDuplicate: false,
-          similarSubmissions: [],
-          similarityScore: 0,
-        },
-        analysis: {
-          submissionId: receipt.id,
-          receiptId: receipt.id,
-          ml_prediction: mlPrediction,
-          overall_risk_assessment: (mlPrediction?.risk_level || 'LOW') as 'LOW' | 'MEDIUM' | 'HIGH',
-          analysis_timestamp: new Date().toISOString(),
-          duplicateDetection: {
-            isDuplicate: false,
-            similarSubmissions: [],
-            similarityScore: 0,
-          },
-          riskFactors: {
-            imageQuality: 'good' as const,
-            extractionConfidence: 'high' as const,
-            vendorVerification: 'unknown' as const,
-            amountReasonableness: 'normal' as const,
-          },
-        }
-      };
+      toast({
+        title: 'Starting Enhanced Analysis',
+        description: 'Running comprehensive fraud detection...',
+      });
+
+      // Perform enhanced fraud analysis
+      const fraudResult = await performEnhancedFraudAnalysis(
+        editableItems,
+        imageSource || '',
+        receipt.submissionId,
+        receipt.id
+      );
       
       const finalReceipt: ProcessedReceipt = {
         ...receipt,
@@ -337,7 +118,7 @@ export default function VerifyReceiptPage() {
 
       toast({
         title: `Receipt ${user?.role === 'manager' ? 'Updated' : 'Verified'} & Analyzed!`,
-        description: `ML Analysis: ${fraudResult.analysis.overall_risk_assessment || 'LOW'} risk (${(fraudResult.fraudProbability * 100).toFixed(1)}% fraud probability)`,
+        description: `Risk Assessment: ${fraudResult.analysis.overall_risk_assessment || 'N/A'}, Confidence: ${(fraudResult.fraudProbability * 100).toFixed(1)}%, Quality: ${fraudResult.riskFactors.imageQuality}`,
       });
 
       if (user?.role === 'manager') {
@@ -414,8 +195,8 @@ export default function VerifyReceiptPage() {
             </Button>
         </div>
         <CardDescription className="text-[var(--color-text-secondary)]">
-          Review the extracted information below. Edit any field as necessary, then confirm to proceed.
-          If fields show "Extraction Failed" or are incorrect, use the "Re-extract with Tesseract" button to try Tesseract OCR, or correct them manually using the receipt image as a reference.
+          Review the AI-extracted information below. Edit any field as necessary, then confirm to proceed.
+          If fields show "Extraction Failed" or are incorrect, please correct them using the receipt image as a reference.
           {user?.role === 'manager' && " As a manager, saving changes will re-trigger fraud analysis."}
         </CardDescription>
       </CardHeader>
@@ -446,34 +227,12 @@ export default function VerifyReceiptPage() {
                 )}
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-lg mb-2 text-[var(--color-text)]">Extracted Items (Editable)</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTesseractOCR}
-                  disabled={isOcrProcessing || isProcessing}
-                  className="text-xs"
-                >
-                  {isOcrProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      OCR: {ocrProgress}%
-                    </>
-                  ) : (
-                    <>
-                      <FileType className="mr-2 h-3 w-3" />
-                      Re-extract with Tesseract
-                    </>
-                  )}
-                </Button>
-              </div>
+              <h3 className="font-semibold text-lg mb-2 text-[var(--color-text)]">Extracted Items (Editable)</h3>
               <ScrollArea className="h-[300px] md:h-[400px] pr-3 border border-[var(--color-border)] rounded-md p-3 bg-[var(--color-bg-secondary)] shadow-inner">
                  {editableItems.length === 0 && (
                   <p className="text-sm text-[var(--color-text-secondary)] p-4 text-center">
-                    No items were extracted. This might be due to image quality.
-                    Try using the "Re-extract with Tesseract" button above, or upload a clearer image.
+                    No items were extracted by the AI. This might be due to image quality.
+                    Please try uploading a clearer image or a different receipt.
                   </p>
                  )}
                  {isExtractionEssentiallyFailed && editableItems.some(item => item.label === "Note") && (
